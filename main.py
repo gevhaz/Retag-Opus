@@ -5,14 +5,14 @@ from os import listdir
 from os.path import isfile, join
 from pprint import pprint
 from colorama import Fore, init
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 init(autoreset=True)
 
 music_dir = "for-acid.csv"
 
-verbose = True
-show_mismatches = True
+verbose = False
+fix_mismatches = False
 save = False
 
 all_files = [join(music_dir, f) for f in listdir(music_dir) if isfile(join(music_dir, f))]
@@ -20,78 +20,99 @@ all_files = [join(music_dir, f) for f in listdir(music_dir) if isfile(join(music
 def prune_title(original_title):
     return re.sub(r"\(Remastered.*\)", "", original_title)
 
-def parse_artist_and_title(artist_and_title):
+def parse_artist_and_title(source_line):
+    artist_and_title = source_line.split(" \u00b7 ")
     title = prune_title(artist_and_title[0]).strip()
     artist: List = artist_and_title[1:]
-    if verbose:
-        print(f"Title: {title}")
-        print(f"Artist(s): {', '.join(artist)}")
 
     if len(artist) < 2 and ", " in artist[0]:
         artist: List = re.split(", | and ", artist[0])
 
     return artist, title
 
+def parse(desc):
+    new_data: Dict = {}
+    for desc_line in desc:
+        # Artist and title
+        if "\u00b7" in desc_line:
+            youtube_artist, youtube_title = parse_artist_and_title(desc_line)
+            new_data["artist"] = youtube_artist
+            new_data["title"] = [youtube_title]
+
+        # Organization
+        if "Provided" in desc_line:
+            organization = re.sub("Provided to YouTube by ", "", desc_line)
+            new_data["organization"] = [organization]
+
+        # Copyright
+        if "\u2117" in desc_line:
+            copyright = re.sub("\u2117 ", "", desc_line)
+            new_data["copyright"] = [copyright]
+
+        # Date
+        if "Released on:" in desc_line:
+            date = re.sub("Released on: ", "", desc_line)
+            date = date[0:4]
+            new_data["date"] = [date]
+
+    return new_data
+
+def print_new_metadata(data):
+    print(f"  Artist: {', '.join(data.get('artist', ['Not found']))}")
+    print(f"  Title: {', '.join(data.get('title', ['Not found']))}")
+    print(f"  Date: {', '.join(data.get('date', ['Not found']))}")
+    print(f"  Organization: {', '.join(data.get('organization', ['Not found']))}")
+    print(f"  Copyright: {', '.join(data.get('copyright', ['Not found']))}")
+    # print(f": {}")
+    print("")
+
+def adjust_metadata(new_data, metadata):
+    if new_data:
+        for field, value in new_data.items():
+            if value is None:
+                print(f"{field.title()}: No value found in YouTube description.")
+            elif metadata.get(field) is None:
+                print(Fore.CYAN + f"{field.title()}: No value exists in metadata. Using parsed data.")
+                metadata[field] = value
+            elif value == metadata.get(field):
+                print(Fore.GREEN + f"{field.title()}: Metadata matches description.")
+            else:
+                print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
+                print(f"  1. Exisiting metadata:  {', '.join(metadata.get(field, ['Not set']))}")
+                print(f"  2. YouTube description: {', '.join(value)}")
+                choice = input("Choose the number you want to use. Empty skips this field for this song: ")
+                if choice == 2:
+                    metadata[field] = value
+    else:
+        print(f"No new data was found.")
+
+    return metadata
 
 for file in all_files:
-    if verbose: print(f"\n----- File: {file} -----")
+    if verbose: print(Fore.BLUE + f"\n----- File: {file} -----")
 
     metadata = OggOpus(file)
-
-    artist = metadata.get("artist")
-    title = metadata.get("title")
-    if artist:
-        artist = ' '.join(artist)
-    if title:
-        title = ' '.join(title)
 
     # if 'artist' in metadata and 'title' in metadata and 'description' in metadata:
     description = metadata.get("description")
     if description:
-        # pprint(description)
-        for desc_line in description:
+        pprint(description)
+        new_data = parse(description)
 
-            # Artist and title
-            if "\u00b7" in desc_line:
-                interpunct_line = desc_line.split(" \u00b7 ")
-                youtube_artist, youtube_title = parse_artist_and_title(interpunct_line)
-                metadata_artist: Optional[List] = metadata.get("artist")
-                
-                if youtube_artist != metadata["artist"] and metadata_artist is not None:
-                    if show_mismatches: 
-                        print(Fore.GREEN + "Artist mismatch:")
-                        print(Fore.GREEN + f"\tYoutube description: {', '.join(youtube_artist)}")
-                        print(Fore.GREEN + f"\tExisting metadata:   {', '.join(metadata['artist'])}")
-                        print(Fore.RED + metadata_artist[0])
-                elif metadata_artist is None:
-                    if show_mismatches: print("No artist in existing metadata for song")
-                if youtube_title != metadata["title"][0]:
-                    if show_mismatches: 
-                        print(Fore.GREEN + f"Title mismatch:")
-                        print(Fore.GREEN + f"\tYoutube description: {youtube_title}")
-                        print(Fore.GREEN + f"\tExisting metadata:   {metadata['title'][0]}")
+        if verbose:
+            print("Metadata parsed from YouTube description:")
+            print_new_metadata(new_data)
+            print("Existing metadata:")
+            print_new_metadata(metadata)
 
-            # Organization
-            if "Provided" in desc_line:
-                organization = re.sub("Provided to YouTube by ", "", desc_line)
-                metadata["organization"] = organization
-                if verbose: print(f"Organization: {organization}")
+        #Mismatches
+        if fix_mismatches:
+            metadata = adjust_metadata(new_data, metadata)
 
-            # Copyright
-            if "\u2117" in desc_line:
-                copyright = re.sub("\u2117 ", "", desc_line)
-                metadata["copyright"] = copyright
-                if verbose: print(f"Copyright: {copyright}")
-
-            # Date
-            if "Released on:" in desc_line:
-                date = re.sub("Released on: ", "", desc_line)
-                date = date[0:4]
-                metadata["date"] = date
-                if verbose: print(f"Date: {date}")
-
-        if verbose: print("")
         if save: metadata.save()
 
-    else:
-        print(f"Skipping '{title}' by {artist}")
+    elif verbose:
+        artist = metadata.get("artist")
+        title = metadata.get("title")
+        if artist and title:
+            print(f"Skipping \'{', '.join(title)}\' by {', '.join(artist)}")
