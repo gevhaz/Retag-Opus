@@ -12,7 +12,7 @@ init(autoreset=True)
 music_dir = "for-acid.csv"
 
 verbose = True
-fix_mismatches = False
+fix_mismatches = True
 debug = True
 save = False
 
@@ -76,7 +76,7 @@ def parse(desc):
         standard_pattern("arranger", r".*[aA]rranger.*:\s*(.*)\s*")
         standard_pattern("lyricist", r".*[lL]yricist.*:\s*(.*)\s*")
         standard_pattern("publisher", r".*[pP]ublisher.*:\s*(.*)\s*")
-        standard_pattern("artist", r"\s*([fF]eatured)*\s*[aA]rtist[s]*:*\s*(.*)\s*")
+        standard_pattern("artist", r"\s*.*[aA]rtist.*:\s*(.*)\s*")
 
         # Basic pattern:
         # r".*[ ]   .*:\s*(.*)\s*"
@@ -84,7 +84,6 @@ def parse(desc):
     return new_data
 
 def print_new_metadata(data):
-    print(data.get("artist"))
     print("  Title: " + Fore.BLUE + f"{' | '.join(data.get('title', [Fore.BLACK + 'Not found']))}")
     print("  Album: " + Fore.BLUE + f"{' | '.join(data.get('album', [Fore.BLACK + 'Not found']))}")
     print("  Album Artist: " + Fore.BLUE + f"{' | '.join(data.get('albumartist', [Fore.BLACK + 'Not found']))}")
