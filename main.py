@@ -120,6 +120,9 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
 
     metadata["comment"] = ["youtube-dl"]
 
+    if re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
+        metadata.pop("date", None)
+
     # Compare all fields
     for field, value in new_data.items():
         if metadata.get(field) is None:
