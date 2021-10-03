@@ -4,7 +4,7 @@ from mutagen.oggopus import OggOpus
 from os import listdir
 from os.path import isfile, join
 from pprint import pprint
-from colorama import Fore, init
+from colorama import Fore, init, Style
 from typing import List, Dict, Tuple
 
 init(autoreset=True)
@@ -71,17 +71,17 @@ def parse(desc):
     return new_data
 
 def print_new_metadata(data):
-    print(f"  Album Artist: {', '.join(data.get('albumartist', ['Not found']))}")
-    print(f"  Artist(s): {', '.join(data.get('artist', ['Not found']))}")
-    print(f"  Title: {', '.join(data.get('title', ['Not found']))}")
-    print(f"  Date: {', '.join(data.get('date', ['Not found']))}")
-    print(f"  Performer: {', '.join(data.get('performer', ['Not found']))}")
-    print(f"  Organization: {', '.join(data.get('organization', ['Not found']))}")
-    print(f"  Copyright: {', '.join(data.get('copyright', ['Not found']))}")
-    print(f"  Composer: {', '.join(data.get('composer', ['Not found']))}")
-    print(f"  Author: {', '.join(data.get('author', ['Not found']))}")
-    print(f"  Publisher: {', '.join(data.get('publisher', ['Not found']))}")
-    print(f"  Lyricist: {', '.join(data.get('lyricist', ['Not found']))}")
+    print("  Album Artist: " + Fore.BLUE + f"{', '.join(data.get('albumartist', [Fore.BLACK + 'Not found']))}")
+    print("  Artist(s): " + Fore.BLUE + f"{', '.join(data.get('artist', [Fore.BLACK + 'Not found']))}")
+    print("  Title: " + Fore.BLUE + f"{', '.join(data.get('title', [Fore.BLACK + 'Not found']))}")
+    print("  Date: " + Fore.BLUE + f"{', '.join(data.get('date', [Fore.BLACK + 'Not found']))}")
+    print("  Performer: " + Fore.BLUE + f"{', '.join(data.get('performer', [Fore.BLACK + 'Not found']))}")
+    print("  Organization: " + Fore.BLUE + f"{', '.join(data.get('organization', [Fore.BLACK + 'Not found']))}")
+    print("  Copyright: " + Fore.BLUE + f"{', '.join(data.get('copyright', [Fore.BLACK + 'Not found']))}")
+    print("  Composer: " + Fore.BLUE + f"{', '.join(data.get('composer', [Fore.BLACK + 'Not found']))}")
+    print("  Author: " + Fore.BLUE + f"{', '.join(data.get('author', [Fore.BLACK + 'Not found']))}")
+    print("  Publisher: " + Fore.BLUE + f"{', '.join(data.get('publisher', [Fore.BLACK + 'Not found']))}")
+    print("  Lyricist: " + Fore.BLUE + f"{', '.join(data.get('lyricist', [Fore.BLACK + 'Not found']))}")
     # print(f": {}")
     print("")
 
