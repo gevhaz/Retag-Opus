@@ -40,6 +40,7 @@ def parse(desc):
     lines_since_title_artist = 1000
 
     for desc_line in desc:
+        lines_since_title_artist = lines_since_title_artist + 1
         # Artist and title
         if "\u00b7" in desc_line:
             lines_since_title_artist = 0
@@ -49,11 +50,11 @@ def parse(desc):
             new_data["title"] = [youtube_title]
 
         artist = new_data.get("artist")
-        if artist and len(artist) > 1:
+        if artist and len(artist) > 0:
             new_data["albumartist"] = [artist[0]]
 
         if lines_since_title_artist == 2:
-            new_data["album"] = desc_line.strip()
+            new_data["album"] = [desc_line.strip()]
 
         def standard_pattern(field_name, regex):
             pattern = re.compile(regex)
@@ -104,15 +105,20 @@ def print_new_metadata(data):
 def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
     changes_made = False
 
-    # Organization previously got copyright value by mistake
-    copyright = metadata.pop("copyright", None)
-    if copyright:
-        metadata["organization"] = copyright
-
     # Date should be safe to get from description
     date = new_data.pop("date", None)
     if date:
         metadata["date"] = date
+        changes_made = True
+
+    # youtube-dl is default album, auto-change
+    md_album = metadata.get("album")
+    yt_album = new_data.get("album")
+    if yt_album and md_album == ["youtube-dl"]:
+        metadata["album"] = yt_album
+        changes_made = True
+
+    metadata["comment"] = ["youtube-dl"]
 
     # Compare all fields
     for field, value in new_data.items():
@@ -137,9 +143,11 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
 
     return changes_made, metadata
 
-for file in all_files:
+for index, file in enumerate(all_files):
     # if "<10>" in file:
-        if verbose: print(Fore.BLUE + f"\n----- File: {file} -----")
+        if verbose: 
+            print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
+            print(Fore.BLUE + f"----- File: {file} -----")
 
         metadata = OggOpus(file)
 
@@ -169,12 +177,26 @@ for file in all_files:
                             redo = False if input("Does this look right? (y/n) ") == 'y' else True
                             if redo:
                                 print(Fore.RED + "Resetting metadata to original state")
+                                new_data = parse(description)
                                 metadata = OggOpus(file)
                                 changed, metadata = adjust_metadata(new_data, metadata)
+                                modify_field = input("Modify specific field? (y/n) ")
+                                field = " "
+                                key = " "
+                                while field and key:
+                                    if modify_field == 'y':
+                                        print("Enter field and key (enter cancels):")
+                                        field = input("  Field: ")
+                                        key = input("  Key: ")
+                                        if field and key:
+                                            metadata[field] = [key]
+                            else:
+                                metadata.save()
+
+
                 else:
                     print(f"No new data was found.")
 
-            if save: metadata.save()
 
         elif verbose:
             artist = metadata.get("artist")
