@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 from pprint import pprint
 from colorama import Fore, init
-from typing import List, Optional, Dict
+from typing import List, Dict, Tuple
 
 init(autoreset=True)
 
@@ -85,25 +85,29 @@ def print_new_metadata(data):
     # print(f": {}")
     print("")
 
-def adjust_metadata(new_data, metadata):
-    if new_data:
-        for field, value in new_data.items():
-            if metadata.get(field) is None:
-                print(Fore.CYAN + f"{field.title()}: No value exists in metadata. Using parsed data.")
+def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
+    changes_made = False
+    for field, value in new_data.items():
+        if metadata.get(field) is None:
+            print(Fore.CYAN + f"{field.title()}: No value exists in metadata. Using parsed data.")
+            metadata[field] = value
+            changes_made = True
+        elif value == metadata.get(field):
+            print(Fore.GREEN + f"{field.title()}: Metadata matches description.")
+        else:
+            print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
+            print(f"  1. Exisiting metadata:  {', '.join(metadata.get(field, ['Not set']))}")
+            print(f"  2. YouTube description: {', '.join(value)}")
+            print("  3. Manually fill in tag")
+            choice = input("Choose the number you want to use. Empty skips this field for this song: ")
+            if choice == '2':
                 metadata[field] = value
-            elif value == metadata.get(field):
-                print(Fore.GREEN + f"{field.title()}: Metadata matches description.")
-            else:
-                print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
-                print(f"  1. Exisiting metadata:  {', '.join(metadata.get(field, ['Not set']))}")
-                print(f"  2. YouTube description: {', '.join(value)}")
-                choice = input("Choose the number you want to use. Empty skips this field for this song: ")
-                if choice == 2:
-                    metadata[field] = value
-    else:
-        print(f"No new data was found.")
+                changes_made = True
+            elif choice == '3':
+                metadata[field] = input("Value: ")
+                changes_made = True
 
-    return metadata
+    return changes_made, metadata
 
 for file in all_files:
     # if "<10>" in file:
@@ -114,7 +118,7 @@ for file in all_files:
         # if 'artist' in metadata and 'title' in metadata and 'description' in metadata:
         description = metadata.get("description")
         if description:
-            pprint(description)
+            # pprint(description)
             new_data = parse(description)
 
             if verbose:
@@ -125,7 +129,21 @@ for file in all_files:
 
             #Mismatches
             if fix_mismatches:
-                metadata = adjust_metadata(new_data, metadata)
+                if new_data:
+                    changed, metadata = adjust_metadata(new_data, metadata)
+
+                    redo = True
+                    if changed:
+                        while redo:
+                            print(Fore.CYAN + "\nNew metadata:")
+                            print_new_metadata(metadata)
+                            redo = False if input("Does this look right? (y/n) ") == 'y' else True
+                            if redo:
+                                print(Fore.RED + "Resetting metadata to original state")
+                                metadata = OggOpus(file)
+                                changed, metadata = adjust_metadata(new_data, metadata)
+                else:
+                    print(f"No new data was found.")
 
             if save: metadata.save()
 
