@@ -12,7 +12,8 @@ init(autoreset=True)
 music_dir = "for-acid.csv"
 
 verbose = True
-fix_mismatches = True
+fix_mismatches = False
+debug = True
 save = False
 
 all_files = [join(music_dir, f) for f in listdir(music_dir) if isfile(join(music_dir, f))]
@@ -36,13 +37,23 @@ def parse_artist_and_title(source_line):
 
 def parse(desc):
     new_data: Dict = {}
+    lines_since_title_artist = 1000
 
     for desc_line in desc:
-        # Album artist and title
+        # Artist and title
         if "\u00b7" in desc_line:
+            lines_since_title_artist = 0
             youtube_artist, youtube_title = parse_artist_and_title(desc_line)
-            new_data["albumartist"] = youtube_artist
+            if youtube_artist:
+                new_data["artist"] = youtube_artist
             new_data["title"] = [youtube_title]
+
+        artist = new_data.get("artist")
+        if artist and len(artist) > 1:
+            new_data["albumartist"] = [artist[0]]
+
+        if lines_since_title_artist == 2:
+            new_data["album"] = desc_line.strip()
 
         def standard_pattern(field_name, regex):
             pattern = re.compile(regex)
@@ -56,11 +67,13 @@ def parse(desc):
 
         standard_pattern("copyright", r"\u2117 (.*)\s*")
         standard_pattern("organization", r"Provided to YouTube by (.*)\s*")
-        standard_pattern("date", r"Released on:\s*(\d\d\d\d)")
+        standard_pattern("date", r"Released on:\s*(\d\d\d\d-\d\d-\d\d)")
         # TODO: Write tests. Check that date only has one value.
         standard_pattern("composer", r".*[cC]omposer.*:\s*(.*)\s*")
+        standard_pattern("conductor", r".*[cC]onductor.*:\s*(.*)\s*")
         standard_pattern("performer", r".*[pP]erformer.*:\s*(.*)\s*")
         standard_pattern("author", r".*[aA]uthor.*:\s*(.*)\s*")
+        standard_pattern("arranger", r".*[aA]rranger.*:\s*(.*)\s*")
         standard_pattern("lyricist", r".*[lL]yricist.*:\s*(.*)\s*")
         standard_pattern("publisher", r".*[pP]ublisher.*:\s*(.*)\s*")
         standard_pattern("artist", r"\s*([fF]eatured)*\s*[aA]rtist[s]*:*\s*(.*)\s*")
@@ -71,29 +84,45 @@ def parse(desc):
     return new_data
 
 def print_new_metadata(data):
-    print("  Album Artist: " + Fore.BLUE + f"{', '.join(data.get('albumartist', [Fore.BLACK + 'Not found']))}")
-    print("  Artist(s): " + Fore.BLUE + f"{', '.join(data.get('artist', [Fore.BLACK + 'Not found']))}")
-    print("  Title: " + Fore.BLUE + f"{', '.join(data.get('title', [Fore.BLACK + 'Not found']))}")
-    print("  Date: " + Fore.BLUE + f"{', '.join(data.get('date', [Fore.BLACK + 'Not found']))}")
-    print("  Performer: " + Fore.BLUE + f"{', '.join(data.get('performer', [Fore.BLACK + 'Not found']))}")
-    print("  Organization: " + Fore.BLUE + f"{', '.join(data.get('organization', [Fore.BLACK + 'Not found']))}")
-    print("  Copyright: " + Fore.BLUE + f"{', '.join(data.get('copyright', [Fore.BLACK + 'Not found']))}")
-    print("  Composer: " + Fore.BLUE + f"{', '.join(data.get('composer', [Fore.BLACK + 'Not found']))}")
-    print("  Author: " + Fore.BLUE + f"{', '.join(data.get('author', [Fore.BLACK + 'Not found']))}")
-    print("  Publisher: " + Fore.BLUE + f"{', '.join(data.get('publisher', [Fore.BLACK + 'Not found']))}")
-    print("  Lyricist: " + Fore.BLUE + f"{', '.join(data.get('lyricist', [Fore.BLACK + 'Not found']))}")
+    print(data.get("artist"))
+    print("  Title: " + Fore.BLUE + f"{' | '.join(data.get('title', [Fore.BLACK + 'Not found']))}")
+    print("  Album: " + Fore.BLUE + f"{' | '.join(data.get('album', [Fore.BLACK + 'Not found']))}")
+    print("  Album Artist: " + Fore.BLUE + f"{' | '.join(data.get('albumartist', [Fore.BLACK + 'Not found']))}")
+    print("  Artist(s): " + Fore.BLUE + f"{' | '.join(data.get('artist', [Fore.BLACK + 'Not found']))}")
+    print("  Date: " + Fore.BLUE + f"{' | '.join(data.get('date', [Fore.BLACK + 'Not found']))}")
+    print("  Performer: " + Fore.BLUE + f"{' | '.join(data.get('performer', [Fore.BLACK + 'Not found']))}")
+    print("  Organization: " + Fore.BLUE + f"{' | '.join(data.get('organization', [Fore.BLACK + 'Not found']))}")
+    print("  Copyright: " + Fore.BLUE + f"{' | '.join(data.get('copyright', [Fore.BLACK + 'Not found']))}")
+    print("  Composer: " + Fore.BLUE + f"{' | '.join(data.get('composer', [Fore.BLACK + 'Not found']))}")
+    print("  Conductor: " + Fore.BLUE + f"{' | '.join(data.get('conductor', [Fore.BLACK + 'Not found']))}")
+    print("  Arranger: " + Fore.BLUE + f"{' | '.join(data.get('arranger', [Fore.BLACK + 'Not found']))}")
+    print("  Author: " + Fore.BLUE + f"{' | '.join(data.get('author', [Fore.BLACK + 'Not found']))}")
+    print("  Publisher: " + Fore.BLUE + f"{' | '.join(data.get('publisher', [Fore.BLACK + 'Not found']))}")
+    print("  Lyricist: " + Fore.BLUE + f"{' | '.join(data.get('lyricist', [Fore.BLACK + 'Not found']))}")
     # print(f": {}")
     print("")
 
 def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
     changes_made = False
+
+    # Organization previously got copyright value by mistake
+    copyright = metadata.pop("copyright", None)
+    if copyright:
+        metadata["organization"] = copyright
+
+    # Date should be safe to get from description
+    date = new_data.pop("date", None)
+    if date:
+        metadata["date"] = date
+
+    # Compare all fields
     for field, value in new_data.items():
         if metadata.get(field) is None:
             print(Fore.CYAN + f"{field.title()}: No value exists in metadata. Using parsed data.")
             metadata[field] = value
             changes_made = True
         elif value == metadata.get(field):
-            print(Fore.GREEN + f"{field.title()}: Metadata matches description.")
+            print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
         else:
             print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
             print(f"  1. Exisiting metadata:  {', '.join(metadata.get(field, ['Not set']))}")
@@ -115,10 +144,11 @@ for file in all_files:
 
         metadata = OggOpus(file)
 
+
         # if 'artist' in metadata and 'title' in metadata and 'description' in metadata:
         description = metadata.get("description")
         if description:
-            # pprint(description)
+            if debug: pprint(description)
             new_data = parse(description)
 
             if verbose:
