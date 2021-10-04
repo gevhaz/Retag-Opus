@@ -82,15 +82,16 @@ def parse(desc):
         standard_pattern("artist", r".*\(feat. (.+)\)")
         # standard_pattern("artist", r".*[aA]rtist.*:\s*(.*)\s*")
 
-        artist = new_data.get("artist")
-        if artist and len(artist) > 0:
-            new_data["albumartist"] = [artist[0]]
+    artist = new_data.get("artist")
+    if artist:
+        print("Enetered if")
+        new_data["albumartist"] = [artist[0]]
 
-        for key, value in new_data.items():
-            if value == []:
-                new_data.pop(key)
-        # Basic pattern:
-        # r".*[ ]   .*:\s*(.*)\s*"
+    for key, value in new_data.items():
+        if value == []:
+            new_data.pop(key)
+    # Basic pattern:
+    # r".*[ ]   .*:\s*(.*)\s*"
 
     return new_data
 
@@ -157,7 +158,7 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
     return changes_made, metadata
 
 for index, file in enumerate(all_files):
-    if "<175>" in file:
+    # if "<175>" in file:
         if verbose: 
             print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
             print(Fore.BLUE + f"----- File: {file} -----")
