@@ -67,18 +67,19 @@ def parse(desc):
                 else:
                     new_data[field_name] = [field_value]
 
-        standard_pattern("copyright", r"\u2117 (.*)\s*")
-        standard_pattern("organization", r"Provided to YouTube by (.*)\s*")
+        standard_pattern("copyright", r"\u2117 (.+)\s*")
+        standard_pattern("organization", r"Provided to YouTube by (.+)\s*")
         standard_pattern("date", r"Released on:\s*(\d\d\d\d-\d\d-\d\d)")
         # TODO: Write tests. Check that date only has one value.
-        standard_pattern("composer", r".*[cC]omposer.*:\s*(.*)\s*")
-        standard_pattern("conductor", r".*[cC]onductor.*:\s*(.*)\s*")
-        standard_pattern("performer", r".*[pP]erformer.*:\s*(.*)\s*")
-        standard_pattern("author", r".*[aA]uthor.*:\s*(.*)\s*")
-        standard_pattern("arranger", r".*[aA]rranger.*:\s*(.*)\s*")
-        standard_pattern("lyricist", r".*[lL]yricist.*:\s*(.*)\s*")
-        standard_pattern("publisher", r".*[pP]ublisher.*:\s*(.*)\s*")
-        standard_pattern("artist", r".*^(?!Makeup).*[aA]rtist.*:\s*(.*)\s*")
+        standard_pattern("composer", r".*[cC]omposer.*:\s*(.+)\s*")
+        standard_pattern("conductor", r".*[cC]onductor.*:\s*(.+)\s*")
+        standard_pattern("performer", r".*[pP]erformer.*:\s*(.+)\s*")
+        standard_pattern("author", r".*[aA]uthor.*:\s*(.+)\s*")
+        standard_pattern("arranger", r".*[aA]rranger.*:\s*(.+)\s*")
+        standard_pattern("lyricist", r".*[lL]yricist.*:\s*(.+)\s*")
+        standard_pattern("publisher", r".*[pP]ublisher.*:\s*(.+)\s*")
+        standard_pattern("artist", r".*^(?!Makeup).*[aA]rtist.*:\s*(.+)\s*")
+        standard_pattern("artist", r".*\(feat. (.+)\)")
         # standard_pattern("artist", r".*[aA]rtist.*:\s*(.*)\s*")
 
         artist = new_data.get("artist")
@@ -156,7 +157,7 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
     return changes_made, metadata
 
 for index, file in enumerate(all_files):
-    # if "<10>" in file:
+    if "<175>" in file:
         if verbose: 
             print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
             print(Fore.BLUE + f"----- File: {file} -----")
