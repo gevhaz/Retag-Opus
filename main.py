@@ -18,6 +18,9 @@ save = False
 
 all_files = [join(music_dir, f) for f in listdir(music_dir) if isfile(join(music_dir, f))]
 
+def remove_duplicates(l: list) -> list:
+    return list(dict.fromkeys(l))
+
 def prune_title(original_title):
     return re.sub(r"\(Remastered.*\)", "", original_title)
 
@@ -49,10 +52,6 @@ def parse(desc):
                 new_data["artist"] = youtube_artist
             new_data["title"] = [youtube_title]
 
-        artist = new_data.get("artist")
-        if artist and len(artist) > 0:
-            new_data["albumartist"] = [artist[0]]
-
         if lines_since_title_artist == 2:
             new_data["album"] = [desc_line.strip()]
 
@@ -60,9 +59,10 @@ def parse(desc):
             pattern = re.compile(regex)
             pattern_match = re.match(pattern, desc_line)
             if pattern_match:
-                field_value = pattern_match.groups()[0]
+                field_value = pattern_match.groups()[len(pattern_match.groups())-1]
                 if new_data.get(field_name):
                     new_data[field_name].append(field_value)
+                    new_data[field_name] = remove_duplicates(new_data[field_name])
                 else:
                     new_data[field_name] = [field_value]
 
@@ -78,6 +78,10 @@ def parse(desc):
         standard_pattern("lyricist", r".*[lL]yricist.*:\s*(.*)\s*")
         standard_pattern("publisher", r".*[pP]ublisher.*:\s*(.*)\s*")
         standard_pattern("artist", r"\s*.*[aA]rtist.*:\s*(.*)\s*")
+
+        artist = new_data.get("artist")
+        if artist and len(artist) > 0:
+            new_data["albumartist"] = [artist[0]]
 
         # Basic pattern:
         # r".*[ ]   .*:\s*(.*)\s*"
