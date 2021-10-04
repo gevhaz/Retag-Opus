@@ -85,6 +85,9 @@ def parse(desc):
         if artist and len(artist) > 0:
             new_data["albumartist"] = [artist[0]]
 
+        for key, value in new_data.items():
+            if value == []:
+                new_data.pop(key)
         # Basic pattern:
         # r".*[ ]   .*:\s*(.*)\s*"
 
