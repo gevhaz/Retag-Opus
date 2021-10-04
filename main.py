@@ -78,7 +78,8 @@ def parse(desc):
         standard_pattern("arranger", r".*[aA]rranger.*:\s*(.*)\s*")
         standard_pattern("lyricist", r".*[lL]yricist.*:\s*(.*)\s*")
         standard_pattern("publisher", r".*[pP]ublisher.*:\s*(.*)\s*")
-        standard_pattern("artist", r"\s*.*[aA]rtist.*:\s*(.*)\s*")
+        standard_pattern("artist", r".*^(?!Makeup).*[aA]rtist.*:\s*(.*)\s*")
+        # standard_pattern("artist", r".*[aA]rtist.*:\s*(.*)\s*")
 
         artist = new_data.get("artist")
         if artist and len(artist) > 0:
