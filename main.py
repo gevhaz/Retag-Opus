@@ -23,7 +23,9 @@ def remove_duplicates(l: list) -> list:
     return list(dict.fromkeys(l))
 
 def prune_title(original_title):
-    return re.sub(r"\(Remastered.*\)", "", original_title)
+    pruned = re.sub(r"\(Remastered.*\)", "", original_title)
+    pruned = re.sub(r"\s*\([fFeat].*\)", "", original_title)
+    return pruned
 
 def split_tag(input: str) -> list:
     return re.split(", | and ", input)
