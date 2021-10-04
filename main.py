@@ -4,12 +4,13 @@ from mutagen.oggopus import OggOpus
 from os import listdir
 from os.path import isfile, join
 from pprint import pprint
-from colorama import Fore, init, Style
+from colorama import Fore, init
 from typing import List, Dict, Tuple
 
 init(autoreset=True)
 
-music_dir = "for-acid.csv"
+# music_dir = "for-acid.csv"
+music_dir = "pitchfork.csv"
 
 verbose = True
 fix_mismatches = True
@@ -197,8 +198,8 @@ for index, file in enumerate(all_files):
                                         key = input("  Key: ")
                                         if field and key:
                                             metadata[field] = [key]
-                            else:
-                                metadata.save()
+                            # else:
+                            #     metadata.save()
 
 
                 else:
