@@ -72,7 +72,6 @@ def parse(desc):
         standard_pattern("copyright", r"\u2117 (.+)\s*")
         standard_pattern("organization", r"Provided to YouTube by (.+)\s*")
         standard_pattern("date", r"Released on:\s*(\d\d\d\d-\d\d-\d\d)")
-        # TODO: Write tests. Check that date only has one value.
         standard_pattern("composer", r".*[cC]omposer.*:\s*(.+)\s*")
         standard_pattern("conductor", r".*[cC]onductor.*:\s*(.+)\s*")
         standard_pattern("performer", r".*[pP]erformer.*:\s*(.+)\s*")
@@ -136,8 +135,6 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
     if len(md_artist) == 1 and split_tag(md_artist[0]) == yt_artist:
         metadata["artist"] = yt_artist
 
-    metadata["comment"] = ["youtube-dl"]
-
     if re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
         metadata.pop("date", None)
 
@@ -185,6 +182,8 @@ for index, file in enumerate(all_files):
                 print("Existing metadata:")
                 print_new_metadata(metadata)
 
+            metadata["comment"] = ["youtube-dl"] # All youtube songs should have description tag
+
             #Mismatches
             if fix_mismatches:
                 if new_data:
@@ -211,8 +210,8 @@ for index, file in enumerate(all_files):
                                         key = input("  Key: ")
                                         if field and key:
                                             metadata[field] = [key]
-                            # else:
-                            #     metadata.save()
+                            else:
+                                metadata.save()
 
 
                 else:
