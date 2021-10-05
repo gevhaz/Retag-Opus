@@ -75,9 +75,18 @@ def parse(desc):
         standard_pattern("composer", r".*[cC]omposer.*:\s*(.+)\s*")
         standard_pattern("conductor", r".*[cC]onductor.*:\s*(.+)\s*")
         standard_pattern("performer", r".*[pP]erformer.*:\s*(.+)\s*")
+
+        standard_pattern("performer:drums", r"(.*, )[dD]rum.*:\s*(.+)\s*")
+        standard_pattern("performer:keyboard", r"(.*, )[pP]erformer.*:\s*(.+)\s*")
+        standard_pattern("performer:vocals", r"(.*, )[vV]ocal.*:\s*(.+)\s*")
+        standard_pattern("performer:programmer", r"(.*, )[pP]erformer.*:\s*(.+)\s*")
+        standard_pattern("performer:violin", r"(.*, )[pP]erformer.*:\s*(.+)\s*")
+        standard_pattern("performer:saxophone", r"(.*, )[sS]axophone.*:\s*(.+)\s*")
+
         standard_pattern("author", r".*[aA]uthor.*:\s*(.+)\s*")
         standard_pattern("arranger", r".*[aA]rranger.*:\s*(.+)\s*")
         standard_pattern("lyricist", r".*[lL]yricist.*:\s*(.+)\s*")
+        standard_pattern("lyricist", r".*[wW]riter.*:\s*(.+)\s*")
         standard_pattern("publisher", r".*[pP]ublisher.*:\s*(.+)\s*")
         standard_pattern("artist", r".*^(?!Makeup).*[aA]rtist.*:\s*(.+)\s*")
         standard_pattern("artist", r".*\(feat. (.+)\)")
