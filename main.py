@@ -131,27 +131,32 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
         metadata["album"] = yt_album
         changes_made = True
 
+    md_artist = metadata.get("artist")
+    yt_artist = new_data.get("artist")
+    if len(md_artist) == 1 and split_tag(md_artist[0]) == yt_artist:
+        metadata["artist"] = yt_artist
+
     metadata["comment"] = ["youtube-dl"]
 
     if re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
         metadata.pop("date", None)
 
     # Compare all fields
-    for field, value in new_data.items():
+    for field, yt_value in new_data.items():
         if metadata.get(field) is None:
             print(Fore.CYAN + f"{field.title()}: No value exists in metadata. Using parsed data.")
-            metadata[field] = value
+            metadata[field] = yt_value
             changes_made = True
-        elif value == metadata.get(field):
+        elif yt_value == metadata.get(field):
             print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
         else:
             print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
-            print(f"  1. Exisiting metadata:  {', '.join(metadata.get(field, ['Not set']))}")
-            print(f"  2. YouTube description: {', '.join(value)}")
+            print(f"  1. Exisiting metadata:  {' | '.join(metadata.get(field, ['Not set']))}")
+            print(f"  2. YouTube description: {' | '.join(yt_value)}")
             print("  3. Manually fill in tag")
             choice = input("Choose the number you want to use. Empty skips this field for this song: ")
             if choice == '2':
-                metadata[field] = value
+                metadata[field] = yt_value
                 changes_made = True
             elif choice == '3':
                 metadata[field] = input("Value: ")
