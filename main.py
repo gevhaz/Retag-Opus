@@ -91,6 +91,8 @@ def parse(desc):
         standard_pattern("performer:programming", r"(.*, )?[pP]rogramm(er|ing).*:\s*(.+)\s*")
         standard_pattern("performer:violin", r"(.*, )?[vV]iolin.*:\s*(.+)\s*")
         standard_pattern("performer:saxophone", r"(.*, )?[sS]axophone.*:\s*(.+)\s*")
+        standard_pattern("performer:piano", r"(.*, )?[pP]iano.*:\s*(.+)\s*")
+        standard_pattern("performer:double bass", r".*[dD]ouble\s+[bB]ass.*:\s*(.+)\s*")
 
         standard_pattern("author", r"(.*, )?[aA]uthor.*:\s*(.+)\s*")
         standard_pattern("arranger", r".*?[aA]rranger.*:\s*(.+)\s*")
@@ -130,7 +132,9 @@ def print_new_metadata(data):
         print("  - Vocals: " + Fore.BLUE + f"{SEP.join(data.get('performer:vocals', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Background Vocals: " + Fore.BLUE + f"{SEP.join(data.get('performer:background vocals', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Keyboard: " + Fore.BLUE + f"{SEP.join(data.get('performer:keyboard', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Piano: " + Fore.BLUE + f"{SEP.join(data.get('performer:piano', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Guitar: " + Fore.BLUE + f"{SEP.join(data.get('performer:guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Double Bass: " + Fore.BLUE + f"{SEP.join(data.get('performer:double bass', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Ukulele: " + Fore.BLUE + f"{SEP.join(data.get('performer:ukulele', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Drums: " + Fore.BLUE + f"{SEP.join(data.get('performer:drums', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Programmer: " + Fore.BLUE + f"{SEP.join(data.get('performer:programming', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
