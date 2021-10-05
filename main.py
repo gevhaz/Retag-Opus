@@ -12,6 +12,8 @@ init(autoreset=True)
 # music_dir = "for-acid.csv"
 music_dir = "pitchfork.csv"
 
+INTERPUNCT = '\u00b7'
+
 verbose = True
 fix_mismatches = True
 debug = True
@@ -32,7 +34,7 @@ def split_tag(input: str) -> list:
 
 
 def parse_artist_and_title(source_line):
-    artist_and_title = source_line.split(" \u00b7 ")
+    artist_and_title = source_line.split(" INTERPUNCT ")
     title = prune_title(artist_and_title[0]).strip()
     artist: List = artist_and_title[1:]
 
@@ -48,7 +50,7 @@ def parse(desc):
     for desc_line in desc:
         lines_since_title_artist = lines_since_title_artist + 1
         # Artist and title
-        if "\u00b7" in desc_line:
+        if "INTERPUNCT" in desc_line:
             lines_since_title_artist = 0
             youtube_artist, youtube_title = parse_artist_and_title(desc_line)
             if youtube_artist:
@@ -114,30 +116,30 @@ def parse(desc):
     return new_data
 
 def print_new_metadata(data):
-    print("  Title: " + Fore.BLUE + f"{' | '.join(data.get('title', [Fore.BLACK + 'Not found']))}")
-    print("  Album: " + Fore.BLUE + f"{' | '.join(data.get('album', [Fore.BLACK + 'Not found']))}")
-    print("  Album Artist: " + Fore.BLUE + f"{' | '.join(data.get('albumartist', [Fore.BLACK + 'Not found']))}")
-    print("  Artist(s): " + Fore.BLUE + f"{' | '.join(data.get('artist', [Fore.BLACK + 'Not found']))}")
-    print("  Date: " + Fore.BLUE + f"{' | '.join(data.get('date', [Fore.BLACK + 'Not found']))}")
-    print("  Performer: " + Fore.BLUE + f"{' | '.join(data.get('performer', [Fore.BLACK + 'Not found']))}")
+    print("  Title: " + Fore.BLUE + f"{' | '.join(data.get('title', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Album: " + Fore.BLUE + f"{' | '.join(data.get('album', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Album Artist: " + Fore.BLUE + f"{' | '.join(data.get('albumartist', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Artist(s): " + Fore.BLUE + f"{' | '.join(data.get('artist', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Date: " + Fore.BLUE + f"{' | '.join(data.get('date', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Performer: " + Fore.BLUE + f"{' | '.join(data.get('performer', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
     if "performer:" in ' '.join(data.keys()):
-        print("  - Vocals: " + Fore.BLUE + f"{' | '.join(data.get('performer:vocals', [Fore.BLACK + 'Not found']))}")
-        print("  - Background Vocals: " + Fore.BLUE + f"{' | '.join(data.get('performer:background vocals', [Fore.BLACK + 'Not found']))}")
-        print("  - Keyboard: " + Fore.BLUE + f"{' | '.join(data.get('performer:keyboard', [Fore.BLACK + 'Not found']))}")
-        print("  - Guitar: " + Fore.BLUE + f"{' | '.join(data.get('performer:guitar', [Fore.BLACK + 'Not found']))}")
-        print("  - Ukulele: " + Fore.BLUE + f"{' | '.join(data.get('performer:ukulele', [Fore.BLACK + 'Not found']))}")
-        print("  - Drums: " + Fore.BLUE + f"{' | '.join(data.get('performer:drums', [Fore.BLACK + 'Not found']))}")
-        print("  - Programmer: " + Fore.BLUE + f"{' | '.join(data.get('performer:programming', [Fore.BLACK + 'Not found']))}")
-        print("  - Violin: " + Fore.BLUE + f"{' | '.join(data.get('performer:violin', [Fore.BLACK + 'Not found']))}")
-        print("  - Saxophone: " + Fore.BLUE + f"{' | '.join(data.get('performer:saxophone', [Fore.BLACK + 'Not found']))}")
-    print("  Organization: " + Fore.BLUE + f"{' | '.join(data.get('organization', [Fore.BLACK + 'Not found']))}")
-    print("  Copyright: " + Fore.BLUE + f"{' | '.join(data.get('copyright', [Fore.BLACK + 'Not found']))}")
-    print("  Composer: " + Fore.BLUE + f"{' | '.join(data.get('composer', [Fore.BLACK + 'Not found']))}")
-    print("  Conductor: " + Fore.BLUE + f"{' | '.join(data.get('conductor', [Fore.BLACK + 'Not found']))}")
-    print("  Arranger: " + Fore.BLUE + f"{' | '.join(data.get('arranger', [Fore.BLACK + 'Not found']))}")
-    print("  Author: " + Fore.BLUE + f"{' | '.join(data.get('author', [Fore.BLACK + 'Not found']))}")
-    print("  Publisher: " + Fore.BLUE + f"{' | '.join(data.get('publisher', [Fore.BLACK + 'Not found']))}")
-    print("  Lyricist: " + Fore.BLUE + f"{' | '.join(data.get('lyricist', [Fore.BLACK + 'Not found']))}")
+        print("  - Vocals: " + Fore.BLUE + f"{' | '.join(data.get('performer:vocals', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+        print("  - Background Vocals: " + Fore.BLUE + f"{' | '.join(data.get('performer:background vocals', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+        print("  - Keyboard: " + Fore.BLUE + f"{' | '.join(data.get('performer:keyboard', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+        print("  - Guitar: " + Fore.BLUE + f"{' | '.join(data.get('performer:guitar', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+        print("  - Ukulele: " + Fore.BLUE + f"{' | '.join(data.get('performer:ukulele', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+        print("  - Drums: " + Fore.BLUE + f"{' | '.join(data.get('performer:drums', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+        print("  - Programmer: " + Fore.BLUE + f"{' | '.join(data.get('performer:programming', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+        print("  - Violin: " + Fore.BLUE + f"{' | '.join(data.get('performer:violin', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+        print("  - Saxophone: " + Fore.BLUE + f"{' | '.join(data.get('performer:saxophone', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Organization: " + Fore.BLUE + f"{' | '.join(data.get('organization', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Copyright: " + Fore.BLUE + f"{' | '.join(data.get('copyright', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Composer: " + Fore.BLUE + f"{' | '.join(data.get('composer', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Conductor: " + Fore.BLUE + f"{' | '.join(data.get('conductor', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Arranger: " + Fore.BLUE + f"{' | '.join(data.get('arranger', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Author: " + Fore.BLUE + f"{' | '.join(data.get('author', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Publisher: " + Fore.BLUE + f"{' | '.join(data.get('publisher', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
+    print("  Lyricist: " + Fore.BLUE + f"{' | '.join(data.get('lyricist', [Fore.BLACK + 'Not found'])).replace(' ', INTERPUNCT)}")
     # print(f": {}")
     print("")
 
