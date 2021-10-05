@@ -52,7 +52,7 @@ def parse(desc):
             lines_since_title_artist = 0
             youtube_artist, youtube_title = parse_artist_and_title(desc_line)
             if youtube_artist:
-                new_data["artist"] = youtube_artist
+                new_data["artist"] = remove_duplicates(youtube_artist)
             new_data["title"] = [youtube_title]
 
         if lines_since_title_artist == 2:
@@ -72,23 +72,31 @@ def parse(desc):
         standard_pattern("copyright", r"\u2117 (.+)\s*")
         standard_pattern("organization", r"Provided to YouTube by (.+)\s*")
         standard_pattern("date", r"Released on:\s*(\d\d\d\d-\d\d-\d\d)")
-        standard_pattern("composer", r"(.*, )?[cC]omposer.*:\s*(.+)\s*")
-        standard_pattern("conductor", r"(.*, )?[cC]onductor.*:\s*(.+)\s*")
-        standard_pattern("performer", r"(.*, )?[pP]erformer.*:\s*(.+)\s*")
+        standard_pattern("composer", r".*?[cC]omposer.*:\s*(.+)\s*")
+        standard_pattern("conductor", r".*[cC]onductor.*:\s*(.+)\s*")
+        standard_pattern("performer", r".*[pP]erformer.*:\s*(.+)\s*")
 
-        standard_pattern("performer:vocals", r"(.*, )?(Lead\s+)?[vV]ocal.*:\s*(.+)\s*")
+        standard_pattern("performer:vocals", r"(.*, )?(Lead\s+)?[vV]ocal(?!.*[eE]ngineer).*:\s*(.+)\s*")
+        standard_pattern("performer:background vocals", r"(.*, )?[bB]ackground\s+[vV]ocal.*:\s*(.+)\s*")
         standard_pattern("performer:drums", r"(.*, )?[dD]rum.*:\s*(.+)\s*")
         standard_pattern("performer:keyboard", r"(.*, )?[kK]eyboard.*:\s*(.+)\s*")
+        standard_pattern("performer:guitar", r".*[gG]uitar.*:\s*(.+)\s*")
+        standard_pattern("performer:ukulele", r".*[uU]kulele.*:\s*(.+)\s*")
         standard_pattern("performer:programming", r"(.*, )?[pP]rogramm(er|ing).*:\s*(.+)\s*")
         standard_pattern("performer:violin", r"(.*, )?[vV]iolin.*:\s*(.+)\s*")
         standard_pattern("performer:saxophone", r"(.*, )?[sS]axophone.*:\s*(.+)\s*")
 
         standard_pattern("author", r"(.*, )?[aA]uthor.*:\s*(.+)\s*")
-        standard_pattern("arranger", r"(.*, )?[aA]rranger.*:\s*(.+)\s*")
-        standard_pattern("lyricist", r"(.*, )?[lL]yricist.*:\s*(.+)\s*")
+        standard_pattern("arranger", r".*?[aA]rranger.*:\s*(.+)\s*")
+        standard_pattern("lyricist", r".*[lL]yricist.*:\s*(.+)\s*")
         standard_pattern("lyricist", r"(.*, )?[wW]riter.*:\s*(.+)\s*")
         standard_pattern("publisher", r"(.*, )?[pP]ublisher.*:\s*(.+)\s*")
-        standard_pattern("artist", r"(.*, )?^(?!Makeup).*[aA]rtist.*:\s*(.+)\s*")
+        standard_pattern("artist", r"(.*, )?[aA]rtist.*:\s*(.+)\s*")
+        standard_pattern("artist", r".*“.*” by (.*) from ‘.*’")
+        standard_pattern("title", r".*“(.*)” by .* from ‘.*’")
+        standard_pattern("album", r".*“.*” by .* from ‘(.*)’")
+        # standard_pattern("artist", r"(.*, )?^(?!Makeup).*[aA]rtist.*:\s*(.+)\s*")
+        # standard_pattern("artist", r"(.*, )?^(?!(Makeup)(Finishing)).*[aA]rtist.*:\s*(.+)\s*")
         standard_pattern("artist", r".*\(feat. (.+)\)")
         # standard_pattern("artist", r".*[aA]rtist.*:\s*(.*)\s*")
 
@@ -114,7 +122,10 @@ def print_new_metadata(data):
     print("  Performer: " + Fore.BLUE + f"{' | '.join(data.get('performer', [Fore.BLACK + 'Not found']))}")
     if "performer:" in ' '.join(data.keys()):
         print("  - Vocals: " + Fore.BLUE + f"{' | '.join(data.get('performer:vocals', [Fore.BLACK + 'Not found']))}")
+        print("  - Background Vocals: " + Fore.BLUE + f"{' | '.join(data.get('performer:background vocals', [Fore.BLACK + 'Not found']))}")
         print("  - Keyboard: " + Fore.BLUE + f"{' | '.join(data.get('performer:keyboard', [Fore.BLACK + 'Not found']))}")
+        print("  - Guitar: " + Fore.BLUE + f"{' | '.join(data.get('performer:guitar', [Fore.BLACK + 'Not found']))}")
+        print("  - Ukulele: " + Fore.BLUE + f"{' | '.join(data.get('performer:ukulele', [Fore.BLACK + 'Not found']))}")
         print("  - Drums: " + Fore.BLUE + f"{' | '.join(data.get('performer:drums', [Fore.BLACK + 'Not found']))}")
         print("  - Programmer: " + Fore.BLUE + f"{' | '.join(data.get('performer:programming', [Fore.BLACK + 'Not found']))}")
         print("  - Violin: " + Fore.BLUE + f"{' | '.join(data.get('performer:violin', [Fore.BLACK + 'Not found']))}")
@@ -226,6 +237,8 @@ for index, file in enumerate(all_files):
                                         key = input("  Key: ")
                                         if field and key:
                                             metadata[field] = [key]
+                                    else:
+                                        break
                             # else:
                             #     metadata.save()
 
