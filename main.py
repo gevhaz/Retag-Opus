@@ -76,11 +76,11 @@ def parse(desc):
         standard_pattern("conductor", r"(.*, )?[cC]onductor.*:\s*(.+)\s*")
         standard_pattern("performer", r"(.*, )?[pP]erformer.*:\s*(.+)\s*")
 
-        standard_pattern("performer:vocals", r"(.*, )?[vV]ocal.*:\s*(.+)\s*")
-        standard_pattern("performer:drums", r"(.*, )[dD]rum.*:\s*(.+)\s*")
-        standard_pattern("performer:keyboard", r"(.*, )?[pP]erformer.*:\s*(.+)\s*")
-        standard_pattern("performer:programming", r"(.*, )?[pP]erformer.*:\s*(.+)\s*")
-        standard_pattern("performer:violin", r"(.*, )?[pP]erformer.*:\s*(.+)\s*")
+        standard_pattern("performer:vocals", r"(.*, )?(Lead\s+)?[vV]ocal.*:\s*(.+)\s*")
+        standard_pattern("performer:drums", r"(.*, )?[dD]rum.*:\s*(.+)\s*")
+        standard_pattern("performer:keyboard", r"(.*, )?[kK]eyboard.*:\s*(.+)\s*")
+        standard_pattern("performer:programming", r"(.*, )?[pP]rogramm(er|ing).*:\s*(.+)\s*")
+        standard_pattern("performer:violin", r"(.*, )?[vV]iolin.*:\s*(.+)\s*")
         standard_pattern("performer:saxophone", r"(.*, )?[sS]axophone.*:\s*(.+)\s*")
 
         standard_pattern("author", r"(.*, )?[aA]uthor.*:\s*(.+)\s*")
@@ -112,19 +112,13 @@ def print_new_metadata(data):
     print("  Artist(s): " + Fore.BLUE + f"{' | '.join(data.get('artist', [Fore.BLACK + 'Not found']))}")
     print("  Date: " + Fore.BLUE + f"{' | '.join(data.get('date', [Fore.BLACK + 'Not found']))}")
     print("  Performer: " + Fore.BLUE + f"{' | '.join(data.get('performer', [Fore.BLACK + 'Not found']))}")
-    if "performer:" in data:
-        print("  \tVocals: " + Fore.BLUE + f"{' | '.join(data.get('performer:vocals', [Fore.BLACK + 'Not found']))}" +
-              Fore.WHITE + ", Keyboard: " +
-              Fore.BLUE + f"{' | '.join(data.get('performer:keyboard', [Fore.BLACK + 'Not found']))}" +
-              Fore.WHITE + ", Drums: " +
-              Fore.BLUE + f"{' | '.join(data.get('performer:drums', [Fore.BLACK + 'Not found']))}" +
-              Fore.WHITE + ", Programmer: " +
-              Fore.BLUE + f"{' | '.join(data.get('performer:programming', [Fore.BLACK + 'Not found']))}" +
-              Fore.WHITE + ", Violin: " +
-              Fore.BLUE + f"{' | '.join(data.get('performer:violin', [Fore.BLACK + 'Not found']))}" +
-              Fore.WHITE + ", Saxophone: " +
-              Fore.BLUE + f"{' | '.join(data.get('performer:saxophone', [Fore.BLACK + 'Not found']))}"
-              )
+    if "performer:" in ' '.join(data.keys()):
+        print("  - Vocals: " + Fore.BLUE + f"{' | '.join(data.get('performer:vocals', [Fore.BLACK + 'Not found']))}")
+        print("  - Keyboard: " + Fore.BLUE + f"{' | '.join(data.get('performer:keyboard', [Fore.BLACK + 'Not found']))}")
+        print("  - Drums: " + Fore.BLUE + f"{' | '.join(data.get('performer:drums', [Fore.BLACK + 'Not found']))}")
+        print("  - Programmer: " + Fore.BLUE + f"{' | '.join(data.get('performer:programming', [Fore.BLACK + 'Not found']))}")
+        print("  - Violin: " + Fore.BLUE + f"{' | '.join(data.get('performer:violin', [Fore.BLACK + 'Not found']))}")
+        print("  - Saxophone: " + Fore.BLUE + f"{' | '.join(data.get('performer:saxophone', [Fore.BLACK + 'Not found']))}")
     print("  Organization: " + Fore.BLUE + f"{' | '.join(data.get('organization', [Fore.BLACK + 'Not found']))}")
     print("  Copyright: " + Fore.BLUE + f"{' | '.join(data.get('copyright', [Fore.BLACK + 'Not found']))}")
     print("  Composer: " + Fore.BLUE + f"{' | '.join(data.get('composer', [Fore.BLACK + 'Not found']))}")
