@@ -84,15 +84,27 @@ def parse(desc):
 
         standard_pattern("performer:vocals", r"(.*, )?(Lead\s+)?[vV]ocal(?!.*[eE]ngineer).*:\s*(.+)\s*")
         standard_pattern("performer:background vocals", r"(.*, )?[bB]ackground\s+[vV]ocal.*:\s*(.+)\s*")
+
         standard_pattern("performer:drums", r"(.*, )?[dD]rum.*:\s*(.+)\s*")
+        standard_pattern("performer:percussion", r".*[pP]ercussion.*:\s*(.+)\s*")
+
         standard_pattern("performer:keyboard", r"(.*, )?[kK]eyboard.*:\s*(.+)\s*")
-        standard_pattern("performer:guitar", r".*[gG]uitar.*:\s*(.+)\s*")
-        standard_pattern("performer:ukulele", r".*[uU]kulele.*:\s*(.+)\s*")
-        standard_pattern("performer:programming", r"(.*, )?[pP]rogramm(er|ing).*:\s*(.+)\s*")
-        standard_pattern("performer:violin", r"(.*, )?[vV]iolin.*:\s*(.+)\s*")
-        standard_pattern("performer:saxophone", r"(.*, )?[sS]axophone.*:\s*(.+)\s*")
         standard_pattern("performer:piano", r"(.*, )?[pP]iano.*:\s*(.+)\s*")
+        standard_pattern("performer:synthesizer", r".*[sS]ynth.*:\s*(.+)\s*")
+
+        standard_pattern("performer:guitar", r"(.*, )?[gG]uitar.*:\s*(.+)\s*")
+        standard_pattern("performer:acoustic guitar", r".*[aA]coustic\s+[gG]uitar.*:\s*(.+)\s*")
+        standard_pattern("performer:electric guitar", r".*[eE]lectric\s+[gG]uitar.*:\s*(.+)\s*")
+        standard_pattern("performer:bass guitar", r".*[bB]ass\s+[gG]uitar.*:\s*(.+)\s*")
+        standard_pattern("performer:ukulele", r".*[uU]kulele.*:\s*(.+)\s*")
+        standard_pattern("performer:violin", r"(.*, )?[vV]iolin.*:\s*(.+)\s*")
         standard_pattern("performer:double bass", r".*[dD]ouble\s+[bB]ass.*:\s*(.+)\s*")
+        standard_pattern("performer:cello", r"(.*, )?[cC]ello.*:\s*(.+)\s*")
+
+        standard_pattern("performer:programming", r"(.*, )?[pP]rogramm(er|ing).*:\s*(.+)\s*")
+
+        standard_pattern("performer:saxophone", r"(.*, )?[sS]axophone.*:\s*(.+)\s*")
+        standard_pattern("performer:flute", r"(.*, )?[fF]lute.*:\s*(.+)\s*")
 
         standard_pattern("author", r"(.*, )?[aA]uthor.*:\s*(.+)\s*")
         standard_pattern("arranger", r".*?[aA]rranger.*:\s*(.+)\s*")
@@ -110,7 +122,6 @@ def parse(desc):
 
     artist = new_data.get("artist")
     if artist:
-        print("Enetered if")
         new_data["albumartist"] = [artist[0]]
 
     for key, value in new_data.items():
@@ -131,15 +142,27 @@ def print_new_metadata(data):
     if "performer:" in ' '.join(data.keys()):
         print("  - Vocals: " + Fore.BLUE + f"{SEP.join(data.get('performer:vocals', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Background Vocals: " + Fore.BLUE + f"{SEP.join(data.get('performer:background vocals', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+
+        print("  - Drums: " + Fore.BLUE + f"{SEP.join(data.get('performer:drums', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Percussion: " + Fore.BLUE + f"{SEP.join(data.get('performer:percussion', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+
         print("  - Keyboard: " + Fore.BLUE + f"{SEP.join(data.get('performer:keyboard', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Piano: " + Fore.BLUE + f"{SEP.join(data.get('performer:piano', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Synthesizer: " + Fore.BLUE + f"{SEP.join(data.get('performer:synthesizer', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+
         print("  - Guitar: " + Fore.BLUE + f"{SEP.join(data.get('performer:guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Double Bass: " + Fore.BLUE + f"{SEP.join(data.get('performer:double bass', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Acoustic Guitar: " + Fore.BLUE + f"{SEP.join(data.get('performer:acoustic guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Electric Guitar: " + Fore.BLUE + f"{SEP.join(data.get('performer:electric guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Bass Guitar: " + Fore.BLUE + f"{SEP.join(data.get('performer:bass guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Ukulele: " + Fore.BLUE + f"{SEP.join(data.get('performer:ukulele', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Drums: " + Fore.BLUE + f"{SEP.join(data.get('performer:drums', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Programmer: " + Fore.BLUE + f"{SEP.join(data.get('performer:programming', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  - Violin: " + Fore.BLUE + f"{SEP.join(data.get('performer:violin', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Double Bass: " + Fore.BLUE + f"{SEP.join(data.get('performer:double bass', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Cello: " + Fore.BLUE + f"{SEP.join(data.get('performer:cello', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+
+        print("  - Programmer: " + Fore.BLUE + f"{SEP.join(data.get('performer:programming', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+
         print("  - Saxophone: " + Fore.BLUE + f"{SEP.join(data.get('performer:saxophone', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Flute: " + Fore.BLUE + f"{SEP.join(data.get('performer:flute', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
     print("  Organization: " + Fore.BLUE + f"{SEP.join(data.get('organization', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
     print("  Copyright: " + Fore.BLUE + f"{SEP.join(data.get('copyright', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
     print("  Composer: " + Fore.BLUE + f"{SEP.join(data.get('composer', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
@@ -205,7 +228,6 @@ for index, file in enumerate(all_files):
             print(Fore.BLUE + f"----- File: {file} -----")
 
         metadata = OggOpus(file)
-
 
         # if 'artist' in metadata and 'title' in metadata and 'description' in metadata:
         description = metadata.get("description")
