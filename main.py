@@ -157,7 +157,7 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
     if len(md_artist) == 1 and split_tag(md_artist[0]) == yt_artist:
         metadata["artist"] = yt_artist
 
-    if re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
+    if metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
         metadata.pop("date", None)
 
     # Compare all fields
@@ -232,8 +232,8 @@ for index, file in enumerate(all_files):
                                         key = input("  Key: ")
                                         if field and key:
                                             metadata[field] = [key]
-                            else:
-                                metadata.save()
+                            # else:
+                            #     metadata.save()
 
 
                 else:
