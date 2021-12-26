@@ -133,6 +133,11 @@ def parse(desc):
     # Basic pattern:
     # r".*[ ]   .*:\s*(.*)\s*"
 
+    copyright_date = new_data.pop("copyright_date", None)
+    date = new_data.get("date")
+    if copyright_date and not date:
+        new_data["date"] = copyright_date
+
     return new_data
 
 def print_new_metadata(data):
