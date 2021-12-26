@@ -120,7 +120,7 @@ def parse(desc):
         standard_pattern("album", r".*“.*” by .* from ‘(.*)’")
         # standard_pattern("artist", r"(.*, )?^(?!Makeup).*[aA]rtist.*:\s*(.+)\s*")
         # standard_pattern("artist", r"(.*, )?^(?!(Makeup)(Finishing)).*[aA]rtist.*:\s*(.+)\s*")
-        standard_pattern("artist", r".*\(feat. (.+)\)")
+        standard_pattern("artist", r".*\(feat. (.+?)\)")
         # standard_pattern("artist", r".*[aA]rtist.*:\s*(.*)\s*")
 
     artist = new_data.get("artist")
