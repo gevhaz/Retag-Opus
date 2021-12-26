@@ -33,7 +33,7 @@ def prune_title(original_title):
     return pruned
 
 def split_tag(input: str) -> list:
-    return re.split(", | and ", input)
+    return re.split(", | and |; ", input)
 
 
 def parse_artist_and_title(source_line):
