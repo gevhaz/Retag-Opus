@@ -24,13 +24,16 @@ save = False
 
 all_files = [join(music_dir, f) for f in listdir(music_dir) if isfile(join(music_dir, f))]
 
+
 def remove_duplicates(duplicates: list) -> list:
     return list(dict.fromkeys(duplicates))
+
 
 def prune_title(original_title):
     pruned = re.sub(r"\(Remastered.*\)", "", original_title)
     pruned = re.sub(r"\s*\([fFeat].*\)", "", original_title)
     return pruned
+
 
 def split_tag(input: str) -> list:
     return re.split(", | and |; ", input)
@@ -45,6 +48,7 @@ def parse_artist_and_title(source_line):
         artist: List = re.split(", | and ", artist[0])
 
     return artist, title
+
 
 def parse(desc):
     new_data: Dict = {}
@@ -140,6 +144,7 @@ def parse(desc):
 
     return new_data
 
+
 def print_new_metadata(data):
     print("  Title: " + Fore.BLUE + f"{SEP.join(data.get('title', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
     print("  Album: " + Fore.BLUE + f"{SEP.join(data.get('album', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
@@ -181,6 +186,7 @@ def print_new_metadata(data):
     print("  Lyricist: " + Fore.BLUE + f"{SEP.join(data.get('lyricist', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
     # print(f": {}")
     print("")
+
 
 def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
     changes_made = False
@@ -225,6 +231,7 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
                 changes_made = True
 
     return changes_made, metadata
+
 
 for index, file in enumerate(all_files):
     # if "<175>" in file:
@@ -282,12 +289,8 @@ for index, file in enumerate(all_files):
                             else:
                                 metadata.save()
                                 print(Fore.GREEN + "Metadata saved")
-
-
                 else:
                     print(f"No new data was found.")
-
-
         elif verbose:
             artist = metadata.get("artist")
             title = metadata.get("title")
