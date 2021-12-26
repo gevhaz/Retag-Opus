@@ -145,9 +145,13 @@ def parse(desc):
     return new_data
 
 
+def print_metadata_key(key_type, key, data):
+    value = SEP.join(data.get(key, [Fore.BLACK + 'Not found'])).replace(' ', SPACE)
+    print("  " + key_type + ": " + Fore.BLUE + value)
+
+
 def print_new_metadata(data):
-    print("  Title: " + Fore.BLUE +
-          f"{SEP.join(data.get('title', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("Title", "title", data)
     print("  Album: " + Fore.BLUE +
           f"{SEP.join(data.get('album', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
     print("  Album Artist: " + Fore.BLUE +
