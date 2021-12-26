@@ -146,44 +146,71 @@ def parse(desc):
 
 
 def print_new_metadata(data):
-    print("  Title: " + Fore.BLUE + f"{SEP.join(data.get('title', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Album: " + Fore.BLUE + f"{SEP.join(data.get('album', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Album Artist: " + Fore.BLUE + f"{SEP.join(data.get('albumartist', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Artist(s): " + Fore.BLUE + f"{SEP.join(data.get('artist', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Date: " + Fore.BLUE + f"{SEP.join(data.get('date', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Performer: " + Fore.BLUE + f"{SEP.join(data.get('performer', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Title: " + Fore.BLUE +
+          f"{SEP.join(data.get('title', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Album: " + Fore.BLUE +
+          f"{SEP.join(data.get('album', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Album Artist: " + Fore.BLUE +
+          f"{SEP.join(data.get('albumartist', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Artist(s): " + Fore.BLUE +
+          f"{SEP.join(data.get('artist', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Date: " + Fore.BLUE +
+          f"{SEP.join(data.get('date', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Performer: " + Fore.BLUE +
+          f"{SEP.join(data.get('performer', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
     if "performer:" in ' '.join(data.keys()):
-        print("  - Vocals: " + Fore.BLUE + f"{SEP.join(data.get('performer:vocals', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Background Vocals: " + Fore.BLUE + f"{SEP.join(data.get('performer:background vocals', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-
-        print("  - Drums: " + Fore.BLUE + f"{SEP.join(data.get('performer:drums', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Percussion: " + Fore.BLUE + f"{SEP.join(data.get('performer:percussion', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-
-        print("  - Keyboard: " + Fore.BLUE + f"{SEP.join(data.get('performer:keyboard', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Piano: " + Fore.BLUE + f"{SEP.join(data.get('performer:piano', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Synthesizer: " + Fore.BLUE + f"{SEP.join(data.get('performer:synthesizer', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-
-        print("  - Guitar: " + Fore.BLUE + f"{SEP.join(data.get('performer:guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Acoustic Guitar: " + Fore.BLUE + f"{SEP.join(data.get('performer:acoustic guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Electric Guitar: " + Fore.BLUE + f"{SEP.join(data.get('performer:electric guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Bass Guitar: " + Fore.BLUE + f"{SEP.join(data.get('performer:bass guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Ukulele: " + Fore.BLUE + f"{SEP.join(data.get('performer:ukulele', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Violin: " + Fore.BLUE + f"{SEP.join(data.get('performer:violin', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Double Bass: " + Fore.BLUE + f"{SEP.join(data.get('performer:double bass', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Cello: " + Fore.BLUE + f"{SEP.join(data.get('performer:cello', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-
-        print("  - Programmer: " + Fore.BLUE + f"{SEP.join(data.get('performer:programming', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-
-        print("  - Saxophone: " + Fore.BLUE + f"{SEP.join(data.get('performer:saxophone', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-        print("  - Flute: " + Fore.BLUE + f"{SEP.join(data.get('performer:flute', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Organization: " + Fore.BLUE + f"{SEP.join(data.get('organization', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Copyright: " + Fore.BLUE + f"{SEP.join(data.get('copyright', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Composer: " + Fore.BLUE + f"{SEP.join(data.get('composer', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Conductor: " + Fore.BLUE + f"{SEP.join(data.get('conductor', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Arranger: " + Fore.BLUE + f"{SEP.join(data.get('arranger', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Author: " + Fore.BLUE + f"{SEP.join(data.get('author', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Publisher: " + Fore.BLUE + f"{SEP.join(data.get('publisher', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
-    print("  Lyricist: " + Fore.BLUE + f"{SEP.join(data.get('lyricist', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Vocals: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:vocals', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Background Vocals: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:background vocals', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Drums: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:drums', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Percussion: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:percussion', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Keyboard: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:keyboard', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Piano: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:piano', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Synthesizer: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:synthesizer', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Guitar: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Acoustic Guitar: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:acoustic guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Electric Guitar: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:electric guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Bass Guitar: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:bass guitar', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Ukulele: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:ukulele', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Violin: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:violin', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Double Bass: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:double bass', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Cello: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:cello', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Programmer: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:programming', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Saxophone: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:saxophone', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  - Flute: " + Fore.BLUE +
+              f"{SEP.join(data.get('performer:flute', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Organization: " + Fore.BLUE +
+          f"{SEP.join(data.get('organization', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Copyright: " + Fore.BLUE +
+          f"{SEP.join(data.get('copyright', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Composer: " + Fore.BLUE +
+          f"{SEP.join(data.get('composer', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Conductor: " + Fore.BLUE +
+          f"{SEP.join(data.get('conductor', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Arranger: " + Fore.BLUE +
+          f"{SEP.join(data.get('arranger', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Author: " + Fore.BLUE +
+          f"{SEP.join(data.get('author', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Publisher: " + Fore.BLUE +
+          f"{SEP.join(data.get('publisher', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+    print("  Lyricist: " + Fore.BLUE +
+          f"{SEP.join(data.get('lyricist', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
     # print(f": {}")
     print("")
 
