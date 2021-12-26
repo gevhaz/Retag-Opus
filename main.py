@@ -234,66 +234,65 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
 
 
 for index, file in enumerate(all_files):
-    # if "<175>" in file:
+    if verbose:
+        print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
+        print(Fore.BLUE + f"----- File: {file} -----")
+
+    metadata = OggOpus(file)
+
+    # if 'artist' in metadata and 'title' in metadata and 'description' in metadata:
+    description = metadata.get("description")
+    if description:
+        if debug:
+            pprint(description)
+        new_data = parse(description)
+
         if verbose:
-            print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
-            print(Fore.BLUE + f"----- File: {file} -----")
+            print("Metadata parsed from YouTube description:")
+            print_new_metadata(new_data)
+            print("Existing metadata:")
+            print_new_metadata(metadata)
 
-        metadata = OggOpus(file)
+        metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
 
-        # if 'artist' in metadata and 'title' in metadata and 'description' in metadata:
-        description = metadata.get("description")
-        if description:
-            if debug:
-                pprint(description)
-            new_data = parse(description)
+        if metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
+            metadata.pop("date", None)
 
-            if verbose:
-                print("Metadata parsed from YouTube description:")
-                print_new_metadata(new_data)
-                print("Existing metadata:")
-                print_new_metadata(metadata)
+        # Mismatches
+        if fix_mismatches:
+            if new_data:
+                changed, metadata = adjust_metadata(new_data, metadata)
 
-            metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
-
-            if metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
-                metadata.pop("date", None)
-
-            # Mismatches
-            if fix_mismatches:
-                if new_data:
-                    changed, metadata = adjust_metadata(new_data, metadata)
-
-                    redo = True
-                    if changed:
-                        while redo:
-                            print(Fore.CYAN + "\nNew metadata:")
-                            print_new_metadata(metadata)
-                            redo = False if input("Does this look right? (y/n) ") == 'y' else True
-                            if redo:
-                                print(Fore.RED + "Resetting metadata to original state")
-                                new_data = parse(description)
-                                metadata = OggOpus(file)
-                                changed, metadata = adjust_metadata(new_data, metadata)
-                                modify_field = input("Modify specific field? (y/n) ")
-                                field = " "
-                                key = " "
-                                while field and key:
-                                    if modify_field == 'y':
-                                        print("Enter field and key (enter cancels):")
-                                        field = input("  Field: ")
-                                        key = input("  Key: ")
-                                        if field and key:
-                                            metadata[field] = [key]
-                                    else:
-                                        break
-                            else:
-                                metadata.save()
-                                print(Fore.GREEN + "Metadata saved")
-                else:
-                    print("No new data was found.")
-        elif verbose:
-            artist = metadata.get("artist")
-            title = metadata.get("title")
-            if artist and title:
-                print(f"Skipping \'{', '.join(title)}\' by {', '.join(artist)}")
+                redo = True
+                if changed:
+                    while redo:
+                        print(Fore.CYAN + "\nNew metadata:")
+                        print_new_metadata(metadata)
+                        redo = False if input("Does this look right? (y/n) ") == 'y' else True
+                        if redo:
+                            print(Fore.RED + "Resetting metadata to original state")
+                            new_data = parse(description)
+                            metadata = OggOpus(file)
+                            changed, metadata = adjust_metadata(new_data, metadata)
+                            modify_field = input("Modify specific field? (y/n) ")
+                            field = " "
+                            key = " "
+                            while field and key:
+                                if modify_field == 'y':
+                                    print("Enter field and key (enter cancels):")
+                                    field = input("  Field: ")
+                                    key = input("  Key: ")
+                                    if field and key:
+                                        metadata[field] = [key]
+                                else:
+                                    break
+                        else:
+                            metadata.save()
+                            print(Fore.GREEN + "Metadata saved")
+            else:
+                print("No new data was found.")
+    elif verbose:
+        artist = metadata.get("artist")
+        title = metadata.get("title")
+        if artist and title:
+            print(f"Skipping \'{', '.join(title)}\' by {', '.join(artist)}")
