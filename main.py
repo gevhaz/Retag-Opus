@@ -24,8 +24,8 @@ save = False
 
 all_files = [join(music_dir, f) for f in listdir(music_dir) if isfile(join(music_dir, f))]
 
-def remove_duplicates(l: list) -> list:
-    return list(dict.fromkeys(l))
+def remove_duplicates(duplicates: list) -> list:
+    return list(dict.fromkeys(duplicates))
 
 def prune_title(original_title):
     pruned = re.sub(r"\(Remastered.*\)", "", original_title)
