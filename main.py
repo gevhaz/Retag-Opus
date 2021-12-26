@@ -235,7 +235,7 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
 
 for index, file in enumerate(all_files):
     # if "<175>" in file:
-        if verbose: 
+        if verbose:
             print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
             print(Fore.BLUE + f"----- File: {file} -----")
 
@@ -244,7 +244,8 @@ for index, file in enumerate(all_files):
         # if 'artist' in metadata and 'title' in metadata and 'description' in metadata:
         description = metadata.get("description")
         if description:
-            if debug: pprint(description)
+            if debug:
+                pprint(description)
             new_data = parse(description)
 
             if verbose:
@@ -253,12 +254,12 @@ for index, file in enumerate(all_files):
                 print("Existing metadata:")
                 print_new_metadata(metadata)
 
-            metadata["comment"] = ["youtube-dl"] # All youtube songs should have description tag
+            metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
 
             if metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
                 metadata.pop("date", None)
 
-            #Mismatches
+            # Mismatches
             if fix_mismatches:
                 if new_data:
                     changed, metadata = adjust_metadata(new_data, metadata)
@@ -290,7 +291,7 @@ for index, file in enumerate(all_files):
                                 metadata.save()
                                 print(Fore.GREEN + "Metadata saved")
                 else:
-                    print(f"No new data was found.")
+                    print("No new data was found.")
         elif verbose:
             artist = metadata.get("artist")
             title = metadata.get("title")
