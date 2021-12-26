@@ -203,9 +203,6 @@ def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
     if len(md_artist) == 1 and split_tag(md_artist[0]) == yt_artist:
         metadata["artist"] = yt_artist
 
-    if metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
-        metadata.pop("date", None)
-
     # Compare all fields
     for field, yt_value in new_data.items():
         if metadata.get(field) is None:
@@ -250,6 +247,9 @@ for index, file in enumerate(all_files):
                 print_new_metadata(metadata)
 
             metadata["comment"] = ["youtube-dl"] # All youtube songs should have description tag
+
+            if metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
+                metadata.pop("date", None)
 
             #Mismatches
             if fix_mismatches:
