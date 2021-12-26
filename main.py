@@ -279,8 +279,9 @@ for index, file in enumerate(all_files):
                                             metadata[field] = [key]
                                     else:
                                         break
-                            # else:
-                            #     metadata.save()
+                            else:
+                                metadata.save()
+                                print(Fore.GREEN + "Metadata saved")
 
 
                 else:
