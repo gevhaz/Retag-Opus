@@ -78,6 +78,7 @@ def parse(desc):
         standard_pattern("copyright", r"\u2117 (.+)\s*")
         standard_pattern("organization", r"Provided to YouTube by (.+)\s*")
         standard_pattern("date", r"Released on:\s*(\d\d\d\d-\d\d-\d\d)")
+        standard_pattern("copyright_date", r"\u2117 (\d\d\d\d)\s")
         standard_pattern("composer", r".*?[cC]omposer.*:\s*(.+)\s*")
         standard_pattern("conductor", r".*[cC]onductor.*:\s*(.+)\s*")
         standard_pattern("performer", r".*[pP]erformer.*:\s*(.+)\s*")
@@ -108,8 +109,10 @@ def parse(desc):
 
         standard_pattern("author", r"(.*, )?[aA]uthor.*:\s*(.+)\s*")
         standard_pattern("arranger", r".*?[aA]rranger.*:\s*(.+)\s*")
+        standard_pattern("arranger", r".*?[aA]rranged\s+[bB]y.*:\s*(.+)\s*")
         standard_pattern("lyricist", r".*[lL]yricist.*:\s*(.+)\s*")
         standard_pattern("lyricist", r"(.*, )?[wW]riter.*:\s*(.+)\s*")
+        standard_pattern("lyricist", r"(.*, )?[wW]ritten\s+[bB]y.*:\s*(.+)\s*")
         standard_pattern("publisher", r"(.*, )?[pP]ublisher.*:\s*(.+)\s*")
         standard_pattern("artist", r"(.*, )?[aA]rtist.*:\s*(.+)\s*")
         standard_pattern("artist", r".*“.*” by (.*) from ‘.*’")
