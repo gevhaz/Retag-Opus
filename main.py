@@ -226,13 +226,11 @@ def main(args):
         return changes_made, metadata
 
     for index, file in enumerate(all_files):
-        if args.verbose:
-            print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
-            print(Fore.BLUE + f"----- File: {file} -----")
+        print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
+        print(Fore.BLUE + f"----- File: {file} -----")
 
         metadata = OggOpus(file)
 
-        # if 'artist' in metadata and 'title' in metadata and 'description' in metadata:
         description = metadata.get("description")
         if description:
             if args.verbose:
