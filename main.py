@@ -12,8 +12,6 @@ import argparse
 import re
 
 from mutagen.oggopus import OggOpus
-from os import listdir
-from os.path import isfile, join
 from pprint import pprint
 from colorama import Fore, init
 from pathlib import Path
@@ -32,7 +30,7 @@ def main(args):
 
     fix_mismatches = True
 
-    all_files = [join(music_dir, f) for f in listdir(music_dir) if isfile(join(music_dir, f))]
+    all_files = list(filter(Path.is_file, Path(music_dir).glob('*.opus')))
 
     def remove_duplicates(duplicates: list) -> list:
         return list(dict.fromkeys(duplicates))
@@ -154,7 +152,7 @@ def main(args):
         print("  " + key_type + ": " + Fore.BLUE + value)
 
     def print_new_metadata(data):
-        print("Title", "title", data)
+        print_metadata_key("Title", "title", data)
         print("  Album: " + Fore.BLUE +
               f"{SEP.join(data.get('album', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  Album Artist: " + Fore.BLUE +
