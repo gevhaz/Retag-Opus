@@ -120,6 +120,7 @@ def main(args):
             standard_pattern("performer:ukulele", r".*[uU]kulele.*:\s*(.+)\s*")
             standard_pattern("performer:violin", r"(.*, )?[vV]iolin.*:\s*(.+)\s*")
             standard_pattern("performer:vocals", r"(.*, )?(Lead\s+)?[vV]ocal(?!.*[eE]ngineer).*:\s*(.+)\s*")
+            standard_pattern("producer", r"(.*, )?[pP]roducer.*:\s*(.+)\s*")
             standard_pattern("publisher", r"(.*, )?[pP]ublisher.*:\s*(.+)\s*")
             standard_pattern("title", r".*“(.*)” by .* from ‘.*’")
 
@@ -205,6 +206,8 @@ def main(args):
               f"{SEP.join(data.get('arranger', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  Author: " + Fore.BLUE +
               f"{SEP.join(data.get('author', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
+        print("  Producer: " + Fore.BLUE +
+              f"{SEP.join(data.get('producer', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  Publisher: " + Fore.BLUE +
               f"{SEP.join(data.get('publisher', [Fore.BLACK + 'Not found'])).replace(' ', SPACE)}")
         print("  Lyricist: " + Fore.BLUE +
