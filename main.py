@@ -53,11 +53,15 @@ def main(args):
 
         return artist, title
 
-    def parse(desc):
-        new_data: Dict = {}
-        lines_since_title_artist = 1000
+    def parse(joined_desc: str) -> Dict[str, List[str]]:
+        new_data: Dict[str, List[str]] = {}
+        lines_since_title_artist: int = 1000
+
+        desc: List[str] = joined_desc.splitlines(False)
 
         for desc_line in desc:
+            desc_line = desc_line.replace('\n', '')
+            desc_line = re.sub('\n', '', desc_line)
             lines_since_title_artist = lines_since_title_artist + 1
             # Artist and title
             if INTERPUNCT in desc_line:
@@ -231,10 +235,12 @@ def main(args):
 
         metadata = OggOpus(file)
 
-        description = metadata.get("description")
-        if description:
+        description_lines: List | None = metadata.get("description")
+        if description_lines:
+            description = '\n'.join(description_lines)
             if args.verbose:
-                pprint(description)
+                print("The raw YouTube description is the following:")
+                print(description)
             new_data = parse(description)
 
             if args.verbose:
