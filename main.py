@@ -308,7 +308,7 @@ if __name__ == "__main__":
                         action="store_true",
                         default=False,
                         dest="verbose",
-                        help="Verbosity")
+                        help="Show verbose output")
 
     parser.add_argument("-V",
                         "--version",
