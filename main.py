@@ -12,7 +12,6 @@ import argparse
 import re
 
 from mutagen.oggopus import OggOpus
-from pprint import pprint
 from colorama import Fore, init
 from pathlib import Path
 from typing import List, Dict, Tuple
