@@ -301,14 +301,14 @@ if __name__ == "__main__":
                         "--directory",
                         action="store",
                         dest="dir",
-                        help="Directory in which the files to be retagged are located")
+                        help="directory in which the files to be retagged are located")
 
     parser.add_argument("-v",
                         "--verbose",
                         action="store_true",
                         default=False,
                         dest="verbose",
-                        help="Show verbose output")
+                        help="show verbose output")
 
     parser.add_argument("-V",
                         "--version",

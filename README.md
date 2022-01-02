@@ -14,6 +14,20 @@ Run the script like so:
 python3 main.py --directory /path/to/directory/with/your/opus/files.opus
 ```
 
+There is also a help (`-h`) flag:
+
+```
+$ ./main.py -h
+usage: main.py [-h] [-d DIR] [-v] [-V]
+
+options:
+  -h, --help            show this help message and exit
+  -d DIR, --directory DIR
+                        directory in which the files to be retagged are located
+  -v, --verbose         show verbose output
+  -V, --version         show program's version number and exit
+```
+
 # Project status
 
 The project is still under development. The most common tags can be
