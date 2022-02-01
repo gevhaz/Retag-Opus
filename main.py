@@ -247,8 +247,12 @@ def main(args):
                 print_new_metadata(new_data)
                 print("Existing metadata:")
                 print_new_metadata(metadata)
+                print("Youtube description:")
+                print('\n'.join(description_lines))
 
             metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
+
+            metadata.pop("language", None)
 
             if metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
                 metadata.pop("date", None)
