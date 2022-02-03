@@ -290,6 +290,8 @@ def main(args):
                                 print(Fore.GREEN + "Metadata saved")
                 else:
                     print("No new data was found.")
+        elif args.fix_descriptionless:
+            pass
         elif args.verbose:
             artist = metadata.get("artist")
             title = metadata.get("title")
@@ -299,6 +301,12 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+
+    parser.add_argument("-a",
+                        "--all",
+                        action="store",
+                        dest="fix_descriptionless",
+                        help="Even if there is no YouTube description, suggest improving existing tags")
 
     parser.add_argument("-d",
                         "--directory",
