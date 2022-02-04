@@ -250,13 +250,6 @@ def main(args):
                 print("Youtube description:")
                 print('\n'.join(description_lines))
 
-            old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
-
-            old_metadata.pop("language", None)
-
-            if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
-                old_metadata.pop("date", None)
-
             # Mismatches
             if fix_mismatches:
                 if new_metadata:
@@ -272,6 +265,14 @@ def main(args):
                                 print(Fore.RED + "Resetting metadata to original state")
                                 new_metadata = parse(description)
                                 old_metadata = OggOpus(file)
+
+                                old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have this tag
+
+                                old_metadata.pop("language", None)
+
+                                if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
+                                    old_metadata.pop("date", None)
+
                                 changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
                                 modify_field = input("Modify specific field? (y/n) ")
                                 field = " "
