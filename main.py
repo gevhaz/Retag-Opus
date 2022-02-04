@@ -304,7 +304,8 @@ if __name__ == "__main__":
 
     parser.add_argument("-a",
                         "--all",
-                        action="store",
+                        action="store_true",
+                        default=False,
                         dest="fix_descriptionless",
                         help="Even if there is no YouTube description, suggest improving existing tags")
 
