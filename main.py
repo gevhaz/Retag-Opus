@@ -14,7 +14,7 @@ import re
 from mutagen.oggopus import OggOpus
 from colorama import Fore, init
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Dict, Optional, Tuple
 
 INTERPUNCT = '\u00b7'
 SPACE = '\u00b7'
@@ -229,7 +229,6 @@ def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -
 
     return changes_made, old_metadata
 
-
 def main(args):
     music_dir = Path(args.dir).resolve()
 
@@ -260,45 +259,47 @@ def main(args):
             print("Youtube description:")
             print('\n'.join(description_lines))
 
+        redo = True
+        changed = False
         if new_metadata:
             changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
 
-            redo = True
-            if changed:
-                while redo:
-                    print(Fore.CYAN + "\nNew metadata:")
-                    print_metadata(old_metadata)
-                    redo = False if input("Does this look right? (y/n) ") == 'y' else True
-                    if redo:
-                        print(Fore.RED + "Resetting metadata to original state")
-                        new_metadata = parse(description)
-                        old_metadata = OggOpus(file)
+        if not changed:
+            print(Fore.RED + "No new data was found.")
+            continue
 
-                        old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have this tag
+        while redo:
+            print(Fore.CYAN + "\nNew metadata:")
+            print_metadata(old_metadata)
+            redo = False if input("Does this look right? (y/n) ") == 'y' else True
+            if redo:
+                print(Fore.RED + "Resetting metadata to original state")
+                new_metadata = parse(description)
+                old_metadata = OggOpus(file)
 
-                        old_metadata.pop("language", None)
+                old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have this tag
 
-                        if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
-                            old_metadata.pop("date", None)
+                old_metadata.pop("language", None)
 
-                        changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
-                        modify_field = input("Modify specific field? (y/n) ")
-                        field = " "
-                        key = " "
-                        while field and key:
-                            if modify_field == 'y':
-                                print("Enter field and key (enter cancels):")
-                                field = input("  Field: ")
-                                key = input("  Key: ")
-                                if field and key:
-                                    old_metadata[field] = [key]
-                            else:
-                                break
+                if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
+                    old_metadata.pop("date", None)
+
+                changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
+                modify_field = input("Modify specific field? (y/n) ")
+                field = " "
+                key = " "
+                while field and key:
+                    if modify_field == 'y':
+                        print("Enter field and key (enter cancels):")
+                        field = input("  Field: ")
+                        key = input("  Key: ")
+                        if field and key:
+                            old_metadata[field] = [key]
                     else:
-                        old_metadata.save()
-                        print(Fore.GREEN + "Metadata saved")
+                        break
             else:
-                print("No new data was found.")
+                old_metadata.save()
+                print(Fore.GREEN + "Metadata saved")
         elif args.fix_descriptionless:
             print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
             print(Fore.BLUE + f"----- File: {file} -----")
