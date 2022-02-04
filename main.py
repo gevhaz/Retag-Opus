@@ -300,6 +300,12 @@ def main(args):
 
             old_metadata.pop("language", None)
 
+            for tag_name, tag in old_metadata.items():
+                old_tag = tag[0]
+                new_tag = split_tag(old_tag)
+                if old_tag != new_tag[0]:
+                    old_metadata[tag_name] = new_tag
+
             old_metadata.save()
             print(Fore.GREEN + "Metadata saved")
 
