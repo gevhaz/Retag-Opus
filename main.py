@@ -185,49 +185,49 @@ def print_metadata(data):
     print("")
 
 
-def adjust_metadata(new_data, metadata) -> Tuple[bool, OggOpus]:
+def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -> Tuple[bool, OggOpus]:
     changes_made = False
 
     # Date should be safe to get from description
-    date = new_data.pop("date", None)
+    date = new_metadata.pop("date", None)
     if date:
-        metadata["date"] = date
+        old_metadata["date"] = date
         changes_made = True
 
     # youtube-dl is default album, auto-change
-    md_album = metadata.get("album")
-    yt_album = new_data.get("album")
+    md_album = old_metadata.get("album")
+    yt_album = new_metadata.get("album")
     if yt_album and md_album == ["youtube-dl"]:
-        metadata["album"] = yt_album
+        old_metadata["album"] = yt_album
         changes_made = True
 
-    md_artist = metadata.get("artist")
-    yt_artist = new_data.get("artist")
-    if len(md_artist) == 1 and split_tag(md_artist[0]) == yt_artist:
-        metadata["artist"] = yt_artist
+    md_artist = old_metadata.get("artist")
+    yt_artist = new_metadata.get("artist")
+    if md_artist is not None and len(md_artist) == 1 and split_tag(md_artist[0]) == yt_artist:
+        old_metadata["artist"] = yt_artist
 
     # Compare all fields
-    for field, yt_value in new_data.items():
-        if metadata.get(field) is None:
+    for field, yt_value in new_metadata.items():
+        if old_metadata.get(field) is None:
             print(Fore.CYAN + f"{field.title()}: No value exists in metadata. Using parsed data.")
-            metadata[field] = yt_value
+            old_metadata[field] = yt_value
             changes_made = True
-        elif yt_value == metadata.get(field):
+        elif yt_value == old_metadata.get(field):
             print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
         else:
             print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
-            print(f"  1. Exisiting metadata:  {' | '.join(metadata.get(field, ['Not set']))}")
+            print(f"  1. Exisiting metadata:  {' | '.join(old_metadata.get(field, ['Not set']))}")
             print(f"  2. YouTube description: {' | '.join(yt_value)}")
             print("  3. Manually fill in tag")
             choice = input("Choose the number you want to use. Empty skips this field for this song: ")
             if choice == '2':
-                metadata[field] = yt_value
+                old_metadata[field] = yt_value
                 changes_made = True
             elif choice == '3':
-                metadata[field] = input("Value: ")
+                old_metadata[field] = input("Value: ")
                 changes_made = True
 
-    return changes_made, metadata
+    return changes_made, old_metadata
 
 
 def main(args):
@@ -239,7 +239,7 @@ def main(args):
         print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
         print(Fore.BLUE + f"----- File: {file} -----")
 
-        old_metadata = OggOpus(file)
+        old_metadata: OggOpus = OggOpus(file)
 
         description_lines: List | None = old_metadata.get("description")
         if not description_lines:
