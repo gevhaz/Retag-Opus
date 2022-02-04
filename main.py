@@ -291,7 +291,18 @@ def main(args):
                 else:
                     print("No new data was found.")
         elif args.fix_descriptionless:
-            pass
+            print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
+            print(Fore.BLUE + f"----- File: {file} -----")
+
+            old_metadata = OggOpus(file)
+
+            old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
+
+            old_metadata.pop("language", None)
+
+            old_metadata.save()
+            print(Fore.GREEN + "Metadata saved")
+
         elif args.verbose:
             artist = old_metadata.get("artist")
             title = old_metadata.get("title")
