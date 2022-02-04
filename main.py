@@ -148,7 +148,7 @@ def main(args):
         value = SEP.join(data.get(key, [Fore.BLACK + 'Not found'])).replace(' ', SPACE)
         print("  " + key_type + ": " + Fore.BLUE + value)
 
-    def print_new_metadata(data):
+    def print_metadata(data):
         print_metadata_key("Title", "title", data)
         print_metadata_key("Album", "album", data)
         print_metadata_key("Album Artist", "albumartist", data)
@@ -232,47 +232,47 @@ def main(args):
         print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
         print(Fore.BLUE + f"----- File: {file} -----")
 
-        metadata = OggOpus(file)
+        old_metadata = OggOpus(file)
 
-        description_lines: List | None = metadata.get("description")
+        description_lines: List | None = old_metadata.get("description")
         if description_lines:
             description = '\n'.join(description_lines)
             if args.verbose:
                 print("The raw YouTube description is the following:")
                 print(description)
-            new_data = parse(description)
+            new_metadata = parse(description)
 
             if args.verbose:
                 print("Metadata parsed from YouTube description:")
-                print_new_metadata(new_data)
+                print_metadata(new_metadata)
                 print("Existing metadata:")
-                print_new_metadata(metadata)
+                print_metadata(old_metadata)
                 print("Youtube description:")
                 print('\n'.join(description_lines))
 
-            metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
+            old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
 
-            metadata.pop("language", None)
+            old_metadata.pop("language", None)
 
-            if metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", metadata["date"][0]):
-                metadata.pop("date", None)
+            if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
+                old_metadata.pop("date", None)
 
             # Mismatches
             if fix_mismatches:
-                if new_data:
-                    changed, metadata = adjust_metadata(new_data, metadata)
+                if new_metadata:
+                    changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
 
                     redo = True
                     if changed:
                         while redo:
                             print(Fore.CYAN + "\nNew metadata:")
-                            print_new_metadata(metadata)
+                            print_metadata(old_metadata)
                             redo = False if input("Does this look right? (y/n) ") == 'y' else True
                             if redo:
                                 print(Fore.RED + "Resetting metadata to original state")
-                                new_data = parse(description)
-                                metadata = OggOpus(file)
-                                changed, metadata = adjust_metadata(new_data, metadata)
+                                new_metadata = parse(description)
+                                old_metadata = OggOpus(file)
+                                changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
                                 modify_field = input("Modify specific field? (y/n) ")
                                 field = " "
                                 key = " "
@@ -282,19 +282,19 @@ def main(args):
                                         field = input("  Field: ")
                                         key = input("  Key: ")
                                         if field and key:
-                                            metadata[field] = [key]
+                                            old_metadata[field] = [key]
                                     else:
                                         break
                             else:
-                                metadata.save()
+                                old_metadata.save()
                                 print(Fore.GREEN + "Metadata saved")
                 else:
                     print("No new data was found.")
         elif args.fix_descriptionless:
             pass
         elif args.verbose:
-            artist = metadata.get("artist")
-            title = metadata.get("title")
+            artist = old_metadata.get("artist")
+            title = old_metadata.get("title")
             if artist and title:
                 print(f"Skipping \'{', '.join(title)}\' by {', '.join(artist)}")
 
