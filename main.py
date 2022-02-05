@@ -230,6 +230,22 @@ def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -
     return changes_made, old_metadata
 
 
+def modify_field(old_metadata: OggOpus) -> OggOpus:
+    modify_field = input("Modify specific field? (y/n) ")
+    field = " "
+    key = " "
+    while field and key:
+        if modify_field == 'y':
+            print("Enter field and key (enter cancels):")
+            field = input("  Field: ")
+            key = input("  Key: ")
+            if field and key:
+                old_metadata[field] = [key]
+        else:
+            break
+    return old_metadata
+
+
 def adjust_existing_data(old_metadata: OggOpus) -> OggOpus:
     old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
 
@@ -312,18 +328,9 @@ def main(args):
                     old_metadata.pop("date", None)
 
                 changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
-                modify_field = input("Modify specific field? (y/n) ")
-                field = " "
-                key = " "
-                while field and key:
-                    if modify_field == 'y':
-                        print("Enter field and key (enter cancels):")
-                        field = input("  Field: ")
-                        key = input("  Key: ")
-                        if field and key:
-                            old_metadata[field] = [key]
-                    else:
-                        break
+
+                # Let user modify any field manually
+                old_metadata = modify_field(old_metadata)
             else:
                 old_metadata.save()
                 print(Fore.GREEN + "Metadata saved!")
