@@ -51,7 +51,7 @@ def parse_artist_and_title(source_line):
 
 
 def parse(joined_desc: str) -> Dict[str, List[str]]:
-    new_data: Dict[str, List[str]] = {}
+    new_metadata: Dict[str, List[str]] = {}
     lines_since_title_artist: int = 1000
 
     desc: List[str] = joined_desc.splitlines(False)
@@ -65,11 +65,11 @@ def parse(joined_desc: str) -> Dict[str, List[str]]:
             lines_since_title_artist = 0
             youtube_artist, youtube_title = parse_artist_and_title(desc_line)
             if youtube_artist:
-                new_data["artist"] = remove_duplicates(youtube_artist)
-            new_data["title"] = [youtube_title]
+                new_metadata["artist"] = remove_duplicates(youtube_artist)
+            new_metadata["title"] = [youtube_title]
 
         if lines_since_title_artist == 2:
-            new_data["album"] = [desc_line.strip()]
+            new_metadata["album"] = [desc_line.strip()]
 
         def standard_pattern(field_name, regex):
             pattern = re.compile(regex)
@@ -77,11 +77,11 @@ def parse(joined_desc: str) -> Dict[str, List[str]]:
             if pattern_match:
                 field_value = pattern_match.groups()[len(pattern_match.groups())-1]
                 field_value = field_value.strip()
-                if new_data.get(field_name):
-                    new_data[field_name].append(field_value)
-                    new_data[field_name] = remove_duplicates(new_data[field_name])
+                if new_metadata.get(field_name):
+                    new_metadata[field_name].append(field_value)
+                    new_metadata[field_name] = remove_duplicates(new_metadata[field_name])
                 else:
-                    new_data[field_name] = [field_value]
+                    new_metadata[field_name] = [field_value]
 
         # standard_pattern("artist", r"(.*, )?^(?!(Makeup)(Finishing)).*[aA]rtist.*:\s*(.+)\s*")
         # standard_pattern("artist", r"(.*, )?^(?!Makeup).*[aA]rtist.*:\s*(.+)\s*")
@@ -125,22 +125,22 @@ def parse(joined_desc: str) -> Dict[str, List[str]]:
         standard_pattern("publisher", r"(.*, )?[pP]ublisher.*:\s*(.+)\s*")
         standard_pattern("title", r".*“(.*)” by .* from ‘.*’")
 
-    artist = new_data.get("artist")
+    artist = new_metadata.get("artist")
     if artist:
-        new_data["albumartist"] = [artist[0]]
+        new_metadata["albumartist"] = [artist[0]]
 
-    for key, value in new_data.items():
+    for key, value in new_metadata.items():
         if value == []:
-            new_data.pop(key)
+            new_metadata.pop(key)
     # Basic pattern:
     # r".*[ ]   .*:\s*(.*)\s*"
 
-    copyright_date = new_data.pop("copyright_date", None)
-    date = new_data.get("date")
+    copyright_date = new_metadata.pop("copyright_date", None)
+    date = new_metadata.get("date")
     if copyright_date and not date:
-        new_data["date"] = copyright_date
+        new_metadata["date"] = copyright_date
 
-    return new_data
+    return new_metadata
 
 
 def print_metadata_key(key_type, key, data):
