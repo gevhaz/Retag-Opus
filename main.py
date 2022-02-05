@@ -229,45 +229,76 @@ def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -
 
     return changes_made, old_metadata
 
+
+def adjust_existing_data(old_metadata: OggOpus) -> OggOpus:
+    old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
+
+    old_metadata.pop("language", None)
+
+    for tag_name, tag in old_metadata.items():
+        old_tag = tag[0]
+        new_tag = split_tag(old_tag)
+        if old_tag != new_tag[0]:
+            old_metadata[tag_name] = new_tag
+
+    return old_metadata
+
+
 def main(args):
     music_dir = Path(args.dir).resolve()
 
     all_files = list(filter(Path.is_file, Path(music_dir).glob('*.opus')))
 
     for index, file in enumerate(all_files):
+        # Print info about file and progress
         print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
         print(Fore.BLUE + f"----- File: {file} -----")
 
-        old_metadata: OggOpus = OggOpus(file)
-
+        # Regardless of what, do the basic improvements
+        old_metadata: OggOpus = adjust_existing_data(OggOpus(file))
         description_lines: List | None = old_metadata.get("description")
+
         if not description_lines:
-            print(Fore.RED + "Skipping song because there is no description")
+            print(Fore.RED + "Description tag is empty. Attempting to improve existing tags")
+            print_metadata(old_metadata)
+            ok = True if input("Does this look right? (y/n) ") == 'y' else False
+            if ok:
+                old_metadata.save()
+                print(Fore.GREEN + "Metadata saved!")
+            else:
+                print(Fore.RED + "Skipping song")
             continue
 
         description = '\n'.join(description_lines)
         if args.verbose:
             print("The raw YouTube description is the following:")
             print(description)
+
         new_metadata = parse(description)
 
-        if args.verbose:
-            print("Metadata parsed from YouTube description:")
-            print_metadata(new_metadata)
-            print("Existing metadata:")
-            print_metadata(old_metadata)
-            print("Youtube description:")
-            print('\n'.join(description_lines))
+        # if args.verbose:
+        #     print("Metadata parsed from YouTube description:")
+        #     print_metadata(new_metadata)
+        #     print("Existing metadata:")
+        #     print_metadata(old_metadata)
+        #     print("Youtube description:")
+        #     print('\n'.join(description_lines))
 
-        redo = True
         changed = False
         if new_metadata:
             changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
 
         if not changed:
-            print(Fore.RED + "No new data was found.")
+            print_metadata(old_metadata)
+            ok = True if input("Does this look right? (y/n) ") == 'y' else False
+            if ok:
+                old_metadata.save()
+                print(Fore.GREEN + "Metadata saved!")
+            else:
+                print(Fore.RED + "Skipping song")
             continue
 
+        redo = True
         while redo:
             print(Fore.CYAN + "\nNew metadata:")
             print_metadata(old_metadata)
@@ -275,11 +306,7 @@ def main(args):
             if redo:
                 print(Fore.RED + "Resetting metadata to original state")
                 new_metadata = parse(description)
-                old_metadata = OggOpus(file)
-
-                old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have this tag
-
-                old_metadata.pop("language", None)
+                old_metadata = adjust_existing_data(OggOpus(file))
 
                 if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
                     old_metadata.pop("date", None)
@@ -299,31 +326,7 @@ def main(args):
                         break
             else:
                 old_metadata.save()
-                print(Fore.GREEN + "Metadata saved")
-        elif args.fix_descriptionless:
-            print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
-            print(Fore.BLUE + f"----- File: {file} -----")
-
-            old_metadata = OggOpus(file)
-
-            old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
-
-            old_metadata.pop("language", None)
-
-            for tag_name, tag in old_metadata.items():
-                old_tag = tag[0]
-                new_tag = split_tag(old_tag)
-                if old_tag != new_tag[0]:
-                    old_metadata[tag_name] = new_tag
-
-            old_metadata.save()
-            print(Fore.GREEN + "Metadata saved")
-
-        elif args.verbose:
-            artist = old_metadata.get("artist")
-            title = old_metadata.get("title")
-            if artist and title:
-                print(f"Skipping \'{', '.join(title)}\' by {', '.join(artist)}")
+                print(Fore.GREEN + "Metadata saved!")
 
 
 if __name__ == "__main__":
