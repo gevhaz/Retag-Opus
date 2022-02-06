@@ -248,6 +248,10 @@ def adjust_existing_data(old_metadata: OggOpus) -> OggOpus:
 
     old_metadata.pop("language", None)
 
+    # If the date is just the upload date, discard it
+    if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
+        old_metadata.pop("date", None)
+
     new_artist = old_metadata.get('artist')
     if new_artist is not None and not len(new_artist) > 1:
         old_metadata['artist'] = split_tag(new_artist)
