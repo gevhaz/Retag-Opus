@@ -215,8 +215,8 @@ def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -
             print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
         else:
             print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
-            print(f"  1. Exisiting metadata:  {' | '.join(old_metadata.get(field, ['Not set']))}")
-            print(f"  2. YouTube description: {' | '.join(yt_value)}")
+            print("  1. Exisiting metadata:  " + Fore.CYAN + f"{' | '.join(old_metadata.get(field, ['Not set']))}")
+            print("  2. YouTube description: " + Fore.MAGENTA + f"{' | '.join(yt_value)}")
             print("  3. Manually fill in tag")
             choice = input("Choose the number you want to use. Empty skips this field for this song: ")
             if choice == '2':
