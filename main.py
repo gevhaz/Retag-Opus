@@ -220,7 +220,7 @@ def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -
             print("  1. Exisiting metadata:  " + md_col + f"{' | '.join(old_metadata.get(field, ['Not set']))}")
             print("  2. YouTube description: " + yt_col + f"{' | '.join(yt_value)}")
             print("  3. Manually fill in tag")
-            choice = input("Choose the number you want to use. Empty skips this field for this song: ")
+            choice = input("Choose the number you want to use. Empty leaves metadata unchanged: ")
             if choice == '2':
                 old_metadata[field] = yt_value
                 changes_made = True
