@@ -230,16 +230,14 @@ def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -
 
 
 def modify_field(old_metadata: OggOpus) -> OggOpus:
-    modify_field = input("Modify specific field? (y/n) ")
-    field = " "
     key = " "
-    while field and key:
-        if modify_field == 'y':
-            print("Enter field and key (enter cancels):")
-            field = input("  Field: ")
-            key = input("  Key: ")
-            if field and key:
-                old_metadata[field] = [key]
+    val = " "
+    while key and val:
+        print("Enter key and value (newline cancels):")
+        key = input("  Key: ")
+        val = input("  Value: ")
+        if key and val:
+            old_metadata[key] = [val]
         else:
             break
     return old_metadata
