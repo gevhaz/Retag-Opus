@@ -254,7 +254,7 @@ def adjust_existing_data(old_metadata: OggOpus) -> OggOpus:
 
     new_artist = old_metadata.get('artist')
     if new_artist is not None and not len(new_artist) > 1:
-        old_metadata['artist'] = split_tag(new_artist)
+        old_metadata['artist'] = split_tag(new_artist[0])
 
     return old_metadata
 
