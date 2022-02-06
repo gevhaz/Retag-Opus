@@ -21,7 +21,6 @@ SPACE = '\u00b7'
 SPACE = ' '
 SEP = " | "
 
-
 init(autoreset=True)
 
 
@@ -50,30 +49,30 @@ def parse_artist_and_title(source_line):
     return artist, title
 
 
-def parse(joined_desc: str) -> Dict[str, List[str]]:
+def parse(description_tag_full: str) -> Dict[str, List[str]]:
     new_metadata: Dict[str, List[str]] = {}
     lines_since_title_artist: int = 1000
 
-    desc: List[str] = joined_desc.splitlines(False)
+    description_tag_lines: List[str] = description_tag_full.splitlines(False)
 
-    for desc_line in desc:
-        desc_line = desc_line.replace('\n', '')
-        desc_line = re.sub('\n', '', desc_line)
+    for description_line in description_tag_lines:
+        description_line = description_line.replace('\n', '')
+        description_line = re.sub('\n', '', description_line)
         lines_since_title_artist = lines_since_title_artist + 1
         # Artist and title
-        if INTERPUNCT in desc_line:
+        if INTERPUNCT in description_line:
             lines_since_title_artist = 0
-            youtube_artist, youtube_title = parse_artist_and_title(desc_line)
+            youtube_artist, youtube_title = parse_artist_and_title(description_line)
             if youtube_artist:
                 new_metadata["artist"] = remove_duplicates(youtube_artist)
             new_metadata["title"] = [youtube_title]
 
         if lines_since_title_artist == 2:
-            new_metadata["album"] = [desc_line.strip()]
+            new_metadata["album"] = [description_line.strip()]
 
         def standard_pattern(field_name, regex):
             pattern = re.compile(regex)
-            pattern_match = re.match(pattern, desc_line)
+            pattern_match = re.match(pattern, description_line)
             if pattern_match:
                 field_value = pattern_match.groups()[len(pattern_match.groups())-1]
                 field_value = field_value.strip()
@@ -260,16 +259,16 @@ def adjust_existing_data(old_metadata: OggOpus) -> OggOpus:
 
 def main(args):
     music_dir = Path(args.dir).resolve()
-
     all_files = list(filter(Path.is_file, Path(music_dir).glob('*.opus')))
 
-    for index, file in enumerate(all_files):
+    for idx, file_name in enumerate(all_files):
         # Print info about file and progress
-        print(Fore.BLUE + f"\nSong {index} of {len(all_files)}")
-        print(Fore.BLUE + f"----- File: {file} -----")
+        print(Fore.BLUE + f"\nSong {idx} of {len(all_files)}")
+        print(Fore.BLUE + f"----- File: {file_name} -----")
 
-        # Regardless of what, do the basic improvements
-        old_metadata: OggOpus = adjust_existing_data(OggOpus(file))
+        # Get basic metadata
+        old_raw_metadata: OggOpus = OggOpus(file_name)
+        old_metadata: OggOpus = adjust_existing_data(old_raw_metadata)
         description_lines: List | None = old_metadata.get("description")
 
         if not description_lines:
@@ -320,7 +319,7 @@ def main(args):
             if redo:
                 print(Fore.RED + "Resetting metadata to original state")
                 new_metadata = parse(description)
-                old_metadata = adjust_existing_data(OggOpus(file))
+                old_metadata = adjust_existing_data(OggOpus(file_name))
 
                 if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
                     old_metadata.pop("date", None)
