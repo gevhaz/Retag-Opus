@@ -11,7 +11,7 @@ __license__ = "GPLv3"
 import argparse
 import re
 
-from mutagen.oggopus import OggOpus
+from mutagen.oggopus import OggOpus, VCommentDict
 from colorama import Fore, init
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
@@ -288,8 +288,11 @@ def main(args):
             print(Fore.BLUE + f"----- File: {file_name} -----")
 
             # 1. Read the data and make basic improvements
-            old_raw_metadata: OggOpus = OggOpus(file_path)
-            old_metadata: OggOpus = adjust_existing_data(old_raw_metadata)
+            old_metadata: OggOpus = OggOpus(file_path)
+            old_tags = {}
+            for key, val in old_metadata.items():
+                old_tags[key] = val
+            old_metadata: OggOpus = adjust_existing_data(old_metadata)
 
             # 2. Get description
             description_lines: List | None = old_metadata.get("description")
@@ -317,7 +320,8 @@ def main(args):
                 reshow_choices = False
                 redo = False
                 action_prompt = ("Action: (s)ave, (r)eset, (m)odify field, (p)ass, "
-                                 "(y)outube description, (c)urrent metadata, (d)escription metadata, (a)bort: ")
+                                 "(y)outube description, (o)ld metadata, (c)urrent metadata, (d)escription metadata, "
+                                 "(a)bort: ")
                 action = input(action_prompt)
                 print('-' * (len(action_prompt) + 1))
                 if action == 's':
@@ -339,6 +343,10 @@ def main(args):
                         print(yt_col + "\n".join(description_lines))
                     else:
                         print(Fore.RED + "No YouTube description tag for this song.")
+                    reshow_choices = True
+                elif action == "o":
+                    print(Fore.BLUE + "The original metadata for this file:")
+                    print_metadata(old_tags, md_col)
                     reshow_choices = True
                 elif action == "c":
                     print(Fore.BLUE + "Current metadata to save:")
