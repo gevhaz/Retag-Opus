@@ -22,6 +22,8 @@ SPACE = ' '
 SEP = " | "
 yt_col = Fore.MAGENTA
 md_col = Fore.CYAN
+man_col = Fore.GREEN
+auto_col = Fore.YELLOW
 
 init(autoreset=True)
 
@@ -149,51 +151,62 @@ def print_metadata_key(key_type, key, key_col, data):
     print("  " + key_type + ": " + key_col + value)
 
 
-def print_metadata(data, key_col=md_col):
-    print_metadata_key("Title", "title", key_col, data)
-    print_metadata_key("Album", "album", key_col, data)
-    print_metadata_key("Album Artist", "albumartist", key_col, data)
-    print_metadata_key("Artist(s)", "artist", key_col, data)
-    print_metadata_key("Date", "date", key_col, data)
-    print_metadata_key("Performer", "performer", key_col, data)
+def print_metadata(data, tag_source, default_col):
+    print_metadata_key("Title", "title", tag_source.get("title", default_col), data)
+    print_metadata_key("Album", "album", tag_source.get("album", default_col), data)
+    print_metadata_key("Album Artist", "albumartist", tag_source.get("albumartist", default_col), data)
+    print_metadata_key("Artist(s)", "artist", tag_source.get("artist", default_col), data)
+    print_metadata_key("Date", "date", tag_source.get("date", default_col), data)
+    print_metadata_key("Performer", "performer", tag_source.get("performer", default_col), data)
     if "performer:" in ' '.join(data.keys()):
-        print_metadata_key("- Vocals", "performer:vocals", key_col, data)
-        print_metadata_key("- Background Vocals", "performer:background vocals", key_col, data)
-        print_metadata_key("- Drums", "performer:drums", key_col, data)
-        print_metadata_key("- Percussion", "performer:percussion", key_col, data)
-        print_metadata_key("- Keyboard", "performer:keyboard", key_col, data)
-        print_metadata_key("- Piano", "performer:piano", key_col, data)
-        print_metadata_key("- Synthesizer", "performer:synthesizer", key_col, data)
-        print_metadata_key("- Guitar", "performer:guitar", key_col, data)
-        print_metadata_key("- Electric guitar", "performer:electric guitar", key_col, data)
-        print_metadata_key("- Bass guitar", "performer:bass guitar", key_col, data)
-        print_metadata_key("- Ukulele", "performer:ukulele", key_col, data)
-        print_metadata_key("- Violin", "performer:violin", key_col, data)
-        print_metadata_key("- Double bass", "performer:double bass", key_col, data)
-        print_metadata_key("- Cello", "performer:cello", key_col, data)
-        print_metadata_key("- Programming", "performer:programming", key_col, data)
-        print_metadata_key("- Saxophone", "performer:saxophone", key_col, data)
-        print_metadata_key("- Flute", "performer:flute", key_col, data)
-    print_metadata_key("Organization", "organization", key_col, data)
-    print_metadata_key("Copyright", "copyright", key_col, data)
-    print_metadata_key("Composer", "composer", key_col, data)
-    print_metadata_key("Conductor", "conductor", key_col, data)
-    print_metadata_key("Arranger", "arranger", key_col, data)
-    print_metadata_key("Author", "author", key_col, data)
-    print_metadata_key("Producer", "producer", key_col, data)
-    print_metadata_key("Publisher", "publisher", key_col, data)
-    print_metadata_key("Lyricist", "lyricist", key_col, data)
+        print_metadata_key("- Vocals", "performer:vocals", tag_source.get("performer:vocals", default_col), data)
+        print_metadata_key("- Background Vocals", "performer:background vocals",
+                           tag_source.get("performer:background vocals", default_col), data)
+        print_metadata_key("- Drums", "performer:drums", tag_source.get("performer:drums", default_col), data)
+        print_metadata_key("- Percussion", "performer:percussion",
+                           tag_source.get("performer:percussion", default_col), data)
+        print_metadata_key("- Keyboard", "performer:keyboard", tag_source.get("performer:keyboard", default_col), data)
+        print_metadata_key("- Piano", "performer:piano", tag_source.get("performer:piano", default_col), data)
+        print_metadata_key("- Synthesizer", "performer:synthesizer",
+                           tag_source.get("performer:synthesizer", default_col), data)
+        print_metadata_key("- Guitar", "performer:guitar", tag_source.get("performer:guitar", default_col), data)
+        print_metadata_key("- Electric guitar", "performer:electric guitar",
+                           tag_source.get("performer:electric guitar", default_col), data)
+        print_metadata_key("- Bass guitar", "performer:bass guitar",
+                           tag_source.get("performer:bass guitar", default_col), data)
+        print_metadata_key("- Ukulele", "performer:ukulele", tag_source.get("performer:ukulele", default_col), data)
+        print_metadata_key("- Violin", "performer:violin", tag_source.get("performer:violin", default_col), data)
+        print_metadata_key("- Double bass", "performer:double bass",
+                           tag_source.get("performer:double bass", default_col), data)
+        print_metadata_key("- Cello", "performer:cello", tag_source.get("performer:cello", default_col), data)
+        print_metadata_key("- Programming", "performer:programming",
+                           tag_source.get("performer:programming", default_col), data)
+        print_metadata_key("- Saxophone", "performer:saxophone",
+                           tag_source.get("performer:saxophone", default_col), data)
+        print_metadata_key("- Flute", "performer:flute", tag_source.get("performer:flute", default_col), data)
+    print_metadata_key("Organization", "organization", tag_source.get("organization", default_col), data)
+    print_metadata_key("Copyright", "copyright", tag_source.get("copyright", default_col), data)
+    print_metadata_key("Composer", "composer", tag_source.get("composer", default_col), data)
+    print_metadata_key("Conductor", "conductor", tag_source.get("conductor", default_col), data)
+    print_metadata_key("Arranger", "arranger", tag_source.get("arranger", default_col), data)
+    print_metadata_key("Author", "author", tag_source.get("author", default_col), data)
+    print_metadata_key("Producer", "producer", tag_source.get("producer", default_col), data)
+    print_metadata_key("Publisher", "publisher", tag_source.get("publisher", default_col), data)
+    print_metadata_key("Lyricist", "lyricist", tag_source.get("lyricist", default_col), data)
     print("")
 
 
-def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -> Tuple[bool, OggOpus]:
+def adjust_metadata(new_metadata: Dict[str, List[str]],
+                    old_metadata: OggOpus,
+                    tag_source: Dict[str, str]) -> Tuple[bool, OggOpus, Dict[str, str]]:
     changes_made = False
 
     # Date should be safe to get from description
-    date = new_metadata.pop("date", None)
-    if date:
+    date = new_metadata.get("date", None)
+    if date and date != old_metadata.get("date"):
         old_metadata["date"] = date
         changes_made = True
+        tag_source["date"] = yt_col
 
     # youtube-dl is default album, auto-change
     md_album = old_metadata.get("album")
@@ -201,20 +214,24 @@ def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -
     if yt_album and md_album == ["youtube-dl"]:
         old_metadata["album"] = yt_album
         changes_made = True
+        tag_source["album"] = yt_col
 
     md_artist = old_metadata.get("artist")
     yt_artist = new_metadata.get("artist")
     if md_artist is not None and len(md_artist) == 1 and split_tag(md_artist[0]) == yt_artist:
         old_metadata["artist"] = yt_artist
+        tag_source["album"] = yt_col
 
     # Compare all fields
     for field, yt_value in new_metadata.items():
         if old_metadata.get(field) is None:
             print(Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data.")
             old_metadata[field] = yt_value
+            tag_source[field] = yt_col
             changes_made = True
         elif yt_value == old_metadata.get(field):
             print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
+            tag_source[field] = md_col
         else:
             print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
             print("  1. Exisiting metadata:  " + md_col + f"{' | '.join(old_metadata.get(field, ['Not set']))}")
@@ -224,14 +241,18 @@ def adjust_metadata(new_metadata: Dict[str, List[str]], old_metadata: OggOpus) -
             if choice == '2':
                 old_metadata[field] = yt_value
                 changes_made = True
+                tag_source[field] = yt_col
             elif choice == '3':
                 old_metadata[field] = input("Value: ")
                 changes_made = True
+                tag_source[field] = man_col
+            else:
+                tag_source[field] = md_col
 
-    return changes_made, old_metadata
+    return changes_made, old_metadata, tag_source
 
 
-def modify_field(old_metadata: OggOpus) -> OggOpus:
+def modify_field(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[OggOpus, Dict[str, str]]:
     key = " "
     val = " "
     while key and val:
@@ -240,12 +261,13 @@ def modify_field(old_metadata: OggOpus) -> OggOpus:
         val = input("  Value: ")
         if key and val:
             old_metadata[key] = [val]
+            tag_source[key] = man_col
         else:
             break
-    return old_metadata
+    return old_metadata, tag_source
 
 
-def adjust_existing_data(old_metadata: OggOpus) -> OggOpus:
+def adjust_existing_data(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[OggOpus, Dict[str, str]]:
     old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
 
     old_metadata.pop("language", None)
@@ -256,9 +278,12 @@ def adjust_existing_data(old_metadata: OggOpus) -> OggOpus:
 
     new_artist = old_metadata.get('artist')
     if new_artist is not None and not len(new_artist) > 1:
-        old_metadata['artist'] = split_tag(new_artist[0])
+        split_new_artist = split_tag(new_artist[0])
+        if split_new_artist != new_artist:
+            old_metadata['artist'] = split_new_artist
+            tag_source['artist'] = auto_col
 
-    return old_metadata
+    return old_metadata, tag_source
 
 
 def get_basename(file_path: Path) -> str:
@@ -290,9 +315,12 @@ def main(args):
             # 1. Read the data and make basic improvements
             old_metadata: OggOpus = OggOpus(file_path)
             old_tags = {}
+            tag_source = {}
             for key, val in old_metadata.items():
                 old_tags[key] = val
-            old_metadata: OggOpus = adjust_existing_data(old_metadata)
+            for key in old_tags.keys():
+                tag_source[key] = md_col
+            old_metadata, tag_source = adjust_existing_data(old_metadata, tag_source)
 
             # 2. Get description
             description_lines: List | None = old_metadata.get("description")
@@ -310,11 +338,11 @@ def main(args):
             # 4. For each field, if there are conflicts, ask user input
             changed = False
             if new_metadata:
-                changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
+                changed, old_metadata, tag_source = adjust_metadata(new_metadata, old_metadata, tag_source)
 
             # 5. Show user final result and ask if it should be saved or retried, or song skipped
             print("Final result:")
-            print_metadata(old_metadata, md_col)
+            print_metadata(old_metadata, tag_source, Fore.RED)
             reshow_choices = True
             while reshow_choices:
                 reshow_choices = False
@@ -331,9 +359,9 @@ def main(args):
                     print(f"Trying to improve metadata again for file: {file_name}")
                     redo = True
                 elif action == "m":
-                    old_metadata = modify_field(old_metadata)
+                    old_metadata, tag_source = modify_field(old_metadata, tag_source)
                     print(Fore.BLUE + "Current metadata to save:")
-                    print_metadata(old_metadata, md_col)
+                    print_metadata(old_metadata, tag_source, Fore.RED)
                     reshow_choices = True
                 elif action == "p":
                     print(Fore.YELLOW + f"Pass. Skipping song: {file_name}")
@@ -346,16 +374,16 @@ def main(args):
                     reshow_choices = True
                 elif action == "o":
                     print(Fore.BLUE + "The original metadata for this file:")
-                    print_metadata(old_tags, md_col)
+                    print_metadata(old_tags, {}, md_col)
                     reshow_choices = True
                 elif action == "c":
                     print(Fore.BLUE + "Current metadata to save:")
-                    print_metadata(old_metadata, md_col)
+                    print_metadata(old_metadata, tag_source, Fore.RED)
                     reshow_choices = True
                 elif action == "d":
                     if new_metadata:
                         print(Fore.BLUE + "Metadata parsed from YouTube description:")
-                        print_metadata(new_metadata, yt_col)
+                        print_metadata(new_metadata, {}, yt_col)
                     else:
                         print(Fore.RED + "This song has no YouTube description tag to parse metadata from.")
                     reshow_choices = True
