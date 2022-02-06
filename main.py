@@ -259,80 +259,108 @@ def adjust_existing_data(old_metadata: OggOpus) -> OggOpus:
     return old_metadata
 
 
+def get_basename(file_path: Path) -> str:
+    file_name = str(file_path)
+    basename = re.match(".*/(.*)", file_name)
+    if basename:
+        match = basename.groups()[0]
+        file_name = match
+        pruned_name = re.match("<(.*)>.opus", file_name)
+        if pruned_name:
+            file_name = pruned_name.groups()[0]
+
+    return file_name
+
+
 def main(args):
     music_dir = Path(args.dir).resolve()
     all_files = list(filter(Path.is_file, Path(music_dir).glob('*.opus')))
 
-    for idx, file_name in enumerate(all_files):
-        # Print info about file and progress
-        print(Fore.BLUE + f"\nSong {idx} of {len(all_files)}")
-        print(Fore.BLUE + f"----- File: {file_name} -----")
-
-        # Get basic metadata
-        old_raw_metadata: OggOpus = OggOpus(file_name)
-        old_metadata: OggOpus = adjust_existing_data(old_raw_metadata)
-        description_lines: List | None = old_metadata.get("description")
-
-        if not description_lines:
-            print(Fore.RED + "Description tag is empty. Attempting to improve existing tags")
-            print_metadata(old_metadata)
-            ok = True if input("Does this look right? (y/n) ") == 'y' else False
-            if ok:
-                old_metadata.save()
-                print(Fore.GREEN + "Metadata saved!")
-            else:
-                print(Fore.RED + "Skipping song")
-            continue
-
-        description = '\n'.join(description_lines)
-        if args.verbose:
-            print("The raw YouTube description is the following:")
-            print(description)
-
-        new_metadata = parse(description)
-
-        # if args.verbose:
-        #     print("Metadata parsed from YouTube description:")
-        #     print_metadata(new_metadata)
-        #     print("Existing metadata:")
-        #     print_metadata(old_metadata)
-        #     print("Youtube description:")
-        #     print('\n'.join(description_lines))
-
-        changed = False
-        if new_metadata:
-            changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
-
-        if not changed:
-            print_metadata(old_metadata)
-            ok = True if input("Does this look right? (y/n) ") == 'y' else False
-            if ok:
-                old_metadata.save()
-                print(Fore.GREEN + "Metadata saved!")
-            else:
-                print(Fore.RED + "Skipping song")
-            continue
-
+    for idx, file_path in enumerate(all_files):
+        stop = False
         redo = True
+        file_name = get_basename(file_path)
         while redo:
-            print(Fore.CYAN + "\nNew metadata:")
-            print_metadata(old_metadata)
-            redo = False if input("Does this look right? (y/n) ") == 'y' else True
-            if redo:
-                print(Fore.RED + "Resetting metadata to original state")
+            # Print info about file and progress
+            print(Fore.BLUE + f"\nSong {idx + 1} of {len(all_files)}")
+            print(Fore.BLUE + f"----- File: {file_name} -----")
+
+            # 1. Read the data and make basic improvements
+            old_raw_metadata: OggOpus = OggOpus(file_path)
+            old_metadata: OggOpus = adjust_existing_data(old_raw_metadata)
+
+            # 2. Get description
+            description_lines: List | None = old_metadata.get("description")
+
+            # 3. If description exists, send it to be parsed
+            new_metadata: Optional[Dict[str, List[str]]] = None
+            if description_lines is not None:
+                description = '\n'.join(description_lines)
+                if args.verbose:
+                    print("The raw YouTube description is the following:")
+                    print(description)
+
                 new_metadata = parse(description)
-                old_metadata = adjust_existing_data(OggOpus(file_name))
 
-                if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
-                    old_metadata.pop("date", None)
-
+            # 4. For each field, if there are conflicts, ask user input
+            changed = False
+            if new_metadata:
                 changed, old_metadata = adjust_metadata(new_metadata, old_metadata)
 
-                # Let user modify any field manually
-                old_metadata = modify_field(old_metadata)
-            else:
-                old_metadata.save()
-                print(Fore.GREEN + "Metadata saved!")
+            # 5. Show user final result and ask if it should be saved or retried, or song skipped
+            print("Final result:")
+            print_metadata(old_metadata)
+            reshow_choices = True
+            while reshow_choices:
+                reshow_choices = False
+                redo = False
+                action_prompt = ("Action: (s)ave, (r)eset, (m)odify field, (p)ass, "
+                                 "(y)outube description, (c)urrent metadata, (d)escription metadata, (a)bort: ")
+                action = input(action_prompt)
+                print('-' * (len(action_prompt) + 1))
+                if action == 's':
+                    old_metadata.save()
+                    print(Fore.GREEN + f"Metadata saved for file: {file_name}")
+                elif action == "r":
+                    print(f"Trying to improve metadata again for file: {file_name}")
+                    redo = True
+                elif action == "m":
+                    old_metadata = modify_field(old_metadata)
+                    print(Fore.CYAN + "Current metadata to save:")
+                    print_metadata(old_metadata)
+                    reshow_choices = True
+                elif action == "p":
+                    print(Fore.YELLOW + f"Pass. Skipping song: {file_name}")
+                elif action == "y":
+                    if description_lines:
+                        print(Fore.BLUE + "Original YouTube description:")
+                        print(Fore.MAGENTA + "\n".join(description_lines))
+                    else:
+                        print(Fore.RED + "No YouTube description tag for this song.")
+                    reshow_choices = True
+                elif action == "c":
+                    print(Fore.BLUE + "Current metadata to save:")
+                    print_metadata(old_metadata)
+                    reshow_choices = True
+                elif action == "d":
+                    if new_metadata:
+                        print(Fore.MAGENTA + "Metadata parsed from YouTube description:")
+                        print_metadata(new_metadata)
+                    else:
+                        print(Fore.RED + "This song has no YouTube description tag to parse metadata from.")
+                    reshow_choices = True
+                elif action == "a":
+                    print(Fore.YELLOW + "Skipping this and all later songs")
+                    stop = True
+                else:
+                    print(Fore.RED + "Invalid choice. Try again:")
+                    reshow_choices = True
+
+        if stop:
+            break
+            # At any step with user input, user can choose:
+            # * Show conflicting fields
+            # * Show fields that will be changed
 
 
 if __name__ == "__main__":
