@@ -271,6 +271,10 @@ def adjust_existing_data(old_metadata: OggOpus, tag_source: Dict[str, str]) -> T
     old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
 
     old_metadata.pop("language", None)
+    old_metadata.pop("compatible_brands", None)
+    old_metadata.pop("minor_version", None)
+    old_metadata.pop("major_brand", None)
+    old_metadata.pop("vendor_id", None)
 
     # If the date is just the upload date, discard it
     if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
