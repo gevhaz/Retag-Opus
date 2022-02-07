@@ -11,21 +11,24 @@ the relevant data into the tags where it actually belongs, such as
 Run the script like so:
 
 ```
-python3 main.py --directory /path/to/directory/with/your/opus/files.opus
+python3 retag --directory /path/to/directory/with/your/opus/files.opus
 ```
 
 There is also a help (`-h`) flag:
 
 ```
-$ ./main.py -h
+$ retag -h
 usage: main.py [-h] [-d DIR] [-v] [-V]
 
 options:
-  -h, --help            show this help message and exit
-  -d DIR, --directory DIR
-                        directory in which the files to be retagged are located
-  -v, --verbose         show verbose output
-  -V, --version         show program's version number and exit
+-h, --help            show this help message and exit
+-s {bash,zsh,tcsh}, --print-completion {bash,zsh,tcsh}
+                      print shell completion script
+-a, --all             Even if there is no YouTube description, suggest improving existing tags
+-d DIR, --directory DIR
+                      directory in which the files to be retagged are located
+-v, --verbose         show verbose output
+-V, --version         show program's version number and exit
 ```
 
 # Project status
