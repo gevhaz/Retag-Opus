@@ -316,6 +316,7 @@ def main(args):
         redo = True
         file_name = get_basename(file_path)
         while redo:
+            redo = False
             # Print info about file and progress
             print(Fore.BLUE + f"\nSong {idx + 1} of {len(all_files)}")
             print(Fore.BLUE + f"----- File: {file_name} -----")
@@ -349,12 +350,21 @@ def main(args):
                 changed, old_metadata, tag_source = adjust_metadata(new_metadata, old_metadata, tag_source)
 
             # 5. Show user final result and ask if it should be saved or retried, or song skipped
+            reshow_choices = True
             print("Final result:")
             print_metadata(old_metadata, tag_source, Fore.RED)
-            reshow_choices = True
+            if all(color == md_col for color in tag_source.values()):
+                if args.fix_descriptionless:
+                    reshow_choices = False if input("Only basic suggested, skip? (Y/n): ") == 'n' else True
+                else:
+                    reshow_choices = False
+                    print(Fore.YELLOW + "No signficant changes suggested, therefore only auto-saving the basic changes")
+                if not reshow_choices:
+                    old_metadata.save()
+                    print(Fore.YELLOW + f"Metadata saved for file: {file_name}")
+
             while reshow_choices:
                 reshow_choices = False
-                redo = False
                 action_prompt = ("Action: (s)ave, (r)eset, (m)odify field, (p)ass, "
                                  "(y)outube description, (o)ld metadata, (c)urrent metadata, (d)escription metadata, "
                                  "(a)bort: ")
