@@ -11,7 +11,7 @@ __license__ = "GPLv3"
 import argparse
 import re
 
-from mutagen.oggopus import OggOpus, VCommentDict
+from mutagen.oggopus import OggOpus
 from colorama import Fore, init
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
@@ -199,14 +199,12 @@ def print_metadata(data, tag_source, default_col):
 
 def adjust_metadata(new_metadata: Dict[str, List[str]],
                     old_metadata: OggOpus,
-                    tag_source: Dict[str, str]) -> Tuple[bool, OggOpus, Dict[str, str]]:
-    changes_made = False
+                    tag_source: Dict[str, str]) -> Tuple[OggOpus, Dict[str, str]]:
 
     # Date should be safe to get from description
     date = new_metadata.get("date", None)
     if date and date != old_metadata.get("date"):
         old_metadata["date"] = date
-        changes_made = True
         tag_source["date"] = yt_col
 
     # youtube-dl is default album, auto-change
@@ -214,7 +212,6 @@ def adjust_metadata(new_metadata: Dict[str, List[str]],
     yt_album = new_metadata.get("album")
     if yt_album and md_album == ["youtube-dl"]:
         old_metadata["album"] = yt_album
-        changes_made = True
         tag_source["album"] = yt_col
 
     md_artist = old_metadata.get("artist")
@@ -229,7 +226,6 @@ def adjust_metadata(new_metadata: Dict[str, List[str]],
             print(Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data.")
             old_metadata[field] = yt_value
             tag_source[field] = yt_col
-            changes_made = True
         elif yt_value == old_metadata.get(field):
             print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
             tag_source[field] = md_col
@@ -241,16 +237,14 @@ def adjust_metadata(new_metadata: Dict[str, List[str]],
             choice = input("Choose the number you want to use. Empty leaves metadata unchanged: ")
             if choice == '2':
                 old_metadata[field] = yt_value
-                changes_made = True
                 tag_source[field] = yt_col
             elif choice == '3':
                 old_metadata[field] = input("Value: ")
-                changes_made = True
                 tag_source[field] = man_col
             else:
                 tag_source[field] = md_col
 
-    return changes_made, old_metadata, tag_source
+    return old_metadata, tag_source
 
 
 def modify_field(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[OggOpus, Dict[str, str]]:
@@ -348,9 +342,8 @@ def main(args):
                 new_metadata = parse(description)
 
             # 4. For each field, if there are conflicts, ask user input
-            changed = False
             if new_metadata:
-                changed, old_metadata, tag_source = adjust_metadata(new_metadata, old_metadata, tag_source)
+                old_metadata, tag_source = adjust_metadata(new_metadata, old_metadata, tag_source)
 
             # 5. Show user final result and ask if it should be saved or retried, or song skipped
             reshow_choices = True
