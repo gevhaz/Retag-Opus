@@ -10,6 +10,7 @@ __license__ = "GPLv3"
 
 import argparse
 import re
+import shtab
 
 from mutagen.oggopus import OggOpus
 from colorama import Fore, init
@@ -418,6 +419,8 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
+    shtab.add_argument_to(parser, ["-s", "--print-completion"])
+
     parser.add_argument("-a",
                         "--all",
                         action="store_true",
@@ -429,7 +432,7 @@ if __name__ == "__main__":
                         "--directory",
                         action="store",
                         dest="dir",
-                        help="directory in which the files to be retagged are located")
+                        help="directory in which the files to be retagged are located").complete = shtab.DIRECTORY
 
     parser.add_argument("-v",
                         "--verbose",
