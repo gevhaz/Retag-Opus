@@ -157,6 +157,7 @@ def print_metadata(data, tag_source, default_col):
     print_metadata_key("Album Artist", "albumartist", tag_source.get("albumartist", default_col), data)
     print_metadata_key("Artist(s)", "artist", tag_source.get("artist", default_col), data)
     print_metadata_key("Date", "date", tag_source.get("date", default_col), data)
+    print_metadata_key("Genre", "genre", tag_source.get("genre", default_col), data)
     print_metadata_key("Performer", "performer", tag_source.get("performer", default_col), data)
     if "performer:" in ' '.join(data.keys()):
         print_metadata_key("- Vocals", "performer:vocals", tag_source.get("performer:vocals", default_col), data)
@@ -280,12 +281,15 @@ def adjust_existing_data(old_metadata: OggOpus, tag_source: Dict[str, str]) -> T
     if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
         old_metadata.pop("date", None)
 
-    new_artist = old_metadata.get('artist')
-    if new_artist is not None and not len(new_artist) > 1:
-        split_new_artist = split_tag(new_artist[0])
-        if split_new_artist != new_artist:
-            old_metadata['artist'] = split_new_artist
-            tag_source['artist'] = auto_col
+    tags_to_split = ['genre', 'artist']
+
+    for tag in tags_to_split:
+        original_tag = old_metadata.get(tag)
+        if original_tag is not None and not len(original_tag) > 1:
+            new_tag = split_tag(original_tag[0])
+            if new_tag != original_tag:
+                old_metadata[tag] = new_tag
+                tag_source[tag] = auto_col
 
     return old_metadata, tag_source
 
