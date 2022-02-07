@@ -27,7 +27,6 @@ options:
 -a, --all             Even if there is no YouTube description, suggest improving existing tags
 -d DIR, --directory DIR
                       directory in which the files to be retagged are located
--v, --verbose         show verbose output
 -V, --version         show program's version number and exit
 ```
 

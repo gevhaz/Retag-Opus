@@ -336,10 +336,6 @@ def main(args):
             new_metadata: Optional[Dict[str, List[str]]] = None
             if description_lines is not None:
                 description = '\n'.join(description_lines)
-                if args.verbose:
-                    print("The raw YouTube description is the following:")
-                    print(description)
-
                 new_metadata = parse(description)
 
             # 4. For each field, if there are conflicts, ask user input
@@ -433,13 +429,6 @@ if __name__ == "__main__":
                         action="store",
                         dest="dir",
                         help="directory in which the files to be retagged are located").complete = shtab.DIRECTORY
-
-    parser.add_argument("-v",
-                        "--verbose",
-                        action="store_true",
-                        default=False,
-                        dest="verbose",
-                        help="show verbose output")
 
     parser.add_argument("-V",
                         "--version",
