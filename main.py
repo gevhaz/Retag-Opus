@@ -300,9 +300,12 @@ def get_basename(file_path: Path) -> str:
     if basename:
         match = basename.groups()[0]
         file_name = match
-        pruned_name = re.match("<(.*)>.opus", file_name)
-        if pruned_name:
-            file_name = pruned_name.groups()[0]
+        name_playlist = re.match("<(.*)> - <(.*)> - <(.*)> - <(.*)>.opus", file_name)
+        name_single = re.match("<(.*)> - <(.*)>.opus", file_name)
+        if name_playlist:
+            file_name = name_playlist.groups()[1] + " - " + name_playlist.groups()[2]
+        elif name_single:
+            file_name = name_single.groups()[0] + " - " + name_single.groups()[1]
 
     return file_name
 
