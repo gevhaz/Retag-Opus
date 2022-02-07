@@ -94,7 +94,7 @@ def parse(description_tag_full: str) -> Dict[str, List[str]]:
         standard_pattern("arranger", r".*?[aA]rranged\s+[bB]y.*:\s*(.+)\s*")
         standard_pattern("arranger", r".*?[aA]rranger.*:\s*(.+)\s*")
         standard_pattern("artist", r"^(?!.*(https?|[mM]akeup|[fF]inishing)).*[aA]rtist.*:\s*(.+)\s*")
-        standard_pattern("artist", r".*\(feat. (.+?)\)")
+        standard_pattern("artist", r".*\([fF]eat. (.+?)\)")
         standard_pattern("artist", r".*“.*” by (.*) from ‘.*’")
         standard_pattern("author", r"(.*, )?[aA]uthor.*:\s*(.+)\s*")
         standard_pattern("composer", r".*?[cC]omposer.*:\s*(.+)\s*")
@@ -288,6 +288,21 @@ def adjust_existing_data(old_metadata: OggOpus, tag_source: Dict[str, str]) -> T
     # If the date is just the upload date, discard it
     if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
         old_metadata.pop("date", None)
+
+    old_title = old_metadata.get("title")
+    if old_title:
+        featuring_regex = r".*\([fF]eat. (.+?)\).*"
+        pattern_match = re.match(featuring_regex, old_title[0])
+        if pattern_match:
+            new_artist = pattern_match.groups()[0]
+            new_artist = new_artist.strip()
+            old_artist = old_metadata.get('artist')
+            if old_artist and old_artist[0] != new_artist:
+                old_artist.append(new_artist)
+                old_metadata['artist'] = remove_duplicates(old_artist)
+            else:
+                old_metadata['artist'] = [new_artist]
+            tag_source['artist'] = auto_col
 
     tags_to_split = ['genre', 'artist']
 
