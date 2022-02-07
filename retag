@@ -93,7 +93,7 @@ def parse(description_tag_full: str) -> Dict[str, List[str]]:
         standard_pattern("album", r".*“.*” by .* from ‘(.*)’")
         standard_pattern("arranger", r".*?[aA]rranged\s+[bB]y.*:\s*(.+)\s*")
         standard_pattern("arranger", r".*?[aA]rranger.*:\s*(.+)\s*")
-        standard_pattern("artist", r"(.*, )?[aA]rtist.*:\s*(.+)\s*")
+        standard_pattern("artist", r"^(?!.*https?).*[aA]rtist.*:\s*(.+)\s*")
         standard_pattern("artist", r".*\(feat. (.+?)\)")
         standard_pattern("artist", r".*“.*” by (.*) from ‘.*’")
         standard_pattern("author", r"(.*, )?[aA]uthor.*:\s*(.+)\s*")
