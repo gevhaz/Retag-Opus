@@ -219,7 +219,7 @@ def adjust_metadata(new_metadata: Dict[str, List[str]],
     yt_artist = new_metadata.get("artist")
     if md_artist is not None and len(md_artist) == 1 and split_tag(md_artist[0]) == yt_artist:
         old_metadata["artist"] = yt_artist
-        tag_source["album"] = yt_col
+        tag_source["artist"] = yt_col
 
     # Compare all fields
     for field, yt_value in new_metadata.items():
