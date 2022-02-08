@@ -439,17 +439,26 @@ def adjust_existing_data(old_metadata: OggOpus, tag_source: Dict[str, str]) -> T
         featuring_regex = r".*\([fF]eat. (.+?)\).*"
         pattern_match = re.match(featuring_regex, old_title[0])
         if pattern_match:
-            new_artist = pattern_match.groups()[0]
-            new_artist = new_artist.strip()
+            new_artist = pattern_match.groups()[0].strip()
             old_artist = old_metadata.get('artist')
+
+            if (old_artist and new_artist not in old_artist) or (old_artist is None and new_artist is not None):
+                tag_source['artist'] = auto_col
+
             if old_artist and old_artist[0] != new_artist:
                 old_artist.append(new_artist)
                 old_metadata['artist'] = remove_duplicates(old_artist)
             else:
                 old_metadata['artist'] = [new_artist]
-            tag_source['artist'] = auto_col
+
+            pruned_title = prune_title(old_title[0])
+            if old_title != pruned_title:
+                old_metadata["title"] = pruned_title
+                tag_source["title"] = auto_col
 
     tags_to_split = ['genre', 'artist']
+
+    old_title = old_metadata.get("title")
 
     for tag in tags_to_split:
         original_tag = old_metadata.get(tag)
