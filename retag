@@ -527,7 +527,9 @@ def main(args):
             old_metadata, tag_source = adjust_existing_data(old_metadata, tag_source)
 
             # 2. Get description
-            description_lines: List | None = old_metadata.get("description")
+            description_lines: List | None = old_metadata.get("synopsis")
+            if description_lines is None:
+                description_lines = old_metadata.get("description")
 
             # 3. If description exists, send it to be parsed
             new_metadata: Optional[Dict[str, List[str]]] = None
