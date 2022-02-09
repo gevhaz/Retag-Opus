@@ -381,11 +381,12 @@ def adjust_metadata(new_metadata: Dict[str, List[str]],
 
     # Compare all fields
     for field, yt_value in new_metadata.items():
-        if old_metadata.get(field) is None:
+        old_value = old_metadata.get(field)
+        if old_value is None and field != "albumartist":
             print(Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data.")
             old_metadata[field] = yt_value
             tag_source[field] = yt_col
-        elif yt_value == old_metadata.get(field):
+        elif yt_value == old_value:
             print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
             tag_source[field] = md_col
         else:
