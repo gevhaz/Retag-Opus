@@ -65,6 +65,11 @@ all_tags: Dict[str, Dict[str, Any]] = {
         "pattern": [
             ]
         },
+    "version": {
+        "print": "Version",
+        "pattern": [
+            ]
+        },
     "performer": {
         "print": "Performer",
         "pattern": [
@@ -246,9 +251,10 @@ def remove_duplicates(duplicates: list) -> list:
     return list(dict.fromkeys(duplicates))
 
 
-def prune_title(original_title):
+def prune_title(original_title: str) -> str:
     pruned = re.sub(r"\([rR]emastered.*\)", "", original_title)
     pruned = re.sub(r"\s*\([fF]eat.*\)", "", pruned)
+    pruned = re.sub(r"\s*\([lL]ive.*\)", "", pruned)
     return pruned.strip()
 
 
@@ -436,7 +442,10 @@ def modify_field(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[Ogg
     return old_metadata, tag_source
 
 
-def adjust_existing_data(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[OggOpus, Dict[str, str]]:
+def adjust_existing_data_prior(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[OggOpus, Dict[str, str]]:
+    """
+    Suggests adjustments based on pre-existing tags from the file.
+    """
     old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
 
     old_metadata.pop("language", None)
@@ -449,31 +458,7 @@ def adjust_existing_data(old_metadata: OggOpus, tag_source: Dict[str, str]) -> T
     if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
         old_metadata.pop("date", None)
 
-    old_title = old_metadata.get("title")
-    if old_title:
-        featuring_regex = r".*\([fF]eat. (.+?)\).*"
-        pattern_match = re.match(featuring_regex, old_title[0])
-        if pattern_match:
-            new_artist = pattern_match.groups()[0].strip()
-            old_artist = old_metadata.get('artist')
-
-            if (old_artist and new_artist not in old_artist) or (old_artist is None and new_artist is not None):
-                tag_source['artist'] = auto_col
-
-            if old_artist and old_artist[0] != new_artist:
-                old_artist.append(new_artist)
-                old_metadata['artist'] = remove_duplicates(old_artist)
-            else:
-                old_metadata['artist'] = [new_artist]
-
-            pruned_title = prune_title(old_title[0])
-            if old_title != pruned_title:
-                old_metadata["title"] = pruned_title
-                tag_source["title"] = auto_col
-
     tags_to_split = ['genre', 'artist']
-
-    old_title = old_metadata.get("title")
 
     for tag in tags_to_split:
         original_tag = old_metadata.get(tag)
@@ -484,6 +469,56 @@ def adjust_existing_data(old_metadata: OggOpus, tag_source: Dict[str, str]) -> T
                 tag_source[tag] = auto_col
 
     return old_metadata, tag_source
+
+
+def adjust_existing_data_after(old_tags: OggOpus, dsc_tags: Optional[Dict[str, List[str]]], tag_source: Dict[str, str]):
+    """
+    Suggests adjustments based on tags from the description or from the old tags, which can only be done once we have to
+    tags extracted from the description.
+
+    :param old_tags:
+    """
+    old_title = old_tags.get("title", [])
+    dsc_title = dsc_tags.get("title", []) if dsc_tags else []
+    combo_title = remove_duplicates(old_title + dsc_title)
+
+    old_artist = old_tags.get('artist', [])
+    dsc_artist = dsc_tags.get('artist', []) if dsc_tags else []
+    combo_artist = remove_duplicates(old_artist + dsc_artist)
+    new_artist = []
+
+    old_version = old_tags.get("version", [])
+    dsc_version = dsc_tags.get("version", []) if dsc_tags else []
+    combo_version = remove_duplicates(old_version + dsc_version)
+    new_version = []
+
+    for title in combo_title:
+        featuring_regex = r".*\([fF]eat. (.+?)\).*"
+        pattern_match = re.match(featuring_regex, title)
+        if pattern_match:
+            new_artist.append(pattern_match.groups()[0].strip())
+
+        live_regex = r".*\(([lL]ive.*)\)"
+        live_match = re.match(live_regex, title)
+        if live_match:
+            new_version.append(live_match.groups()[0].strip())
+
+    if set(new_version) != set(combo_version) and len(new_version) > 0:
+        old_tags["version"] = remove_duplicates(combo_version + new_version)
+        tag_source["version"] = auto_col
+
+    if set(new_artist) != set(combo_artist) and len(new_artist) > 0:
+        old_tags["artist"] = remove_duplicates(combo_artist + new_artist)
+        tag_source["artist"] = auto_col
+
+    pruned_title = prune_title(old_title[0])
+    if old_title[0] != pruned_title:
+        old_tags["title"] = [pruned_title]
+        tag_source["title"] = auto_col
+        print(old_title)
+        print(pruned_title)
+
+    return old_tags, tag_source
 
 
 def get_basename(file_path: Path) -> str:
@@ -524,7 +559,7 @@ def main(args):
                 old_tags[key] = val
             for key in old_tags.keys():
                 tag_source[key] = md_col
-            old_metadata, tag_source = adjust_existing_data(old_metadata, tag_source)
+            old_metadata, tag_source = adjust_existing_data_prior(old_metadata, tag_source)
 
             # 2. Get description
             description_lines: List | None = old_metadata.get("synopsis")
@@ -536,6 +571,9 @@ def main(args):
             if description_lines is not None:
                 description = '\n'.join(description_lines)
                 new_metadata = parse(description)
+
+            # 3.1. Use new tags as well to extract information
+            old_metadata, tag_source = adjust_existing_data_after(old_metadata, new_metadata, tag_source)
 
             # 4. For each field, if there are conflicts, ask user input
             if new_metadata:
