@@ -253,10 +253,10 @@ def remove_duplicates(duplicates: list) -> list:
 
 def prune_title(original_title: str) -> str:
     pruned = re.sub(r"\([rR]emastered.*\)", "", original_title)
-    pruned = re.sub(r"(.*)\s*[\(\[][fF]eat.?\s+(.+?)[\)\]](.*)", r"\1 \3", pruned)
-    pruned = re.sub(r"(.*)\s*[\(\[]([lL]ive.*)[\)\]]", r"\1", pruned)
-    pruned = re.sub(r"(.*)\s*[\(\[]([iI]nstrumental.*)[\)\]]", r"\1", pruned)
-    pruned = re.sub(r"(.*)\s*\((.*[rR]emix.*)\)", r"\1", pruned)
+    pruned = re.sub(r"(.*?)\s*[\(\[][fF]eat.?\s+(.+?)[\)\]]\s*(.*)", r"\1 \3", pruned)
+    pruned = re.sub(r"(.*?)\s*[\(\[]([lL]ive.*)[\)\]]\s*(.*)", r"\1 \3", pruned)
+    pruned = re.sub(r"(.*?)\s*[\(\[]([iI]nstrumental.*)[\)\]]\s*(.*)", r"\1 \3", pruned)
+    pruned = re.sub(r"(.*?)\s*\((.*[rR]emix.*)\)", r"\1", pruned)
     return pruned.strip()
 
 
@@ -500,17 +500,17 @@ def adjust_existing_data_after(old_tags: OggOpus, dsc_tags: Optional[Dict[str, L
     new_genre = []
 
     for title in combo_title:
-        featuring_regex = r"(.*)\s*[\(\[][fF]eat.?\s+(.+?)[\)\]](.*)"
+        featuring_regex = r"(.*)\s*[\(\[][fF]eat.?\s+(.+?)[\)\]]\s*(.*)"
         pattern_match = re.match(featuring_regex, title)
         if pattern_match:
             new_artist += split_tag(pattern_match.groups()[1].strip())
 
-        live_regex = r"(.*)\s*[\(\[]([lL]ive.*)[\)\]]"
+        live_regex = r"(.*)\s*[\(\[]([lL]ive.*)[\)\]]\s*(.*)"
         live_match = re.match(live_regex, title)
         if live_match:
             new_version.append(live_match.groups()[1].strip())
 
-        instrumental_regex = r"(.*)\s*[\(\[]([iI]nstrumental.*)[\)\]]"
+        instrumental_regex = r"(.*)\s*[\(\[]([iI]nstrumental.*)[\)\]]\s*(.*)"
         instrumental_match = re.match(instrumental_regex, title)
         if instrumental_match:
             new_genre.append("Instrumental")
@@ -536,8 +536,6 @@ def adjust_existing_data_after(old_tags: OggOpus, dsc_tags: Optional[Dict[str, L
     if old_title[0] != pruned_title:
         old_tags["title"] = [pruned_title]
         tag_source["title"] = auto_col
-        print(old_title)
-        print(pruned_title)
 
     return old_tags, tag_source
 
