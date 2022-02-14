@@ -255,6 +255,7 @@ def prune_title(original_title: str) -> str:
     pruned = re.sub(r"\([rR]emastered.*\)", "", original_title)
     pruned = re.sub(r"\s*\([fF]eat.*\)", "", pruned)
     pruned = re.sub(r"\s*\([lL]ive.*\)", "", pruned)
+    pruned = re.sub(r"(.*)\s*[\(\[]([iI]nstrumental.*)[\)\]]", r"\1", pruned)
     return pruned.strip()
 
 
@@ -502,6 +503,11 @@ def adjust_existing_data_after(old_tags: OggOpus, dsc_tags: Optional[Dict[str, L
         live_match = re.match(live_regex, title)
         if live_match:
             new_version.append(live_match.groups()[0].strip())
+
+        instrumental_regex = r"(.*)\s*[\(\[]([iI]nstrumental.*)[\)\]]"
+        instrumental_match = re.match(instrumental_regex, title)
+        if instrumental_match:
+            new_version.append(instrumental_match.groups()[1].strip())
 
     if set(new_version) != set(combo_version) and len(new_version) > 0:
         old_tags["version"] = remove_duplicates(combo_version + new_version)
