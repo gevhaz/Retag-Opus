@@ -494,6 +494,11 @@ def adjust_existing_data_after(old_tags: OggOpus, dsc_tags: Optional[Dict[str, L
     combo_version = remove_duplicates(old_version + dsc_version)
     new_version = []
 
+    old_genre = old_tags.get("genre", [])
+    dsc_genre = dsc_tags.get("genre", []) if dsc_tags else []
+    combo_genre = remove_duplicates(old_genre + dsc_genre)
+    new_genre = []
+
     for title in combo_title:
         featuring_regex = r".*\([fF]eat. (.+?)\).*"
         pattern_match = re.match(featuring_regex, title)
@@ -508,7 +513,7 @@ def adjust_existing_data_after(old_tags: OggOpus, dsc_tags: Optional[Dict[str, L
         instrumental_regex = r"(.*)\s*[\(\[]([iI]nstrumental.*)[\)\]]"
         instrumental_match = re.match(instrumental_regex, title)
         if instrumental_match:
-            new_version.append(instrumental_match.groups()[1].strip())
+            new_genre.append("Instrumental")
 
         remix_regex = r"(.*)\s*\((.*[rR]emix.*)\)"
         remix_match = re.match(remix_regex, title)
@@ -522,6 +527,10 @@ def adjust_existing_data_after(old_tags: OggOpus, dsc_tags: Optional[Dict[str, L
     if set(new_artist) != set(combo_artist) and len(new_artist) > 0:
         old_tags["artist"] = remove_duplicates(combo_artist + new_artist)
         tag_source["artist"] = auto_col
+
+    if set(new_genre) != set(combo_genre) and len(new_genre) > 0:
+        old_tags["genre"] = remove_duplicates(combo_genre + new_genre)
+        tag_source["genre"] = auto_col
 
     pruned_title = prune_title(old_title[0])
     if old_title[0] != pruned_title:
