@@ -1,7 +1,8 @@
 import re
 
-from mutagen.oggopus import OggOpus  # type: ignore
 from colorama import Fore  # type: ignore
+from mutagen.oggopus import OggOpus  # type: ignore
+from simple_term_menu import TerminalMenu  # type: ignore
 
 import colors
 import constants
@@ -204,38 +205,59 @@ class MusicTags:
                 self.print_all()
                 while redo:
                     redo = False
+                    candidates = []
                     print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
                     if old_value:
-                        print("  1. Exisiting metadata:  " + colors.md_col + ' | '.join(old_value))
+                        print("Exisiting metadata:  " + colors.md_col + ' | '.join(old_value))
+                        candidates.append("Existing metadata")
                     if yt_value:
-                        print("  2. YouTube description: " + colors.yt_col + ' | '.join(yt_value))
+                        print("YouTube description: " + colors.yt_col + ' | '.join(yt_value))
+                        candidates.append("YouTube description")
                     if from_tags_value:
-                        print("  3. Parsed from original tags: " + Fore.YELLOW + ' | '.join(from_tags_value))
+                        print("Parsed from original tags: " + Fore.YELLOW + ' | '.join(from_tags_value))
+                        candidates.append("Parsed from original tags")
                     if from_desc_value:
-                        print("  4. Parsed from YouTube tags: " + Fore.GREEN + ' | '.join(from_desc_value))
-                    print("  5. Manually fill in tag")
-                    print("  6. Print description metadata")
-                    print("  7. Remove field")
-                    choice = input("Choose the number you want to use. Empty leaves metadata unchanged: ")
-                    if choice == '1':
-                        self.resolved[field] = self.original[field]
-                    elif choice == '2' and yt_value is not None:
+                        print("Parsed from YouTube tags: " + Fore.GREEN + ' | '.join(from_desc_value))
+                        candidates.append("Parsed from Youtube tags")
+
+                    # There have to be choices available for it to make sense to stay in the loop
+                    if not candidates:
+                        break
+                    candidates.append("Other action")
+                    candidate_menu = TerminalMenu(candidates)
+                    choice = candidate_menu.show()
+                    if choice is None:
+                        continue
+                    if candidates[choice] == "Other action":
+                        other_choices = [
+                            "[m] Manually fill in tag",
+                            "[p] Print description metadata",
+                            "[r] Remove field"
+                            "[g] Go back"
+                            ]
+                        other_choice_menu = TerminalMenu(other_choices, title="Choose the source you want to use:")
+                        choice = other_choice_menu.show()
+                        if other_choices[choice] == "[m] Manually fill in tag":
+                            self.resolved[field] = [input("Value: ")]
+                        elif other_choices[choice] == "[p] Print description metadata":
+                            print("-----------------------------------------------")
+                            self.print_youtube()
+                            redo = True
+                        elif other_choices[choice] == "[r] Remove field":
+                            self.resolved.pop(field, None)
+                        elif other_choices[choice] == "[g] Go back":
+                            redo = True
+                        else:
+                            print(Fore.RED + "Invalid choice, try again")
+                            redo = True
+                    elif candidates[choice] == "Existing metadata":
+                        self.resolved[field] = self.original.get(field, [])
+                    elif candidates[choice] == "YouTube description" and yt_value is not None:
                         self.resolved[field] = yt_value
-                    elif choice == '3' and from_tags_value is not None:
+                    elif candidates[choice] == "Parsed from original tags" and from_tags_value is not None:
                         self.resolved[field] = from_tags_value
-                    elif choice == '4' and from_desc_value is not None:
+                    elif candidates[choice] == "Parsed from Youtube tags" and from_desc_value is not None:
                         self.resolved[field] = from_desc_value
-                    elif choice == '5':
-                        self.resolved[field] = [input("Value: ")]
-                    elif choice == '6':
-                        print("-----------------------------------------------")
-                        self.print_youtube()
-                        redo = True
-                    elif choice == '7':
-                        self.resolved.pop(field, None)
-                    else:
-                        print(Fore.RED + "Invalid choice, try again")
-                        redo = True
 
     def modify_resolved_field(self):
         key = " "
