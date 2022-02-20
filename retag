@@ -117,39 +117,48 @@ def main(args):
                         "[q] quit"
                         ]
                 terminal_menu = TerminalMenu(options, title="What do you want to do?")
-                action = terminal_menu.show()
-                print('-' * 30)
-                if action is None or options[action] == "[q] quit":
-                    print(Fore.YELLOW + "Skipping this and all later songs")
-                    stop = True
-                elif options[action] == "[s] save":
-                    old_metadata.save()
-                    print(Fore.GREEN + f"Metadata saved for file: {file_name}")
-                elif options[action] == "[r] reset":
-                    print(f"Trying to improve metadata again for file: {file_name}")
-                    redo = True
-                elif options[action] == "[m] modify field":
-                    tags.modify_resolved_field()
-                    print(Fore.BLUE + "Current metadata to save:")
-                    tags.print_resolved()
-                    reshow_choices = True
-                elif options[action] == "[p] pass":
-                    print(Fore.YELLOW + f"Pass. Skipping song: {file_name}")
-                elif options[action] == "[y] youtube description":
-                    if description_lines:
-                        print(Fore.BLUE + "Original YouTube description:")
-                        print(colors.yt_col + "\n".join(description_lines))
-                    else:
-                        print(Fore.RED + "No YouTube description tag for this song.")
-                    reshow_choices = True
-                elif options[action] == "[a] all metadata":
-                    print(Fore.BLUE + "All old and new metadata suggested for this file:")
-                    tags.print_all()
-                    reshow_choices = True
-                elif options[action] == "[e] resolved metadata":
-                    print(Fore.BLUE + "Current metadata to save:")
-                    tags.print_resolved()
-                    reshow_choices = True
+                choice = terminal_menu.show()
+                print('-' * 40)
+
+                action = "[q] quit"
+                if choice is not None:
+                    action = options[choice]
+
+                match action:
+                    case "[q] quit":
+                        print(Fore.YELLOW + "Skipping this and all later songs")
+                        stop = True
+                    case "[s] save":
+                        old_metadata.save()
+                        print(Fore.GREEN + f"Metadata saved for file: {file_name}")
+                    case "[r] reset":
+                        print(f"Trying to improve metadata again for file: {file_name}")
+                        redo = True
+                    case "[m] modify field":
+                        tags.modify_resolved_field()
+                        print(Fore.BLUE + "Current metadata to save:")
+                        tags.print_resolved()
+                        reshow_choices = True
+                    case "[p] pass":
+                        print(Fore.YELLOW + f"Pass. Skipping song: {file_name}")
+                    case "[y] youtube description":
+                        if description_lines:
+                            print(Fore.BLUE + "Original YouTube description:")
+                            print(colors.yt_col + "\n".join(description_lines))
+                        else:
+                            print(Fore.RED + "No YouTube description tag for this song.")
+                        reshow_choices = True
+                    case "[a] all metadata":
+                        print(Fore.BLUE + "All old and new metadata suggested for this file:")
+                        tags.print_all()
+                        reshow_choices = True
+                    case "[e] resolved metadata":
+                        print(Fore.BLUE + "Current metadata to save:")
+                        tags.print_resolved()
+                        reshow_choices = True
+                    case _:
+                        print(Fore.RED + "Something went wrong, starting over")
+                        redo = True
 
         if stop:
             break
