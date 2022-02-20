@@ -117,7 +117,7 @@ def main(args):
                     print(f"Trying to improve metadata again for file: {file_name}")
                     redo = True
                 elif action == "m":
-                    old_metadata, tag_source = tags.modify_resolved_field()
+                    tags.modify_resolved_field()
                     print(Fore.BLUE + "Current metadata to save:")
                     tags.print_resolved()
                     reshow_choices = True
