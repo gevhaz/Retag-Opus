@@ -1,11 +1,17 @@
-from typing import Any, Dict
+from typing import TypedDict
 
 INTERPUNCT = '\u00b7'
 SPACE = '\u00b7'
 SPACE = ' '
 SEP = " | "
 
-tag_parse_patterns: Dict[str, str] = {
+
+class ParsingReference(TypedDict):
+    print: str
+    pattern: list[str]
+
+
+tag_parse_patterns: dict[str, str] = {
         "featuring": r"(.*?)\s*[\(\[][fF]eat.?\s+(.+?)[\)\]]\s*(.*)",
         "remastered": r"(.*?)\s*\(([rR]emastered.*)\)\s*(.*)",
         "live": r"(.*?)\s*[\(\[]([lL]ive.*)[\)\]]\s*(.*)",
@@ -13,7 +19,7 @@ tag_parse_patterns: Dict[str, str] = {
         "remix": r"(.*?)\s*\((.*[rR]emix.*)\)\s*(.*)"
     }
 
-all_tags: Dict[str, Dict[str, Any]] = {
+all_tags: dict[str, ParsingReference] = {
     "title": {
         "print": "Title",
         "pattern": [
@@ -120,7 +126,7 @@ all_tags: Dict[str, Dict[str, Any]] = {
         }
     }
 
-performer_tags: Dict[str, Dict[str, Any]] = {
+performer_tags: dict[str, ParsingReference] = {
     "performer:vocals": {
         "print": "- Vocals",
         "pattern": [

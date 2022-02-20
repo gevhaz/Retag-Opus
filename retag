@@ -12,7 +12,6 @@ __license__ = "GPLv3"
 from mutagen.oggopus import OggOpus  # type: ignore
 from colorama import Fore, init  # type: ignore
 from pathlib import Path
-from typing import List
 
 from cli import Cli
 import colors
@@ -63,7 +62,7 @@ def main(args):
             tags.set_tags_from_old_tags(old_tags_parser.get_tags())
 
             # 2. Get description
-            description_lines: List | None = old_metadata.get("synopsis")
+            description_lines: list[str] | None = old_metadata.get("synopsis")
             if description_lines is None:
                 description_lines = old_metadata.get("description")
 

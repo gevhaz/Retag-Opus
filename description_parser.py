@@ -1,23 +1,23 @@
 import re
 
-from typing import List, Dict
-
 import constants
 
 from utils import Utils
 
 INTERPUNCT = '\u00b7'
 
+Tags = dict[str, list[str]]
+
 
 class DescriptionParser:
 
     def __init__(self):
-        self.tags: Dict[str, List[str]] = {}
+        self.tags: Tags = {}
 
     def parse_artist_and_title(self, source_line):
         artist_and_title = source_line.split(" " + constants.INTERPUNCT + " ")
         title = Utils().prune_title(artist_and_title[0])
-        artist: List = artist_and_title[1:]
+        artist: list = artist_and_title[1:]
 
         if len(artist) < 2 and ", " in artist[0]:
             artist = Utils().split_tag(artist[0])
@@ -39,7 +39,7 @@ class DescriptionParser:
     def parse(self, description_tag_full: str):
         lines_since_title_artist: int = 1000
 
-        description_tag_lines: List[str] = description_tag_full.splitlines(False)
+        description_tag_lines: list[str] = description_tag_full.splitlines(False)
 
         for description_line in description_tag_lines:
             description_line = description_line.replace('\n', '')
@@ -75,7 +75,7 @@ class DescriptionParser:
         if artist:
             self.tags["albumartist"] = [artist[0]]
             if len(artist) > 1:
-                many_artist: List[str] = []
+                many_artist: list[str] = []
                 for a in artist:
                     many_artist = many_artist + Utils().split_tag(a)
                 artist = many_artist
@@ -103,5 +103,5 @@ class DescriptionParser:
         if copyright_date and not date:
             self.tags["date"] = copyright_date
 
-    def get_tags(self) -> Dict[str, List[str]]:
+    def get_tags(self) -> Tags:
         return self.tags

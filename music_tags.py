@@ -2,12 +2,13 @@ import re
 
 from mutagen.oggopus import OggOpus  # type: ignore
 from colorama import Fore  # type: ignore
-from typing import List, Dict
 
 import colors
 import constants
 
 from utils import Utils
+
+Tags = dict[str, list[str]]
 
 
 class MusicTags:
@@ -16,11 +17,11 @@ class MusicTags:
     """
 
     def __init__(self):
-        self.original: Dict[str, List[str]] = {}
-        self.youtube: Dict[str, List[str]] = {}
-        self.fromtags: Dict[str, List[str]] = {}
-        self.fromdesc: Dict[str, List[str]] = {}
-        self.resolved: Dict[str, List[str]] = {}
+        self.original: Tags = {}
+        self.youtube: Tags = {}
+        self.fromtags: Tags = {}
+        self.fromdesc: Tags = {}
+        self.resolved: Tags = {}
 
     def print_metadata_key(self, key_type, key, key_col, data):
         value = constants.SEP.join(data.get(key, [Fore.BLACK + 'Not found'])).replace(' ', constants.SPACE)
@@ -137,19 +138,19 @@ class MusicTags:
         for key, value in original_metadata.values():
             self.original[key] = value
 
-    def set_youtube_tags(self, youtube_tags: Dict[str, List[str]]):
+    def set_youtube_tags(self, youtube_tags: Tags):
         self.youtube = youtube_tags
 
-    def set_original_tags(self, original_tags: Dict[str, List[str]]):
+    def set_original_tags(self, original_tags: Tags):
         self.original = original_tags
 
-    def set_tags_from_description(self, from_desc_tags: Dict[str, List[str]]):
+    def set_tags_from_description(self, from_desc_tags: Tags):
         self.fromdesc = from_desc_tags
 
-    def set_tags_from_old_tags(self, tags_from_old_tags: Dict[str, List[str]]):
+    def set_tags_from_old_tags(self, tags_from_old_tags: Tags):
         self.fromtags = tags_from_old_tags
 
-    def set_resolved_tags(self, resolved: Dict[str, List[str]]):
+    def set_resolved_tags(self, resolved: Tags):
         self.resolved = resolved
 
     def prune_final_metadata(self):
