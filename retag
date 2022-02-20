@@ -30,8 +30,8 @@ def main(args):
     all_files = list(filter(Path.is_file, Path(music_dir).glob('*.opus')))
 
     if args.manual_album is not None:
-        constants.all_tags["discsubtitle"] = {"print": "Disc subtitle"}
-        constants.all_tags["discsubtitle"]["pattern"] = constants.all_tags["album"]["pattern"]
+        constants.all_tags["discsubtitle"] = constants.all_tags["album"]
+        constants.all_tags["discsubtitle"]["print"] = "Disc subtitle"
         constants.all_tags["album"]["pattern"] = []
 
     for idx, file_path in enumerate(all_files):
