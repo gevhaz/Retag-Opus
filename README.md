@@ -6,6 +6,12 @@ Youtube's ContentID. This script will help you parse that tag and put
 the relevant data into the tags where it actually belongs, such as
 `title`, `artist`, and `album`.
 
+# Dependencies
+
+Retag requires
+[simple-term-menu](https://github.com/IngoMeyer441/simple-term-menu) to
+be installed.
+
 # Usage
 
 Run the script like so:
