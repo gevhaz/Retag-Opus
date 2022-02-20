@@ -106,8 +106,8 @@ def main(args):
             while reshow_choices:
                 reshow_choices = False
                 action_prompt = ("Action: (s)ave, (r)eset, (m)odify field, (p)ass, "
-                                 "(y)outube description, (o)ld metadata, (c)urrent metadata, (d)escription metadata, "
-                                 "(a)bort: ")
+                                 "(y)outube description, (a)ll metadata, r(e)solved metadata, "
+                                 "(q)uit: ")
                 action = input(action_prompt)
                 print('-' * (len(action_prompt) + 1))
                 if action == 's':
@@ -130,22 +130,15 @@ def main(args):
                     else:
                         print(Fore.RED + "No YouTube description tag for this song.")
                     reshow_choices = True
-                elif action == "o":
-                    print(Fore.BLUE + "The original metadata for this file:")
-                    tags.print_original()
+                elif action == "a":
+                    print(Fore.BLUE + "All old an new metadata suggested for this file:")
+                    tags.print_all()
                     reshow_choices = True
-                elif action == "c":
+                elif action == "e":
                     print(Fore.BLUE + "Current metadata to save:")
                     tags.print_resolved()
                     reshow_choices = True
-                elif action == "d":
-                    if tags.youtube:
-                        print(Fore.BLUE + "Metadata parsed from YouTube description:")
-                        tags.print_youtube()
-                    else:
-                        print(Fore.RED + "This song has no YouTube description tag to parse metadata from.")
-                    reshow_choices = True
-                elif action == "a":
+                elif action == "q":
                     print(Fore.YELLOW + "Skipping this and all later songs")
                     stop = True
                 else:
