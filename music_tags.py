@@ -75,12 +75,14 @@ class MusicTags:
                 main_line.append(Fore.GREEN + " | ".join(fromdesc))
             if len(main_line) > 0:
                 main_block.append(Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(main_line))
+            else:
+                main_block.append(Fore.WHITE + tag_data['print'] + Fore.BLACK + "Not set")
 
         if len(performer_block + main_block) > 0:
             if len(performer_block) > 0:
                 print(Fore.BLUE + "Performers:")
                 print("\n".join(performer_block))
-            print("\n".join(main_block))
+            print("\n".join(main_block) + "\n")
         else:
             print(Fore.RED + "There's no data to be printed")
 
