@@ -1,432 +1,28 @@
 #!/usr/bin/env python3
 """
-Script to parse a "description" tag in a song, corresponding to the
-youtube version of the song, and parse it to produce other tags.
+Script to parse a "description" tag in a song, corresponding to the youtube version of the song, and parse it to produce
+other tags. Existing tags are also used to produce new ones, e.g. moving strings like "2020 Remix" from the title tag to
+the version tag.
 """
 
 __author__ = "Simon Bengtsson"
 __version__ = "0.1.0"
 __license__ = "GPLv3"
 
-import argparse
-import re
-import shtab
-
 from mutagen.oggopus import OggOpus  # type: ignore
 from colorama import Fore, init  # type: ignore
 from pathlib import Path
-from typing import Any, List, Dict, Optional, Tuple
+from typing import List, Dict, Tuple
 
-INTERPUNCT = '\u00b7'
-SPACE = '\u00b7'
-SPACE = ' '
-SEP = " | "
-yt_col = Fore.MAGENTA
-md_col = Fore.CYAN
-man_col = Fore.GREEN
-auto_col = Fore.YELLOW
+from cli import Cli
+import colors
+
+from description_parser import DescriptionParser
+from music_tags import MusicTags
+from tags_parser import TagsParser
+from utils import Utils
 
 init(autoreset=True)
-
-all_tags: Dict[str, Dict[str, Any]] = {
-    "title": {
-        "print": "Title",
-        "pattern": [
-            r".*“(.*)” by .* from ‘.*’"
-            ]
-        },
-    "album": {
-        "print": "Album",
-        "pattern": [
-                r".*“.*” by .* from ‘(.*)’"
-            ]
-        },
-    "albumartist": {
-        "print": "Album Artist",
-        "pattern": [
-            ]
-        },
-    "artist": {
-        "print": "Artist(s)",
-        "pattern": [
-            r"^(?!.*(https?|[mM]akeup|[fF]inishing)).*[aA]rtist.*:\s*(.+)\s*",
-            r".*\([fF]eat. (.+?)\)",
-            r".*“.*” by (.*) from ‘.*’"
-            ]
-        },
-    "date": {
-        "print": "Date",
-        "pattern": [
-                r"Released on:\s*(\d\d\d\d-\d\d-\d\d)"
-            ]
-        },
-    "genre": {
-        "print": "Genre",
-        "pattern": [
-            ]
-        },
-    "version": {
-        "print": "Version",
-        "pattern": [
-            ]
-        },
-    "performer": {
-        "print": "Performer",
-        "pattern": [
-            r".*[pP]erformer.*:\s*(.+)\s*"
-            ]
-        },
-    "organization": {
-        "print": "Organization",
-        "pattern": [
-            r"Provided to YouTube by (.+)\s*"
-            ]
-        },
-    "copyright": {
-        "print": "Copyright",
-        "pattern": [
-                r"\u2117 (.+)\s*"
-            ]
-        },
-    "composer": {
-        "print": "Composer",
-        "pattern": [
-            r".*?[cC]omposer.*:\s*(.+)\s*"
-            ]
-        },
-    "conductor": {
-        "print": "Conductor",
-        "pattern": [
-            r".*[cC]onductor.*:\s*(.+)\s*"
-            ]
-        },
-    "arranger": {
-        "print": "Arranger",
-        "pattern": [
-            r".*?[aA]rranged\s+[bB]y.*:\s*(.+)\s*",
-            r".*?[aA]rranger.*:\s*(.+)\s*"
-            ]
-        },
-    "author": {
-        "print": "Author",
-        "pattern": [
-            r"(.*, )?[aA]uthor.*:\s*(.+)\s*"
-            ]
-        },
-    "producer": {
-        "print": "Producer",
-        "pattern": [
-            r"(.*, )?[pP]roducer.*:\s*(.+)\s*"
-            ]
-        },
-    "publisher": {
-        "print": "Publisher",
-        "pattern": [
-            r"(.*, )?[pP]ublisher.*:\s*(.+)\s*"
-            ]
-        },
-    "lyricist": {
-        "print": "Lyricist",
-        "pattern": [
-            r"(.*, )?[wW]riter.*:\s*(.+)\s*",
-            r"(.*, )?[wW]ritten\s+[bB]y.*:\s*(.+)\s*",
-            r".*[lL]yricist.*:\s*(.+)\s*"
-            ]
-        }
-    }
-
-performer_tags: Dict[str, Dict[str, Any]] = {
-    "performer:vocals": {
-        "print": "- Vocals",
-        "pattern": [
-            r"(.*, )?(Lead\s+)?[vV]ocal(?!.*[eE]ngineer).*:\s*(.+)\s*"
-            ]
-        },
-    "performer:background vocals": {
-        "print": "- Background Vocals",
-        "pattern": [
-            r"(.*, )?[bB]ackground\s+[vV]ocal.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:drums": {
-        "print": "- Drums",
-        "pattern": [
-            r"(.*, )?[dD]rum.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:percussion": {
-        "print": "- Percussion",
-        "pattern": [
-            r".*[pP]ercussion.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:keyboard": {
-        "print": "- Keyboard",
-        "pattern": [
-            r"(.*, )?[kK]eyboard.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:piano": {
-        "print": "- Piano",
-        "pattern": [
-            r"(.*, )?[pP]iano.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:synthesizer": {
-        "print": "- Synthesizer",
-        "pattern": [
-            r".*[sS]ynth.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:guitar": {
-        "print": "- Guitar",
-        "pattern": [
-            r"(.*, )?[gG]uitar.*:\s*(.+)\s*"
-            r".*[eE]lectric\s+[gG]uitar.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:electric guitar": {
-        "print": "- Electric guitar",
-        "pattern": [
-            ]
-        },
-    "performer:bass guitar": {
-        "print": "- Bass guitar",
-        "pattern": [
-            r".*[bB]ass\s+[gG]uitar.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:acoustic guitar": {
-        "print": "- Acoustic guitar",
-        "pattern": [
-            r".*[aA]coustic\s+[gG]uitar.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:ukulele": {
-        "print": "- Ukulele",
-        "pattern": [
-            r".*[uU]kulele.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:violin": {
-        "print": "- Violin",
-        "pattern": [
-            r"(.*, )?[vV]iolin.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:double bass": {
-        "print": "- Double bass",
-        "pattern": [
-            r".*[dD]ouble\s+[bB]ass.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:cello": {
-        "print": "- Cello",
-        "pattern": [
-            r"(.*, )?[cC]ello.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:programming": {
-        "print": "- Programming",
-        "pattern": [
-            r"(.*, )?[pP]rogramm(er|ing).*:\s*(.+)\s*"
-            ]
-        },
-    "performer:saxophone": {
-        "print": "- Saxophone",
-        "pattern": [
-            r"(.*, )?[sS]axophone.*:\s*(.+)\s*"
-            ]
-        },
-    "performer:flute": {
-        "print": "- Flute",
-        "pattern": [
-            r"(.*, )?[fF]lute.*:\s*(.+)\s*"
-            ]
-        }
-    }
-
-
-def remove_duplicates(duplicates: list) -> list:
-    return list(dict.fromkeys(duplicates))
-
-
-def prune_title(original_title: str) -> str:
-    pruned = re.sub(r"\([rR]emastered.*\)", "", original_title)
-    pruned = re.sub(r"(.*?)\s*[\(\[][fF]eat.?\s+(.+?)[\)\]]\s*(.*)", r"\1 \3", pruned)
-    pruned = re.sub(r"(.*?)\s*[\(\[]([lL]ive.*)[\)\]]\s*(.*)", r"\1 \3", pruned)
-    pruned = re.sub(r"(.*?)\s*[\(\[]([iI]nstrumental.*)[\)\]]\s*(.*)", r"\1 \3", pruned)
-    pruned = re.sub(r"(.*?)\s*\((.*[rR]emix.*)\)", r"\1", pruned)
-    return pruned.strip()
-
-
-def split_tag(input: str) -> List[str]:
-    return re.split(", | and | & |; ", input)
-
-
-def parse_artist_and_title(source_line):
-    artist_and_title = source_line.split(" " + INTERPUNCT + " ")
-    title = prune_title(artist_and_title[0])
-    artist: List = artist_and_title[1:]
-
-    if len(artist) < 2 and ", " in artist[0]:
-        artist = split_tag(artist[0])
-
-    return artist, title
-
-
-def parse(description_tag_full: str) -> Dict[str, List[str]]:
-    new_metadata: Dict[str, List[str]] = {}
-    lines_since_title_artist: int = 1000
-
-    description_tag_lines: List[str] = description_tag_full.splitlines(False)
-
-    def standard_pattern(field_name, regex):
-        pattern = re.compile(regex)
-        pattern_match = re.match(pattern, description_line)
-        if pattern_match:
-            field_value = pattern_match.groups()[len(pattern_match.groups())-1]
-            field_value = field_value.strip()
-            if new_metadata.get(field_name):
-                new_metadata[field_name].append(field_value)
-                new_metadata[field_name] = remove_duplicates(new_metadata[field_name])
-            else:
-                new_metadata[field_name] = [field_value]
-
-    for description_line in description_tag_lines:
-        description_line = description_line.replace('\n', '')
-        description_line = re.sub('\n', '', description_line)
-        lines_since_title_artist = lines_since_title_artist + 1
-        # Artist and title
-        if INTERPUNCT in description_line:
-            lines_since_title_artist = 0
-            youtube_artist, youtube_title = parse_artist_and_title(description_line)
-            if youtube_artist:
-                new_metadata["artist"] = remove_duplicates(youtube_artist)
-            new_metadata["title"] = [youtube_title]
-
-        if lines_since_title_artist == 2:
-            new_metadata["album"] = [description_line.strip()]
-
-        for tag_id, tag_data in all_tags.items():
-            for pattern in tag_data['pattern']:
-                standard_pattern(tag_id, pattern)
-
-        for tag_id, tag_data in performer_tags.items():
-            for pattern in tag_data['pattern']:
-                standard_pattern(tag_id, pattern)
-
-        title = new_metadata.pop("title", None)
-        if title:
-            new_metadata['title'] = [prune_title(title[0])]
-
-    artist = new_metadata.get("artist")
-    if artist:
-        new_metadata["albumartist"] = [artist[0]]
-        if len(artist) > 1:
-            many_artist: List[str] = []
-            for a in artist:
-                many_artist = many_artist + split_tag(a)
-            artist = many_artist
-        else:
-            artist = split_tag(artist[0])
-        artist = remove_duplicates(artist)
-        new_metadata['artist'] = artist
-
-    for key, value in new_metadata.items():
-        if value == []:
-            new_metadata.pop(key)
-    # Basic pattern:
-    # r".*[ ]   .*:\s*(.*)\s*"
-
-    standard_pattern("copyright_date", r"\u2117 (\d\d\d\d)\s")
-    copyright_date = new_metadata.pop("copyright_date", None)
-    date = new_metadata.get("date")
-    if copyright_date and not date:
-        new_metadata["date"] = copyright_date
-
-    return new_metadata
-
-
-def print_metadata_key(key_type, key, key_col, data):
-    value = SEP.join(data.get(key, [Fore.BLACK + 'Not found'])).replace(' ', SPACE)
-    print("  " + key_type + ": " + key_col + value)
-
-
-def print_metadata(data, tag_source, default_col):
-    if "performer:" in ' '.join(data.keys()):
-        print("  Performers:")
-        for tag_id, tag_data in performer_tags.items():
-            if tag_id in data and data[tag_id] is not None:
-                print_metadata_key(tag_data["print"], tag_id, tag_source.get(tag_id, default_col), data)
-    for tag_id, tag_data in all_tags.items():
-        print_metadata_key(tag_data["print"], tag_id, tag_source.get(tag_id, default_col), data)
-    print("")
-
-
-def adjust_metadata(new_metadata: Dict[str, List[str]],
-                    old_metadata: OggOpus,
-                    tag_source: Dict[str, str]) -> Tuple[OggOpus, Dict[str, str]]:
-
-    # Date should be safe to get from description
-    date = new_metadata.get("date", None)
-    if date and date != old_metadata.get("date"):
-        old_metadata["date"] = date
-        tag_source["date"] = yt_col
-
-    # youtube-dl is default album, auto-change
-    md_album = old_metadata.get("album")
-    yt_album = new_metadata.get("album")
-    if yt_album and md_album == ["youtube-dl"]:
-        old_metadata["album"] = yt_album
-        tag_source["album"] = yt_col
-
-    md_artist = old_metadata.get("artist")
-    yt_artist = new_metadata.get("artist")
-    if md_artist is not None and len(md_artist) == 1 and split_tag(md_artist[0]) == yt_artist:
-        old_metadata["artist"] = yt_artist
-        tag_source["artist"] = yt_col
-
-    # Compare all fields
-    for field, yt_value in new_metadata.items():
-        old_value = old_metadata.get(field)
-        if old_value is None and field != "albumartist":
-            print(Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data.")
-            old_metadata[field] = yt_value
-            tag_source[field] = yt_col
-        elif yt_value == old_value:
-            print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
-            tag_source[field] = md_col
-        else:
-            redo = True
-            print("-----------------------------------------------")
-            print_metadata(old_metadata, tag_source, Fore.RED)
-            while redo:
-                redo = False
-                print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
-                print("  1. Exisiting metadata:  " + md_col + f"{' | '.join(old_metadata.get(field, ['Not set']))}")
-                print("  2. YouTube description: " + yt_col + f"{' | '.join(yt_value)}")
-                print("  3. Manually fill in tag")
-                print("  4. Print description metadata")
-                print("  5. Remove field")
-                choice = input("Choose the number you want to use. Empty leaves metadata unchanged: ")
-                if choice == '2':
-                    old_metadata[field] = yt_value
-                    tag_source[field] = yt_col
-                elif choice == '3':
-                    old_metadata[field] = [input("Value: ")]
-                    tag_source[field] = man_col
-                elif choice == '4':
-                    print("-----------------------------------------------")
-                    print_metadata(new_metadata, {}, yt_col)
-                    redo = True
-                elif choice == '5':
-                    old_metadata.pop(field, None)
-                    tag_source[field] = man_col
-                else:
-                    tag_source[field] = md_col
-
-    return old_metadata, tag_source
 
 
 def modify_field(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[OggOpus, Dict[str, str]]:
@@ -438,122 +34,10 @@ def modify_field(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[Ogg
         val = input("  Value: ")
         if key and val:
             old_metadata[key] = [val]
-            tag_source[key] = man_col
+            tag_source[key] = colors.man_col
         else:
             break
     return old_metadata, tag_source
-
-
-def adjust_existing_data_prior(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[OggOpus, Dict[str, str]]:
-    """
-    Suggests adjustments based on pre-existing tags from the file.
-    """
-    old_metadata["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
-
-    old_metadata.pop("language", None)
-    old_metadata.pop("compatible_brands", None)
-    old_metadata.pop("minor_version", None)
-    old_metadata.pop("major_brand", None)
-    old_metadata.pop("vendor_id", None)
-
-    # If the date is just the upload date, discard it
-    if old_metadata.get("date") and re.match(r"\d\d\d\d\d\d\d\d", old_metadata["date"][0]):
-        old_metadata.pop("date", None)
-
-    tags_to_split = ['genre', 'artist']
-
-    for tag in tags_to_split:
-        original_tag = old_metadata.get(tag)
-        if original_tag is not None and not len(original_tag) > 1:
-            new_tag = split_tag(original_tag[0])
-            if new_tag != original_tag:
-                old_metadata[tag] = new_tag
-                tag_source[tag] = auto_col
-
-    return old_metadata, tag_source
-
-
-def adjust_existing_data_after(old_tags: OggOpus, dsc_tags: Optional[Dict[str, List[str]]], tag_source: Dict[str, str]):
-    """
-    Suggests adjustments based on tags from the description or from the old tags, which can only be done once we have to
-    tags extracted from the description.
-
-    :param old_tags:
-    """
-    old_title = old_tags.get("title", [])
-    dsc_title = dsc_tags.get("title", []) if dsc_tags else []
-    combo_title = remove_duplicates(old_title + dsc_title)
-
-    old_artist = old_tags.get('artist', [])
-    dsc_artist = dsc_tags.get('artist', []) if dsc_tags else []
-    combo_artist = remove_duplicates(old_artist + dsc_artist)
-    new_artist = []
-
-    old_version = old_tags.get("version", [])
-    dsc_version = dsc_tags.get("version", []) if dsc_tags else []
-    combo_version = remove_duplicates(old_version + dsc_version)
-    new_version = []
-
-    old_genre = old_tags.get("genre", [])
-    dsc_genre = dsc_tags.get("genre", []) if dsc_tags else []
-    combo_genre = remove_duplicates(old_genre + dsc_genre)
-    new_genre = []
-
-    for title in combo_title:
-        featuring_regex = r"(.*)\s*[\(\[][fF]eat.?\s+(.+?)[\)\]]\s*(.*)"
-        pattern_match = re.match(featuring_regex, title)
-        if pattern_match:
-            new_artist += split_tag(pattern_match.groups()[1].strip())
-
-        live_regex = r"(.*)\s*[\(\[]([lL]ive.*)[\)\]]\s*(.*)"
-        live_match = re.match(live_regex, title)
-        if live_match:
-            new_version.append(live_match.groups()[1].strip())
-
-        instrumental_regex = r"(.*)\s*[\(\[]([iI]nstrumental.*)[\)\]]\s*(.*)"
-        instrumental_match = re.match(instrumental_regex, title)
-        if instrumental_match:
-            new_genre.append("Instrumental")
-
-        remix_regex = r"(.*)\s*\((.*[rR]emix.*)\)"
-        remix_match = re.match(remix_regex, title)
-        if remix_match:
-            new_version.append(remix_match.groups()[1].strip())
-
-    if set(new_version) != set(combo_version) and len(new_version) > 0:
-        old_tags["version"] = remove_duplicates(combo_version + new_version)
-        tag_source["version"] = auto_col
-
-    if set(new_artist) != set(combo_artist) and len(new_artist) > 0:
-        old_tags["artist"] = remove_duplicates(combo_artist + new_artist)
-        tag_source["artist"] = auto_col
-
-    if set(new_genre) != set(combo_genre) and len(new_genre) > 0:
-        old_tags["genre"] = remove_duplicates(combo_genre + new_genre)
-        tag_source["genre"] = auto_col
-
-    pruned_title = prune_title(old_title[0])
-    if old_title[0] != pruned_title:
-        old_tags["title"] = [pruned_title]
-        tag_source["title"] = auto_col
-
-    return old_tags, tag_source
-
-
-def get_basename(file_path: Path) -> str:
-    file_name = str(file_path)
-    basename = re.match(".*/(.*)", file_name)
-    if basename:
-        match = basename.groups()[0]
-        file_name = match
-        name_playlist = re.match("<(.*)> - <(.*)> - <(.*)> - <(.*)>.opus", file_name)
-        name_single = re.match("<(.*)> - <(.*)>.opus", file_name)
-        if name_playlist:
-            file_name = name_playlist.groups()[1] + " - " + name_playlist.groups()[2]
-        elif name_single:
-            file_name = name_single.groups()[0] + " - " + name_single.groups()[1]
-
-    return file_name
 
 
 def main(args):
@@ -563,7 +47,7 @@ def main(args):
     for idx, file_path in enumerate(all_files):
         stop = False
         redo = True
-        file_name = get_basename(file_path)
+        file_name = Utils().file_path_to_song_data(file_path)
         while redo:
             redo = False
             # Print info about file and progress
@@ -577,8 +61,15 @@ def main(args):
             for key, val in old_metadata.items():
                 old_tags[key] = val
             for key in old_tags.keys():
-                tag_source[key] = md_col
-            old_metadata, tag_source = adjust_existing_data_prior(old_metadata, tag_source)
+                tag_source[key] = colors.md_col
+            tags = MusicTags()
+            tags.set_original_tags(old_tags)
+            prepare_resolved = old_tags.copy()
+            tags.set_resolved_tags(prepare_resolved)
+            old_tags_parser = TagsParser()
+            old_tags_parser.parse_tags(tags.original)
+            old_tags_parser.process_existing_tags()
+            tags.set_tags_from_old_tags(old_tags_parser.get_tags())
 
             # 2. Get description
             description_lines: List | None = old_metadata.get("synopsis")
@@ -586,31 +77,37 @@ def main(args):
                 description_lines = old_metadata.get("description")
 
             # 3. If description exists, send it to be parsed
-            new_metadata: Optional[Dict[str, List[str]]] = None
             if description_lines is not None:
+                desc_parser = DescriptionParser()
                 description = '\n'.join(description_lines)
-                new_metadata = parse(description)
+                desc_parser.parse(description)
+                tags.set_youtube_tags(desc_parser.get_tags())
+                tags.add_source_tag()
 
-            # 3.1. Use new tags as well to extract information
-            old_metadata, tag_source = adjust_existing_data_after(old_metadata, new_metadata, tag_source)
+                new_tags_parser = TagsParser()
+                new_tags_parser.parse_tags(tags.youtube)
+                tags.set_tags_from_description(new_tags_parser.get_tags())
 
             # 4. For each field, if there are conflicts, ask user input
-            if new_metadata:
-                old_metadata, tag_source = adjust_metadata(new_metadata, old_metadata, tag_source)
+            if tags.youtube or tags.fromtags:
+                tags.adjust_metadata()
+
+            # 4.5 Get rid of shady tags
+            tags.prune_final_metadata()
 
             # 5. Show user final result and ask if it should be saved or retried, or song skipped
             reshow_choices = True
             print("Final result:")
-            print_metadata(old_metadata, tag_source, Fore.RED)
-            if all(color == md_col for color in tag_source.values()):
-                if args.fix_descriptionless:
-                    reshow_choices = False if input("Only basic suggested, skip? (Y/n): ") == 'n' else True
-                else:
-                    reshow_choices = False
-                    print(Fore.YELLOW + "No signficant changes suggested, therefore only auto-saving the basic changes")
-                if not reshow_choices:
-                    old_metadata.save()
-                    print(Fore.YELLOW + f"Metadata saved for file: {file_name}")
+            tags.print_resolved()
+            # if all(color == colors.md_col for color in tag_source.values()):
+            #     if args.fix_descriptionless:
+            #         reshow_choices = False if input("Only basic suggested, skip? (Y/n): ") == 'n' else True
+            #     else:
+            #         reshow_choices = False
+            #       print(Fore.YELLOW + "No signficant changes suggested, therefore only auto-saving the basic changes")
+            #     if not reshow_choices:
+            #         old_metadata.save()
+            #         print(Fore.YELLOW + f"Metadata saved for file: {file_name}")
 
             while reshow_choices:
                 reshow_choices = False
@@ -628,29 +125,29 @@ def main(args):
                 elif action == "m":
                     old_metadata, tag_source = modify_field(old_metadata, tag_source)
                     print(Fore.BLUE + "Current metadata to save:")
-                    print_metadata(old_metadata, tag_source, Fore.RED)
+                    tags.print_resolved()
                     reshow_choices = True
                 elif action == "p":
                     print(Fore.YELLOW + f"Pass. Skipping song: {file_name}")
                 elif action == "y":
                     if description_lines:
                         print(Fore.BLUE + "Original YouTube description:")
-                        print(yt_col + "\n".join(description_lines))
+                        print(colors.yt_col + "\n".join(description_lines))
                     else:
                         print(Fore.RED + "No YouTube description tag for this song.")
                     reshow_choices = True
                 elif action == "o":
                     print(Fore.BLUE + "The original metadata for this file:")
-                    print_metadata(old_tags, {}, md_col)
+                    tags.print_original()
                     reshow_choices = True
                 elif action == "c":
                     print(Fore.BLUE + "Current metadata to save:")
-                    print_metadata(old_metadata, tag_source, Fore.RED)
+                    tags.print_resolved()
                     reshow_choices = True
                 elif action == "d":
-                    if new_metadata:
+                    if tags.youtube:
                         print(Fore.BLUE + "Metadata parsed from YouTube description:")
-                        print_metadata(new_metadata, {}, yt_col)
+                        tags.print_youtube()
                     else:
                         print(Fore.RED + "This song has no YouTube description tag to parse metadata from.")
                     reshow_choices = True
@@ -669,27 +166,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-
-    shtab.add_argument_to(parser, ["-s", "--print-completion"])
-
-    parser.add_argument("-a",
-                        "--all",
-                        action="store_true",
-                        default=False,
-                        dest="fix_descriptionless",
-                        help="Even if there is no YouTube description, suggest improving existing tags")
-
-    parser.add_argument("-d",
-                        "--directory",
-                        action="store",
-                        dest="dir",
-                        help="directory in which the files to be retagged are located").complete = shtab.DIRECTORY
-
-    parser.add_argument("-V",
-                        "--version",
-                        action="version",
-                        version="%(prog)s (version {version})".format(version=__version__))
-
-    args = parser.parse_args()
+    args = Cli.parse_arguments(__version__)
     main(args)
