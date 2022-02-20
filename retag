@@ -119,7 +119,10 @@ def main(args):
                 terminal_menu = TerminalMenu(options, title="What do you want to do?")
                 action = terminal_menu.show()
                 print('-' * 30)
-                if options[action] == "[s] save":
+                if action is None or options[action] == "[q] quit":
+                    print(Fore.YELLOW + "Skipping this and all later songs")
+                    stop = True
+                elif options[action] == "[s] save":
                     old_metadata.save()
                     print(Fore.GREEN + f"Metadata saved for file: {file_name}")
                 elif options[action] == "[r] reset":
@@ -147,9 +150,6 @@ def main(args):
                     print(Fore.BLUE + "Current metadata to save:")
                     tags.print_resolved()
                     reshow_choices = True
-                elif action is None or options[action] == "[q] quit":
-                    print(Fore.YELLOW + "Skipping this and all later songs")
-                    stop = True
 
         if stop:
             break
