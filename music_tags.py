@@ -218,7 +218,7 @@ class MusicTags:
                     choice = input("Choose the number you want to use. Empty leaves metadata unchanged: ")
                     if choice == '1':
                         self.resolved[field] = self.original[field]
-                    if choice == '2' and yt_value is not None:
+                    elif choice == '2' and yt_value is not None:
                         self.resolved[field] = yt_value
                     elif choice == '3' and from_tags_value is not None:
                         self.resolved[field] = from_tags_value
@@ -234,6 +234,7 @@ class MusicTags:
                         self.resolved.pop(field, None)
                     else:
                         print(Fore.RED + "Invalid choice, try again")
+                        redo = True
 
     def modify_resolved_field(self):
         key = " "
