@@ -16,6 +16,7 @@ from typing import List, Dict, Tuple
 
 from cli import Cli
 import colors
+import constants
 
 from description_parser import DescriptionParser
 from music_tags import MusicTags
@@ -43,6 +44,11 @@ def modify_field(old_metadata: OggOpus, tag_source: Dict[str, str]) -> Tuple[Ogg
 def main(args):
     music_dir = Path(args.dir).resolve()
     all_files = list(filter(Path.is_file, Path(music_dir).glob('*.opus')))
+
+    if args.manual_album is not None:
+        constants.all_tags["discsubtitle"] = {"print": "Disc subtitle"}
+        constants.all_tags["discsubtitle"]["pattern"] = constants.all_tags["album"]["pattern"]
+        constants.all_tags["album"]["pattern"] = []
 
     for idx, file_path in enumerate(all_files):
         stop = False
@@ -94,6 +100,10 @@ def main(args):
 
             # 4.5 Get rid of shady tags
             tags.prune_final_metadata()
+
+            # 4.5.1 Manually set album
+            if args.manual_album is not None:
+                tags.resolved["album"] = [args.manual_album]
 
             # 5. Show user final result and ask if it should be saved or retried, or song skipped
             reshow_choices = True

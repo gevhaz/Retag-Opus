@@ -21,6 +21,7 @@ class Cli:
                             "--album",
                             action="store",
                             required=False,
+                            default=None,
                             dest="manual_album",
                             help="Manually sets the album tag to the given value and puts any parsed album in the "
                                  "discsubtitle tag")

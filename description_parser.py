@@ -54,7 +54,10 @@ class DescriptionParser:
                 self.tags["title"] = [youtube_title]
 
             if lines_since_title_artist == 2:
-                self.tags["album"] = [description_line.strip()]
+                if "discsubtitle" in constants.all_tags:
+                    self.tags["discsubtitle"] = [description_line.strip()]
+                else:
+                    self.tags["album"] = [description_line.strip()]
 
             for tag_id, tag_data in constants.all_tags.items():
                 for pattern in tag_data['pattern']:
