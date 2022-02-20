@@ -234,3 +234,15 @@ class MusicTags:
                         self.resolved.pop(field, None)
                     else:
                         print(Fore.RED + "Invalid choice, try again")
+
+    def modify_resolved_field(self):
+        key = " "
+        val = " "
+        while key and val:
+            print("Enter key and value (newline cancels):")
+            key = input("  Key: ")
+            val = input("  Value: ")
+            if key and val:
+                self.resolved[key] = [val]
+            else:
+                break
