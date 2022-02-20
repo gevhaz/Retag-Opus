@@ -225,41 +225,62 @@ class MusicTags:
                     # There have to be choices available for it to make sense to stay in the loop
                     if not candidates:
                         break
+
                     candidates.append("Other action")
+
                     candidate_menu = TerminalMenu(candidates)
                     choice = candidate_menu.show()
+
                     if choice is None:
                         continue
-                    if candidates[choice] == "Other action":
-                        other_choices = [
-                            "[m] Manually fill in tag",
-                            "[p] Print description metadata",
-                            "[r] Remove field"
-                            "[g] Go back"
-                            ]
-                        other_choice_menu = TerminalMenu(other_choices, title="Choose the source you want to use:")
-                        choice = other_choice_menu.show()
-                        if other_choices[choice] == "[m] Manually fill in tag":
-                            self.resolved[field] = [input("Value: ")]
-                        elif other_choices[choice] == "[p] Print description metadata":
-                            print("-----------------------------------------------")
-                            self.print_youtube()
-                            redo = True
-                        elif other_choices[choice] == "[r] Remove field":
-                            self.resolved.pop(field, None)
-                        elif other_choices[choice] == "[g] Go back":
-                            redo = True
-                        else:
-                            print(Fore.RED + "Invalid choice, try again")
-                            redo = True
-                    elif candidates[choice] == "Existing metadata":
-                        self.resolved[field] = self.original.get(field, [])
-                    elif candidates[choice] == "YouTube description" and yt_value is not None:
-                        self.resolved[field] = yt_value
-                    elif candidates[choice] == "Parsed from original tags" and from_tags_value is not None:
-                        self.resolved[field] = from_tags_value
-                    elif candidates[choice] == "Parsed from Youtube tags" and from_desc_value is not None:
-                        self.resolved[field] = from_desc_value
+
+                    match candidates[choice]:
+                        case "Other action":
+
+                            default_action = "[g] Go back"
+                            other_choices = [
+                                "[m] Manually fill in tag",
+                                "[p] Print description metadata",
+                                "[r] Remove field",
+                                default_action
+                                ]
+
+                            other_choice_menu = TerminalMenu(other_choices, title="Choose the source you want to use:")
+                            choice = other_choice_menu.show()
+
+                            action = default_action
+                            if choice is not None:
+                                action = other_choices[choice]
+
+                            match action:
+                                case "[m] Manually fill in tag":
+                                    self.resolved[field] = [input("Value: ")]
+                                case "[p] Print description metadata":
+                                    print("-----------------------------------------------")
+                                    self.print_youtube()
+                                    redo = True
+                                case "[r] Remove field":
+                                    self.resolved.pop(field, None)
+                                case "[g] Go back":
+                                    redo = True
+                                case _:
+                                    print(Fore.RED + "Invalid choice, try again")
+                                    redo = True
+
+                        case "Existing metadata":
+                            self.resolved[field] = self.original.get(field, [])
+
+                        case "YouTube description":
+                            if yt_value is not None:
+                                self.resolved[field] = yt_value
+
+                        case "Parsed from original tags":
+                            if from_tags_value is not None:
+                                self.resolved[field] = from_tags_value
+
+                        case "Parsed from Youtube tags":
+                            if from_desc_value is not None:
+                                self.resolved[field] = from_desc_value
 
     def modify_resolved_field(self):
         key = " "
