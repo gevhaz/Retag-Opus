@@ -12,6 +12,7 @@ __license__ = "GPLv3"
 from mutagen.oggopus import OggOpus  # type: ignore
 from colorama import Fore, init  # type: ignore
 from pathlib import Path
+from simple_term_menu import TerminalMenu  # type: ignore
 
 from cli import Cli
 import colors
@@ -105,45 +106,50 @@ def main(args):
 
             while reshow_choices:
                 reshow_choices = False
-                action_prompt = ("Action: (s)ave, (r)eset, (m)odify field, (p)ass, "
-                                 "(y)outube description, (a)ll metadata, r(e)solved metadata, "
-                                 "(q)uit: ")
-                action = input(action_prompt)
-                print('-' * (len(action_prompt) + 1))
-                if action == 's':
+                options = [
+                        "[s] save",
+                        "[r] reset",
+                        "[m] modify field",
+                        "[p] pass",
+                        "[y] youtube description",
+                        "[a] all metadata",
+                        "[e] resolved metadata",
+                        "[q] quit: "
+                        ]
+                terminal_menu = TerminalMenu(options, title="What do you want to do?")
+                action = terminal_menu.show()
+                print('-' * 30)
+                if options[action] == "[s] save":
                     old_metadata.save()
                     print(Fore.GREEN + f"Metadata saved for file: {file_name}")
-                elif action == "r":
+                elif options[action] == "[r] reset":
                     print(f"Trying to improve metadata again for file: {file_name}")
                     redo = True
-                elif action == "m":
+                elif options[action] == "[m] modify field":
                     tags.modify_resolved_field()
                     print(Fore.BLUE + "Current metadata to save:")
                     tags.print_resolved()
                     reshow_choices = True
-                elif action == "p":
+                elif options[action] == "[p] pass":
                     print(Fore.YELLOW + f"Pass. Skipping song: {file_name}")
-                elif action == "y":
+                elif options[action] == "[y] youtube description":
                     if description_lines:
                         print(Fore.BLUE + "Original YouTube description:")
                         print(colors.yt_col + "\n".join(description_lines))
                     else:
                         print(Fore.RED + "No YouTube description tag for this song.")
                     reshow_choices = True
-                elif action == "a":
-                    print(Fore.BLUE + "All old an new metadata suggested for this file:")
+                elif options[action] == "[a] all metadata":
+                    print(Fore.BLUE + "All old and new metadata suggested for this file:")
                     tags.print_all()
                     reshow_choices = True
-                elif action == "e":
+                elif options[action] == "[e] resolved metadata":
                     print(Fore.BLUE + "Current metadata to save:")
                     tags.print_resolved()
                     reshow_choices = True
-                elif action == "q":
+                elif action is None or options[action] == "[q] quit: ":
                     print(Fore.YELLOW + "Skipping this and all later songs")
                     stop = True
-                else:
-                    print(Fore.RED + "Invalid choice. Try again:")
-                    reshow_choices = True
 
         if stop:
             break
