@@ -200,19 +200,19 @@ class MusicTags:
             from_tags_value = self.fromtags.get(field, [])
             all_new_sources = self.get_field(field, only_new=True)
             if (old_value is None and len(all_new_sources) > 0 and field != "albumartist"):
-                if yt_value:
+                if len(yt_value) > 0:
                     self.resolved[field] = yt_value
-                elif from_tags_value:
+                elif len(from_tags_value) > 0:
                     self.resolved[field] = from_tags_value
-                elif from_desc_value:
+                elif len(from_desc_value) > 0:
                     self.resolved[field] = from_desc_value
                 else:
                     continue
                 print(Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data: "
                       f"{self.resolved[field]}.")
-            elif yt_value == old_value:
+            elif yt_value == old_value and len(old_value) > 0:
                 print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
-            elif from_desc_value == old_value:
+            elif from_desc_value == old_value and len(old_value) > 0:
                 print(Fore.GREEN + f"{field.title()}: Metadata matches parsed YouTube tags.")
             else:
                 redo = True
