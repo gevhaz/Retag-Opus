@@ -120,7 +120,7 @@ def main(args):
                 print('-' * 40)
 
                 action = "[q] quit"
-                if choice is not None:
+                if choice is not None and not isinstance(choice, tuple):
                     action = options[choice]
 
                 match action:

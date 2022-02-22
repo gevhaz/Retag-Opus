@@ -31,7 +31,8 @@ class Cli:
                             action="store",
                             required=True,
                             dest="dir",
-                            help="directory in which the files to be retagged are located").complete = shtab.DIRECTORY
+                            help="directory in which the files to be retagged are "
+                                 "located").complete = shtab.DIRECTORY  # type: ignore
 
         parser.add_argument("-V",
                             "--version",
