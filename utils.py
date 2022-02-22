@@ -1,6 +1,8 @@
 import re
 
+from colorama import Fore
 from pathlib import Path
+from simple_term_menu import TerminalMenu  # type: ignore
 from typing import List
 
 import constants
@@ -38,3 +40,24 @@ class Utils:
                 file_name = name_single.groups()[0] + " - " + name_single.groups()[1]
 
         return file_name
+
+    @staticmethod
+    def select_single_tag(candidates: list[str]):
+        """
+        Let's the user select one out of the candidate tags and returns a list with that as the only item. The user can
+        also choose to skip with q, escape, or choosing the --No change-- item.
+
+        :param candidates: The list of tags to choose between.
+
+        :return: A list with the selected candidate or an empty list if none is selected.
+        """
+        candidates.append("--No change--")
+        choose_one_tag_menu = TerminalMenu(candidates,
+                                           title="Choose one tag to use")
+        choice = choose_one_tag_menu.show()
+        if choice is None:
+            print(Fore.YELLOW + "No tag selected")
+        elif isinstance(choice, int) and choice != len(candidates) - 1:
+            print(Fore.BLUE + f"Using {candidates[choice]} as tag for this song")
+            return [candidates[choice]]
+        return []

@@ -166,6 +166,16 @@ class MusicTags:
     def add_source_tag(self):
         self.resolved["comment"] = ["youtube-dl"]
 
+    def get_field(self, field: str, only_new=False) -> list[str]:
+        old_value = self.original.get(field, [])
+        yt_value = self.youtube.get(field, [])
+        from_desc_value = self.fromdesc.get(field, [])
+        from_tags_value = self.fromtags.get(field, [])
+        if only_new:
+            return Utils().remove_duplicates(yt_value + from_desc_value + from_tags_value)
+        else:
+            return Utils().remove_duplicates(old_value + yt_value + from_desc_value + from_tags_value)
+
     def adjust_metadata(self):
 
         # Date should be safe to get from description
@@ -184,19 +194,22 @@ class MusicTags:
         all_new_fields += [key for key in self.fromdesc.keys()]
         all_new_fields += [key for key in self.fromtags.keys()]
         for field in all_new_fields:
-            old_value = self.original.get(field)
-            yt_value = self.youtube.get(field)
-            from_desc_value = self.fromdesc.get(field)
-            from_tags_value = self.fromtags.get(field)
-            if (old_value is None and len([x for x in [yt_value, from_desc_value, from_tags_value] if x is not None])
-                    and field != "albumartist"):
-                print(Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data.")
+            old_value = self.original.get(field, [])
+            yt_value = self.youtube.get(field, [])
+            from_desc_value = self.fromdesc.get(field, [])
+            from_tags_value = self.fromtags.get(field, [])
+            all_new_sources = self.get_field(field, only_new=True)
+            if (old_value is None and len(all_new_sources) > 0 and field != "albumartist"):
                 if yt_value:
                     self.resolved[field] = yt_value
-                if from_tags_value:
+                elif from_tags_value:
                     self.resolved[field] = from_tags_value
-                if from_desc_value:
+                elif from_desc_value:
                     self.resolved[field] = from_desc_value
+                else:
+                    continue
+                print(Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data: "
+                      f"{self.resolved[field]}.")
             elif yt_value == old_value:
                 print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
             elif from_desc_value == old_value:
@@ -209,16 +222,16 @@ class MusicTags:
                     redo = False
                     candidates = []
                     print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
-                    if old_value:
+                    if len(old_value) > 0:
                         print("Exisiting metadata:  " + colors.md_col + ' | '.join(old_value))
                         candidates.append("Existing metadata")
-                    if yt_value:
+                    if len(yt_value) > 0:
                         print("YouTube description: " + colors.yt_col + ' | '.join(yt_value))
                         candidates.append("YouTube description")
-                    if from_tags_value:
+                    if len(from_tags_value) > 0:
                         print("Parsed from original tags: " + Fore.YELLOW + ' | '.join(from_tags_value))
                         candidates.append("Parsed from original tags")
-                    if from_desc_value:
+                    if len(from_desc_value) > 0:
                         print("Parsed from YouTube tags: " + Fore.GREEN + ' | '.join(from_desc_value))
                         candidates.append("Parsed from Youtube tags")
 
@@ -231,7 +244,7 @@ class MusicTags:
                     candidate_menu = TerminalMenu(candidates)
                     choice = candidate_menu.show()
 
-                    if choice is None:
+                    if choice is None or isinstance(choice, tuple):
                         continue
 
                     match candidates[choice]:
@@ -249,7 +262,7 @@ class MusicTags:
                             choice = other_choice_menu.show()
 
                             action = default_action
-                            if choice is not None:
+                            if choice is not None and not isinstance(choice, tuple):
                                 action = other_choices[choice]
 
                             match action:
@@ -281,6 +294,21 @@ class MusicTags:
                         case "Parsed from Youtube tags":
                             if from_desc_value is not None:
                                 self.resolved[field] = from_desc_value
+
+        all_artists = self.get_field("artist")
+        resolved_artist = self.resolved.get("artist")
+        original_artist = self.original.get("artist")
+
+        if len(all_artists) > 1:
+            print(Fore.BLUE + "Select the album artist:")
+            one_artist = Utils().select_single_tag(all_artists)
+            if len(one_artist) > 0:
+                self.resolved["albumartist"] = one_artist
+        elif not self.original.get("albumartist"):
+            if resolved_artist:
+                self.resolved["albumartist"] = resolved_artist
+            elif original_artist:
+                self.resolved["albumartist"] = original_artist
 
     def modify_resolved_field(self):
         key = " "

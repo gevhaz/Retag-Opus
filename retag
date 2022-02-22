@@ -80,8 +80,7 @@ def main(args):
                 tags.set_tags_from_description(new_tags_parser.get_tags())
 
             # 4. For each field, if there are conflicts, ask user input
-            if tags.youtube or tags.fromtags:
-                tags.adjust_metadata()
+            tags.adjust_metadata()
 
             # 4.5 Get rid of shady tags
             tags.prune_final_metadata()
