@@ -120,19 +120,15 @@ class MusicTags:
                     self.print_metadata_key(tag_data["print"], tag_id, col, self.resolved)
         for tag_id, tag_data in constants.all_tags.items():
             tag = self.resolved.get(tag_id)
-            col = Fore.GREEN if tag != self.original.get(tag_id) else colors.md_col
+            col = colors.md_col
+            if self.resolved.get(tag_id) == ["[Removed]"]:
+                col = Fore.RED
+            elif tag != self.original.get(tag_id):
+                col = Fore.GREEN
             self.print_metadata_key(tag_data["print"], tag_id, col, self.resolved)
         print("")
 
-    def cleanup_orignal(self):
-        self.original["comment"] = ["youtube-dl"]  # All youtube songs should have description tag
-
-        self.original.pop("language", None)
-        self.original.pop("compatible_brands", None)
-        self.original.pop("minor_version", None)
-        self.original.pop("major_brand", None)
-        self.original.pop("vendor_id", None)
-
+    def discard_upload_date(self):
         # If the date is just the upload date, discard it
         if self.original.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original["date"][0]):
             self.original.pop("date", None)
@@ -157,11 +153,11 @@ class MusicTags:
         self.resolved = resolved
 
     def prune_final_metadata(self):
-        self.resolved.pop("language", None)
-        self.resolved.pop("compatible_brands", None)
-        self.resolved.pop("minor_version", None)
-        self.resolved.pop("major_brand", None)
-        self.resolved.pop("vendor_id", None)
+        self.resolved["language"] = ["[Removed]"]
+        self.resolved["compatible_brands"] = ["[Removed]"]
+        self.resolved["minor_version"] = ["[Removed]"]
+        self.resolved["major_brand"] = ["[Removed]"]
+        self.resolved["vendor_id"] = ["[Removed]"]
 
     def add_source_tag(self):
         self.resolved["comment"] = ["youtube-dl"]
@@ -277,7 +273,7 @@ class MusicTags:
                                     self.print_youtube()
                                     redo = True
                                 case "[r] Remove field":
-                                    self.resolved.pop(field, None)
+                                    self.resolved[field] = ["[Removed]"]
                                 case "[g] Go back":
                                     redo = True
                                 case _:
