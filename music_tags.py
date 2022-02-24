@@ -128,8 +128,19 @@ class MusicTags:
             self.print_metadata_key(tag_data["print"], tag_id, col, self.resolved)
         print("")
 
+    def switch_album_to_disc_subtitle(self, manual_album_name: str):
+        """
+        Switches the original album tag to the discsubtitle tag so that it will be used in the comparison for that tag,
+        rather than album, which is not used when the album is set manually.
+        """
+        original_album = self.original.pop("album", None)
+        if original_album is not None and original_album != [manual_album_name]:
+            self.original["discsubtitle"] = original_album
+
     def discard_upload_date(self):
-        # If the date is just the upload date, discard it
+        """
+        If the date is just the upload date, discard it
+        """
         if self.original.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original["date"][0]):
             self.original.pop("date", None)
 

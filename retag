@@ -31,7 +31,7 @@ def main(args):
     all_files = list(filter(Path.is_file, Path(music_dir).glob('*.opus')))
 
     if args.manual_album is not None:
-        constants.all_tags["discsubtitle"] = constants.all_tags["album"]
+        constants.all_tags["discsubtitle"] = constants.all_tags["album"].copy()
         constants.all_tags["discsubtitle"]["print"] = "Disc subtitle"
         constants.all_tags["album"]["pattern"] = []
 
@@ -56,6 +56,8 @@ def main(args):
 
             tags.set_original_tags(old_tags)
             tags.discard_upload_date()
+            if args.manual_album is not None:
+                tags.switch_album_to_disc_subtitle(args.manual_album)
 
             prepare_resolved = old_tags.copy()
             tags.set_resolved_tags(prepare_resolved)
