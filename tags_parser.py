@@ -59,6 +59,16 @@ class TagsParser:
             if remix_match:
                 new_version.append(remix_match.groups()[1].strip())
 
+            remaster_regex = constants.tag_parse_patterns['remaster']
+            remaster_match = re.match(remaster_regex, title)
+            if remaster_match:
+                new_version.append(remaster_match.groups()[1].strip())
+
+            remaster2_regex = constants.tag_parse_patterns['remaster2']
+            remaster2_match = re.match(remaster2_regex, title)
+            if remaster2_match:
+                new_version.append(remaster2_match.groups()[1].strip())
+
         if set(new_version) != set(old_version) and len(new_version) > 0:
             self.tags["version"] = Utils().remove_duplicates(old_version + new_version)
 

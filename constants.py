@@ -13,7 +13,8 @@ class ParsingReference(TypedDict):
 
 tag_parse_patterns: dict[str, str] = {
         "featuring": r"(.*?)\s*[\(\[][fF]eat.?\s+(.+?)[\)\]]\s*(.*)",
-        "remastered": r"(.*?)\s*\(([rR]emastered.*)\)\s*(.*)",
+        "remaster": r"(.*?)\s*\((\d{0,4}\s*[rR]emaster.*)\)\s*(.*)",
+        "remaster2": r"(.*?)\s*-\s*(\d{0,4}\s*[Rr]emaster.*)(.*)",
         "live": r"(.*?)\s*[\(\[]([lL]ive.*)[\)\]]\s*(.*)",
         "instrumental": r"(.*?)\s*[\(\[]([iI]nstrumental.*)[\)\]]\s*(.*)",
         "remix": r"(.*?)\s*\((.*[rR]emix.*)\)\s*(.*)"
