@@ -240,11 +240,15 @@ class MusicTags:
                         break
 
                     candidates.append("Other action")
+                    candidates.append("Quit")
 
                     candidate_menu = TerminalMenu(candidates)
                     choice = candidate_menu.show()
 
-                    if choice is None or isinstance(choice, tuple):
+                    if choice is None:
+                        print(Fore.YELLOW + "Skipping this and all later songs")
+                        Utils().exit_now()
+                    elif isinstance(choice, tuple):
                         continue
 
                     match candidates[choice]:
@@ -294,6 +298,10 @@ class MusicTags:
                         case "Parsed from Youtube tags":
                             if from_desc_value is not None:
                                 self.resolved[field] = from_desc_value
+
+                        case "Quit":
+                            print(Fore.YELLOW + "Skipping this and all later songs")
+                            Utils().exit_now()
 
         all_artists = self.get_field("artist")
         resolved_artist = self.resolved.get("artist")

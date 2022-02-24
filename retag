@@ -36,7 +36,6 @@ def main(args):
         constants.all_tags["album"]["pattern"] = []
 
     for idx, file_path in enumerate(all_files):
-        stop = False
         redo = True
         file_name = Utils().file_path_to_song_data(file_path)
         while redo:
@@ -91,8 +90,6 @@ def main(args):
 
             # 5. Show user final result and ask if it should be saved or retried, or song skipped
             reshow_choices = True
-            print("Final result:")
-            tags.print_resolved()
             # if all(color == colors.md_col for color in tag_source.values()):
             #     if args.fix_descriptionless:
             #         reshow_choices = False if input("Only basic suggested, skip? (Y/n): ") == 'n' else True
@@ -104,6 +101,8 @@ def main(args):
             #         print(Fore.YELLOW + f"Metadata saved for file: {file_name}")
 
             while reshow_choices:
+                print("Final result:")
+                tags.print_resolved()
                 reshow_choices = False
                 options = [
                         "[s] save",
@@ -126,7 +125,7 @@ def main(args):
                 match action:
                     case "[q] quit":
                         print(Fore.YELLOW + "Skipping this and all later songs")
-                        stop = True
+                        Utils().exit_now()
                     case "[s] save":
                         old_metadata.save()
                         print(Fore.GREEN + f"Metadata saved for file: {file_name}")
@@ -159,8 +158,6 @@ def main(args):
                         print(Fore.RED + "Something went wrong, starting over")
                         redo = True
 
-        if stop:
-            break
             # At any step with user input, user can choose:
             # * Show conflicting fields
             # * Show fields that will be changed

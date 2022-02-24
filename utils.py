@@ -1,4 +1,5 @@
 import re
+import sys
 
 from colorama import Fore
 from pathlib import Path
@@ -61,3 +62,7 @@ class Utils:
             print(Fore.BLUE + f"Using {candidates[choice]} as tag for this song")
             return [candidates[choice]]
         return []
+
+    @staticmethod
+    def exit_now():
+        sys.exit(0)
