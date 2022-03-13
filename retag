@@ -113,7 +113,8 @@ def main(args):
                 options = [
                         "[s] save",
                         "[r] reset",
-                        "[m] modify field",
+                        "[m] modify tag",
+                        "[d] delete item in tag",
                         "[p] pass",
                         "[y] youtube description",
                         "[a] all metadata",
@@ -143,10 +144,13 @@ def main(args):
                     case "[r] reset":
                         print(f"Trying to improve metadata again for file: {file_name}")
                         redo = True
-                    case "[m] modify field":
+                    case "[m] modify tag":
                         tags.modify_resolved_field()
                         print(Fore.BLUE + "Current metadata to save:")
                         tags.print_resolved()
+                        reshow_choices = True
+                    case "[d] delete item in tag":
+                        tags.delete_tag_item()
                         reshow_choices = True
                     case "[p] pass":
                         print(Fore.YELLOW + f"Pass. Skipping song: {file_name}")

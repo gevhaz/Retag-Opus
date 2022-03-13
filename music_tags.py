@@ -346,3 +346,39 @@ class MusicTags:
                 self.resolved[key] = [val]
             else:
                 break
+
+    def delete_tag_item(self):
+        tags_in_resolved = []
+        for tag in self.resolved.keys():
+            if tag in constants.all_tags.keys() or tag in constants.performer_tags.keys():
+                tags_in_resolved.append(tag)
+
+        tags_in_resolved.append("Quit")
+        removal_menu = TerminalMenu(tags_in_resolved, title="Which field do you want to delete items from?")
+        tag_index = removal_menu.show()
+
+        if tag_index is None or isinstance(tag_index, tuple) or tags_in_resolved[tag_index] == "Quit":
+            print(Fore.YELLOW + "Returning without removing anything")
+        else:
+            selected_tag = tags_in_resolved[tag_index]
+            items_in_tag = self.resolved.get(selected_tag, []).copy()
+            item_removal_menu = TerminalMenu(
+                items_in_tag,
+                title=f"Which field should be removed from the '{selected_tag}' tag?",
+                multi_select=True,
+                show_multi_select_hint=True,
+                multi_select_empty_ok=True,
+                multi_select_select_on_accept=False,
+            )
+
+            items_to_remove = item_removal_menu.show()
+            if isinstance(items_to_remove, int):
+                items_to_remove = [items_to_remove]
+            elif items_to_remove is None or len(items_to_remove) == 0:
+                print(Fore.YELLOW + "Returning without removing anything")
+                return
+
+            for item in items_to_remove:
+                self.resolved[selected_tag].remove(items_in_tag[item])
+                if len(self.resolved[selected_tag]) == 0:
+                    self.resolved.pop(selected_tag)
