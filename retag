@@ -111,11 +111,11 @@ def main(args):
                 tags.print_resolved()
                 reshow_choices = False
                 options = [
+                        "[p] pass",
                         "[s] save",
                         "[r] reset",
                         "[m] modify tag",
                         "[d] delete item in tag",
-                        "[p] pass",
                         "[y] youtube description",
                         "[a] all metadata",
                         "[e] resolved metadata",

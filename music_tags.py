@@ -253,7 +253,7 @@ class MusicTags:
                         candidates.append("Parsed from Youtube tags")
 
                     # There have to be choices available for it to make sense to stay in the loop
-                    if not candidates:
+                    if len(candidates) == 0:
                         break
 
                     candidates.append("Other action")
@@ -273,6 +273,7 @@ class MusicTags:
 
                             default_action = "[g] Go back"
                             other_choices = [
+                                "[s] Select items from a list",
                                 "[m] Manually fill in tag",
                                 "[p] Print description metadata",
                                 "[r] Remove field",
@@ -293,6 +294,28 @@ class MusicTags:
                                     print("-----------------------------------------------")
                                     self.print_youtube()
                                     redo = True
+                                case "[s] Select items from a list":
+                                    available_tags = self.get_field(field)
+                                    tag_selection_menu = TerminalMenu(
+                                        available_tags,
+                                        title="Select the items you want in this tag",
+                                        multi_select=True,
+                                        show_multi_select_hint=True,
+                                        multi_select_empty_ok=True,
+                                        multi_select_select_on_accept=False,
+                                    )
+
+                                    items = tag_selection_menu.show()
+                                    if isinstance(items, int):
+                                        items = [items]
+                                    elif items is None:
+                                        print(Fore.RED + "Invalid choice, try again")
+                                        redo = True
+                                        break
+
+                                    self.resolved[field] = []
+                                    for item in items:
+                                        self.resolved[field].append(available_tags[item])
                                 case "[r] Remove field":
                                     self.resolved[field] = ["[Removed]"]
                                 case "[g] Go back":
