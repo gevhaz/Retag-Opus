@@ -76,7 +76,7 @@ class MusicTags:
             if len(main_line) > 0:
                 main_block.append(Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(main_line))
             else:
-                main_block.append(Fore.WHITE + tag_data['print'] + Fore.BLACK + "Not set")
+                main_block.append(Fore.WHITE + tag_data['print'] + ": " + Fore.BLACK + "Not set")
 
         if len(performer_block + main_block) > 0:
             if len(performer_block) > 0:
