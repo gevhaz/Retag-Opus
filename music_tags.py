@@ -39,6 +39,14 @@ class MusicTags:
         print("")
 
     def get_tag_data(self, tag_id: str) -> list[str]:
+        """
+        Returns a list of all values for a specific tag from various sources with color depending on source.
+
+        :param tag_id: The tag name for which data should be returned
+
+        :return: List with strings containing the value the given tag has in different sources with color codes that
+        differ between sources. If no source contains the tag, an empty list is returned.
+        """
         print_data: list[str] = []
         original = self.original.get(tag_id)
         youtube = self.youtube.get(tag_id)
