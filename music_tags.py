@@ -38,43 +38,34 @@ class MusicTags:
             self.print_metadata_key(tag_data["print"], tag_id, col, data)
         print("")
 
-    def print_all(self):
+    def get_tag_data(self, tag_id: str) -> list[str]:
+        print_data: list[str] = []
+        original = self.original.get(tag_id)
+        youtube = self.youtube.get(tag_id)
+        fromdesc = self.fromdesc.get(tag_id)
+        fromtags = self.fromtags.get(tag_id)
+        if original:
+            print_data.append(colors.md_col + " | ".join(original))
+        if youtube and original != youtube:
+            print_data.append(colors.yt_col + " | ".join(youtube))
+        if fromtags and fromtags != original:
+            print_data.append(Fore.YELLOW + " | ".join(fromtags))
+        if fromdesc and fromdesc != original:
+            print_data.append(Fore.GREEN + " | ".join(fromdesc))
+        return print_data
 
+    def print_all(self):
         performer_block = []
         for tag_id, tag_data in constants.performer_tags.items():
-            performer_line = []
-            original = self.original.get(tag_id)
-            youtube = self.youtube.get(tag_id)
-            fromdesc = self.fromdesc.get(tag_id)
-            fromtags = self.fromtags.get(tag_id)
-            if original:
-                performer_line.append(colors.md_col + " | ".join(original))
-            if youtube and youtube != original:
-                performer_line.append(colors.yt_col + " | ".join(youtube))
-            if fromtags and fromtags != original:
-                performer_line.append(Fore.YELLOW + " | ".join(fromtags))
-            if fromdesc and fromdesc != original:
-                performer_line.append(Fore.GREEN + " | ".join(fromdesc))
-            if len(performer_line) > 0:
-                performer_block.append(Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(performer_line))
+            tag_all_values = self.get_tag_data(tag_id)
+            if len(tag_all_values) > 0:
+                performer_block.append(Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(tag_all_values))
 
         main_block = []
         for tag_id, tag_data in constants.all_tags.items():
-            main_line = []
-            original = self.original.get(tag_id)
-            youtube = self.youtube.get(tag_id)
-            fromdesc = self.fromdesc.get(tag_id)
-            fromtags = self.fromtags.get(tag_id)
-            if original:
-                main_line.append(colors.md_col + " | ".join(original))
-            if youtube and original != youtube:
-                main_line.append(colors.yt_col + " | ".join(youtube))
-            if fromtags and fromtags != original:
-                main_line.append(Fore.YELLOW + " | ".join(fromtags))
-            if fromdesc and fromdesc != original:
-                main_line.append(Fore.GREEN + " | ".join(fromdesc))
-            if len(main_line) > 0:
-                main_block.append(Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(main_line))
+            tag_all_values = self.get_tag_data(tag_id)
+            if len(tag_all_values) > 0:
+                main_block.append(Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(tag_all_values))
             else:
                 main_block.append(Fore.WHITE + tag_data['print'] + ": " + Fore.BLACK + "Not set")
 
