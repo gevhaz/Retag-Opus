@@ -10,7 +10,6 @@ import constants
 
 
 class Utils:
-
     @staticmethod
     def remove_duplicates(duplicates: list) -> list:
         return list(dict.fromkeys(duplicates))
@@ -53,8 +52,7 @@ class Utils:
         :return: A list with the selected candidate or an empty list if none is selected.
         """
         candidates.append("--No change--")
-        choose_one_tag_menu = TerminalMenu(candidates,
-                                           title="Choose one tag to use")
+        choose_one_tag_menu = TerminalMenu(candidates, title="Choose one tag to use")
         choice = choose_one_tag_menu.show()
         if choice is None:
             print(Fore.YELLOW + "No tag selected")

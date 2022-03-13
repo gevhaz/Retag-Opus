@@ -4,13 +4,12 @@ import constants
 
 from utils import Utils
 
-INTERPUNCT = '\u00b7'
+INTERPUNCT = "\u00b7"
 
 Tags = dict[str, list[str]]
 
 
 class DescriptionParser:
-
     def __init__(self):
         self.tags: Tags = {}
 
@@ -28,7 +27,7 @@ class DescriptionParser:
         pattern = re.compile(regex)
         pattern_match = re.match(pattern, line)
         if pattern_match:
-            field_value = pattern_match.groups()[len(pattern_match.groups())-1]
+            field_value = pattern_match.groups()[len(pattern_match.groups()) - 1]
             field_value = field_value.strip()
             if self.tags.get(field_name):
                 self.tags[field_name].append(field_value)
@@ -42,8 +41,8 @@ class DescriptionParser:
         description_tag_lines: list[str] = description_tag_full.splitlines(False)
 
         for description_line in description_tag_lines:
-            description_line = description_line.replace('\n', '')
-            description_line = re.sub('\n', '', description_line)
+            description_line = description_line.replace("\n", "")
+            description_line = re.sub("\n", "", description_line)
             lines_since_title_artist = lines_since_title_artist + 1
             # Artist and title
             if INTERPUNCT in description_line:
@@ -60,16 +59,16 @@ class DescriptionParser:
                     self.tags["album"] = [description_line.strip()]
 
             for tag_id, tag_data in constants.all_tags.items():
-                for pattern in tag_data['pattern']:
+                for pattern in tag_data["pattern"]:
                     self.standard_pattern(tag_id, pattern, description_line)
 
             for tag_id, tag_data in constants.performer_tags.items():
-                for pattern in tag_data['pattern']:
+                for pattern in tag_data["pattern"]:
                     self.standard_pattern(tag_id, pattern, description_line)
 
             title = self.tags.pop("title", None)
             if title:
-                self.tags['title'] = [Utils().prune_title(title[0])]
+                self.tags["title"] = [Utils().prune_title(title[0])]
 
         artist = self.tags.get("artist")
         if artist:
@@ -82,7 +81,7 @@ class DescriptionParser:
             else:
                 artist = Utils().split_tag(artist[0])
             artist = Utils().remove_duplicates(artist)
-            self.tags['artist'] = artist
+            self.tags["artist"] = artist
 
         for key, value in self.tags.items():
             if value == []:
@@ -93,8 +92,8 @@ class DescriptionParser:
 
         # Custom patterns
         for description_line in description_tag_lines:
-            description_line = description_line.replace('\n', '')
-            description_line = re.sub('\n', '', description_line)
+            description_line = description_line.replace("\n", "")
+            description_line = re.sub("\n", "", description_line)
 
             self.standard_pattern("copyright_date", r"\u2117 (\d\d\d\d)\s", description_line)
 

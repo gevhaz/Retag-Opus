@@ -25,11 +25,11 @@ class MusicTags:
         self.resolved: Tags = {}
 
     def print_metadata_key(self, key_type, key, key_col, data):
-        value = constants.SEP.join(data.get(key, [Fore.BLACK + 'Not found'])).replace(' ', constants.SPACE)
+        value = constants.SEP.join(data.get(key, [Fore.BLACK + "Not found"])).replace(" ", constants.SPACE)
         print("  " + key_type + ": " + key_col + value)
 
     def print_metadata(self, data, col):
-        if "performer:" in ' '.join(data.keys()):
+        if "performer:" in " ".join(data.keys()):
             print("  Performers:")
             for tag_id, tag_data in constants.performer_tags.items():
                 if tag_id in data and data[tag_id] is not None:
@@ -67,15 +67,15 @@ class MusicTags:
         for tag_id, tag_data in constants.performer_tags.items():
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
-                performer_block.append(Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(tag_all_values))
+                performer_block.append(Fore.WHITE + tag_data["print"] + ": " + f"{Fore.WHITE} | ".join(tag_all_values))
 
         main_block = []
         for tag_id, tag_data in constants.all_tags.items():
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
-                main_block.append(Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(tag_all_values))
+                main_block.append(Fore.WHITE + tag_data["print"] + ": " + f"{Fore.WHITE} | ".join(tag_all_values))
             else:
-                main_block.append(Fore.WHITE + tag_data['print'] + ": " + Fore.BLACK + "Not set")
+                main_block.append(Fore.WHITE + tag_data["print"] + ": " + Fore.BLACK + "Not set")
 
         if len(performer_block + main_block) > 0:
             if len(performer_block) > 0:
@@ -110,7 +110,7 @@ class MusicTags:
             print(Fore.RED + "No new data parsed from tags parsed from description")
 
     def print_resolved(self, print_all: bool = False):
-        if "performer:" in ' '.join(self.resolved.keys()):
+        if "performer:" in " ".join(self.resolved.keys()):
             print("  Performers:")
             for tag_id, tag_data in constants.performer_tags.items():
                 resolved_tag = self.resolved.get(tag_id)
@@ -120,7 +120,7 @@ class MusicTags:
                 elif resolved_tag != self.original.get(tag_id):
                     self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
                 elif len(all_sources_tag) > 0 and print_all:
-                    print("  " + Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(all_sources_tag))
+                    print("  " + Fore.WHITE + tag_data["print"] + ": " + f"{Fore.WHITE} | ".join(all_sources_tag))
                 else:
                     self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
         for tag_id, tag_data in constants.all_tags.items():
@@ -131,7 +131,7 @@ class MusicTags:
             elif resolved_tag != self.original.get(tag_id):
                 self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
             elif len(all_sources_tag) > 0 and print_all:
-                print("  " + Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(all_sources_tag))
+                print("  " + Fore.WHITE + tag_data["print"] + ": " + f"{Fore.WHITE} | ".join(all_sources_tag))
             else:
                 self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
         print("")
@@ -214,7 +214,7 @@ class MusicTags:
             from_desc_value = self.fromdesc.get(field, [])
             from_tags_value = self.fromtags.get(field, [])
             all_new_sources = self.get_field(field, only_new=True)
-            if (old_value is None and len(all_new_sources) > 0 and field != "albumartist"):
+            if old_value is None and len(all_new_sources) > 0 and field != "albumartist":
                 if len(yt_value) > 0:
                     self.resolved[field] = yt_value
                 elif len(from_tags_value) > 0:
@@ -223,8 +223,10 @@ class MusicTags:
                     self.resolved[field] = from_desc_value
                 else:
                     continue
-                print(Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data: "
-                      f"{self.resolved[field]}.")
+                print(
+                    Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data: "
+                    f"{self.resolved[field]}."
+                )
             elif yt_value == old_value and len(old_value) > 0:
                 print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
             elif from_desc_value == old_value and len(old_value) > 0:
@@ -238,16 +240,16 @@ class MusicTags:
                     candidates = []
                     print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
                     if len(old_value) > 0:
-                        print("Exisiting metadata:  " + colors.md_col + ' | '.join(old_value))
+                        print("Exisiting metadata:  " + colors.md_col + " | ".join(old_value))
                         candidates.append("Existing metadata")
                     if len(yt_value) > 0:
-                        print("YouTube description: " + colors.yt_col + ' | '.join(yt_value))
+                        print("YouTube description: " + colors.yt_col + " | ".join(yt_value))
                         candidates.append("YouTube description")
                     if len(from_tags_value) > 0:
-                        print("Parsed from original tags: " + Fore.YELLOW + ' | '.join(from_tags_value))
+                        print("Parsed from original tags: " + Fore.YELLOW + " | ".join(from_tags_value))
                         candidates.append("Parsed from original tags")
                     if len(from_desc_value) > 0:
-                        print("Parsed from YouTube tags: " + Fore.GREEN + ' | '.join(from_desc_value))
+                        print("Parsed from YouTube tags: " + Fore.GREEN + " | ".join(from_desc_value))
                         candidates.append("Parsed from Youtube tags")
 
                     # There have to be choices available for it to make sense to stay in the loop
@@ -274,8 +276,8 @@ class MusicTags:
                                 "[m] Manually fill in tag",
                                 "[p] Print description metadata",
                                 "[r] Remove field",
-                                default_action
-                                ]
+                                default_action,
+                            ]
 
                             other_choice_menu = TerminalMenu(other_choices, title="Choose the source you want to use:")
                             choice = other_choice_menu.show()
