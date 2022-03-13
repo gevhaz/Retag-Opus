@@ -36,6 +36,14 @@ options:
 -V, --version         show program's version number and exit
 ```
 
+Retag will go through the opus file in the root of the directory you
+provided and try to parse tag information from the youtube description
+if it is in the tags and from the original tags (e.g. adding another
+artist if the title indicates a featured artist). It might look like
+this:
+
+![retag terminal example](screenshot_1.png)
+
 # Project status
 
 The project is still under development. The most common tags can be
