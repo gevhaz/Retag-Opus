@@ -1,3 +1,6 @@
 [tool.pyright]
 pythonVersion = "3.10"
 pythonPlatform = "Linux"
+
+[tool.black]
+line-length = 120
