@@ -109,22 +109,31 @@ class MusicTags:
         else:
             print(Fore.RED + "No new data parsed from tags parsed from description")
 
-    def print_resolved(self):
+    def print_resolved(self, print_all: bool = False):
         if "performer:" in ' '.join(self.resolved.keys()):
             print("  Performers:")
             for tag_id, tag_data in constants.performer_tags.items():
-                tag = self.resolved.get(tag_id)
-                if tag:
-                    col = Fore.GREEN if tag != self.original.get(tag_id) else colors.md_col
-                    self.print_metadata_key(tag_data["print"], tag_id, col, self.resolved)
+                resolved_tag = self.resolved.get(tag_id)
+                all_sources_tag = self.get_tag_data(tag_id)
+                if resolved_tag == ["[Removed]"]:
+                    self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
+                elif resolved_tag != self.original.get(tag_id):
+                    self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
+                elif len(all_sources_tag) > 0 and print_all:
+                    print("  " + Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(all_sources_tag))
+                else:
+                    self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
         for tag_id, tag_data in constants.all_tags.items():
-            tag = self.resolved.get(tag_id)
-            col = colors.md_col
-            if self.resolved.get(tag_id) == ["[Removed]"]:
-                col = Fore.RED
-            elif tag != self.original.get(tag_id):
-                col = Fore.GREEN
-            self.print_metadata_key(tag_data["print"], tag_id, col, self.resolved)
+            resolved_tag = self.resolved.get(tag_id)
+            all_sources_tag = self.get_tag_data(tag_id)
+            if resolved_tag == ["[Removed]"]:
+                self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
+            elif resolved_tag != self.original.get(tag_id):
+                self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
+            elif len(all_sources_tag) > 0 and print_all:
+                print("  " + Fore.WHITE + tag_data['print'] + ": " + f"{Fore.WHITE} | ".join(all_sources_tag))
+            else:
+                self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
         print("")
 
     def switch_album_to_disc_subtitle(self, manual_album_name: str):
@@ -223,7 +232,7 @@ class MusicTags:
             else:
                 redo = True
                 print("-----------------------------------------------")
-                self.print_all()
+                self.print_resolved(print_all=True)
                 while redo:
                     redo = False
                     candidates = []
