@@ -57,6 +57,10 @@ available. Here is an example of what it can look like:
 
 ![retag final view example](screenshot_2.png)
 
+As you can see, you can remove tags, which will make them print
+"[Removed]" in red text. In the actual song metadata, they will just be
+removed.
+
 # Project status
 
 The project is still under development. The most common tags can be
