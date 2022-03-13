@@ -44,6 +44,19 @@ this:
 
 ![retag terminal example](screenshot_1.png)
 
+Purple text indicates that the tag comes from the youtube description.
+Blue indicates that the tag existed in the metadata since before. Yellow
+indicates that the tag comes from interpreting one of the original tags,
+and green indicates that the tag has been interpreted from one of the
+new tags taken from the youtube description.
+
+As you go on adjusting tags, they turn green for indicating that you're
+done adjusting them. In the end, some tags may stay blue, indicating
+that you have selected the original tag or that no new data is
+available. Here is an example of what it can look like:
+
+![retag final view example](screenshot_2.png)
+
 # Project status
 
 The project is still under development. The most common tags can be
