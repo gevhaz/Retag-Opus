@@ -208,6 +208,7 @@ class MusicTags:
         all_new_fields = [key for key in self.youtube.keys()]
         all_new_fields += [key for key in self.fromdesc.keys()]
         all_new_fields += [key for key in self.fromtags.keys()]
+        all_new_fields = Utils.remove_duplicates(all_new_fields)
         for field in all_new_fields:
             old_value = self.original.get(field, [])
             yt_value = self.youtube.get(field, [])
@@ -405,3 +406,17 @@ class MusicTags:
                 self.resolved[selected_tag].remove(items_in_tag[item])
                 if len(self.resolved[selected_tag]) == 0:
                     self.resolved.pop(selected_tag)
+
+    def check_any_new_data_exists(self):
+        new_content_exists = False
+        all_new_fields = [key for key in self.youtube.keys()]
+        all_new_fields += [key for key in self.fromdesc.keys()]
+        all_new_fields += [key for key in self.fromtags.keys()]
+        all_new_fields = Utils.remove_duplicates(all_new_fields)
+        for field in all_new_fields:
+            all_sources = set(self.get_field(field))
+            all_new_sources = set(self.get_field(field, only_new=True))
+            if all_sources.issuperset(all_new_sources):
+                new_content_exists = True
+
+        return new_content_exists
