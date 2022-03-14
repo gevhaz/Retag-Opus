@@ -413,10 +413,20 @@ class MusicTags:
         all_new_fields += [key for key in self.fromdesc.keys()]
         all_new_fields += [key for key in self.fromtags.keys()]
         all_new_fields = Utils.remove_duplicates(all_new_fields)
-        for field in all_new_fields:
-            all_sources = set(self.get_field(field))
-            all_new_sources = set(self.get_field(field, only_new=True))
-            if all_sources.issuperset(all_new_sources):
+        for tag in all_new_fields:
+            all_sources = set(self.get_field(tag))
+            original_tags = set(self.original.get(tag, []))
+            if not original_tags.issuperset(all_sources):
+                # If there are no new tags, the set of all tags should not contain anything that is not already in the
+                # original tags.
+                new_content_exists = True
+
+        for tag in self.resolved.keys():
+            original_tags = set(self.original.get(tag, []))
+            resolved_tags = set(self.resolved.get(tag, []))
+            if not original_tags.issuperset(resolved_tags):
+                # There may be some automatically added tags in resolved. Check that resolved doesn't contain any tag
+                # that doesn't already exist in the original tags.
                 new_content_exists = True
 
         return new_content_exists
