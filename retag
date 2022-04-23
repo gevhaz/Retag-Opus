@@ -100,15 +100,6 @@ def main(args):
 
             # 5. Show user final result and ask if it should be saved or retried, or song skipped
             reshow_choices = True
-            # if all(color == colors.md_col for color in tag_source.values()):
-            #     if args.fix_descriptionless:
-            #         reshow_choices = False if input("Only basic suggested, skip? (Y/n): ") == 'n' else True
-            #     else:
-            #         reshow_choices = False
-            #       print(Fore.YELLOW + "No signficant changes suggested, therefore only auto-saving the basic changes")
-            #     if not reshow_choices:
-            #         old_metadata.save()
-            #         print(Fore.YELLOW + f"Metadata saved for file: {file_name}")
 
             while reshow_choices:
                 print("Final result:")
