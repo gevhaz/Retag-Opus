@@ -29,6 +29,8 @@ class TagsParser:
         old_title = tags.get("title", [])
 
         old_artist = tags.get("artist", [])
+        if len(old_artist) == 1:
+            old_artist = Utils.split_tag(old_artist[0])
         new_artist = []
 
         old_version = tags.get("version", [])

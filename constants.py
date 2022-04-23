@@ -12,7 +12,7 @@ class ParsingReference(TypedDict):
 
 
 tag_parse_patterns: dict[str, str] = {
-    "featuring": r"(.*?)\s*[\(\[][fF]eat.?\s+(.+?)[\)\]]\s*(.*)",
+    "featuring": r"(.*?)\s*[\(\[\ ][fF]eat.?\s+(.+)[\)\]]*\s*(.*)",
     "remaster": r"(.*?)\s*\((\d{0,4}\s*[rR]emaster.*)\)\s*(.*)",
     "remaster2": r"(.*?)\s*-\s*(\d{0,4}\s*[Rr]emaster.*)(.*)",
     "live": r"(.*?)\s*[\(\[]([lL]ive.*)[\)\]]\s*(.*)",
