@@ -84,19 +84,19 @@ class TagsParser:
             if old_title[0] != pruned_title:
                 self.tags["title"] = [pruned_title]
 
-    def process_existing_tags(self):
+    def process_existing_tags(self, tags: Dict[str, List[str]]):
         """
         Analyze existing tags for information that can be moved into new tags.
         """
 
         # If the date is just the upload date, discard it
-        if self.tags.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.tags["date"][0]):
-            self.tags.pop("date", None)
+        if tags.get("date") and re.match(r"\d\d\d\d\d\d\d\d", tags["date"][0]):
+            tags.pop("date", None)
 
         tags_to_split = ["genre", "artist"]
 
         for tag in tags_to_split:
-            tags_tag = self.tags.get(tag)
+            tags_tag = tags.get(tag)
             if tags_tag is not None and not len(tags_tag) > 1:
                 new_tag = Utils().split_tag(tags_tag[0])
                 if new_tag != tags_tag:
