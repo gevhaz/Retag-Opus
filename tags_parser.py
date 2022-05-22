@@ -10,8 +10,9 @@ INTERPUNCT = "\u00b7"
 
 
 class TagsParser:
-    def __init__(self):
+    def __init__(self, tags: Dict[str, List[str]]):
         self.tags: Dict[str, List[str]] = {}
+        self.original_tags = tags
 
     def standard_pattern(self, field_name, regex, line):
         pattern = re.compile(regex)
@@ -25,18 +26,18 @@ class TagsParser:
             else:
                 self.tags[field_name] = [field_value]
 
-    def parse_tags(self, tags: Dict[str, List[str]]):
-        old_title = tags.get("title", [])
+    def parse_tags(self):
+        old_title = self.original_tags.get("title", [])
 
-        old_artist = tags.get("artist", [])
+        old_artist = self.original_tags.get("artist", [])
         if len(old_artist) == 1:
             old_artist = Utils.split_tag(old_artist[0])
         new_artist = []
 
-        old_version = tags.get("version", [])
+        old_version = self.original_tags.get("version", [])
         new_version = []
 
-        old_genre = tags.get("genre", [])
+        old_genre = self.original_tags.get("genre", [])
         new_genre = []
 
         for title in old_title:
@@ -84,19 +85,19 @@ class TagsParser:
             if old_title[0] != pruned_title:
                 self.tags["title"] = [pruned_title]
 
-    def process_existing_tags(self, tags: Dict[str, List[str]]):
+    def process_existing_tags(self):
         """
         Analyze existing tags for information that can be moved into new tags.
         """
 
         # If the date is just the upload date, discard it
-        if tags.get("date") and re.match(r"\d\d\d\d\d\d\d\d", tags["date"][0]):
-            tags.pop("date", None)
+        if self.original_tags.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original_tags["date"][0]):
+            self.original_tags.pop("date", None)
 
         tags_to_split = ["genre", "artist"]
 
         for tag in tags_to_split:
-            tags_tag = tags.get(tag)
+            tags_tag = self.original_tags.get(tag)
             if tags_tag is not None and not len(tags_tag) > 1:
                 new_tag = Utils().split_tag(tags_tag[0])
                 if new_tag != tags_tag:
