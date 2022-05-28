@@ -6,7 +6,6 @@ from simple_term_menu import TerminalMenu  # type: ignore
 
 import colors
 import constants
-
 from utils import Utils
 
 Tags = dict[str, list[str]]

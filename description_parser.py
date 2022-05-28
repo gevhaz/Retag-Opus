@@ -1,7 +1,6 @@
 import re
 
 import constants
-
 from utils import Utils
 
 INTERPUNCT = "\u00b7"
