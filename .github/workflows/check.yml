@@ -1,0 +1,34 @@
+name: Check
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  lint:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Poetry
+      run: pipx install poetry
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+        cache: "poetry"
+
+    - name: Install dependencies
+      run: |
+        poetry env use $(which python3.10)
+        poetry install
+
+    - name: Lint with flake8
+      run: poetry run flake8
