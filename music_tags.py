@@ -1,8 +1,8 @@
 import re
 
-from colorama import Fore  # type: ignore
-from mutagen.oggopus import OggOpus  # type: ignore
-from simple_term_menu import TerminalMenu  # type: ignore
+from colorama import Fore
+from mutagen.oggopus import OggOpus
+from simple_term_menu import TerminalMenu
 
 import colors
 import constants
@@ -16,18 +16,18 @@ class MusicTags:
     Stores tags for one song as a dictionary on the same format as the one provided by the OggOpus object.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.original: Tags = {}
         self.youtube: Tags = {}
         self.fromtags: Tags = {}
         self.fromdesc: Tags = {}
         self.resolved: Tags = {}
 
-    def print_metadata_key(self, key_type, key, key_col, data):
+    def print_metadata_key(self, key_type: str, key: str, key_col: str, data: Tags) -> None:
         value = constants.SEP.join(data.get(key, [Fore.BLACK + "Not found"])).replace(" ", constants.SPACE)
         print("  " + key_type + ": " + key_col + value)
 
-    def print_metadata(self, data, col):
+    def print_metadata(self, data: Tags, col: str) -> None:
         if "performer:" in " ".join(data.keys()):
             print("  Performers:")
             for tag_id, tag_data in constants.performer_tags.items():
@@ -61,7 +61,7 @@ class MusicTags:
             print_data.append(Fore.GREEN + " | ".join(fromdesc))
         return print_data
 
-    def print_all(self):
+    def print_all(self) -> None:
         performer_block = []
         for tag_id, tag_data in constants.performer_tags.items():
             tag_all_values = self.get_tag_data(tag_id)
@@ -84,31 +84,31 @@ class MusicTags:
         else:
             print(Fore.RED + "There's no data to be printed")
 
-    def print_youtube(self):
+    def print_youtube(self) -> None:
         if self.youtube:
             self.print_metadata(self.youtube, colors.yt_col)
         else:
             print(Fore.RED + "No new data parsed from description")
 
-    def print_original(self):
+    def print_original(self) -> None:
         if self.original:
             self.print_metadata(self.original, colors.md_col)
         else:
             print(Fore.RED + "There were no pre-existing tags for this file")
 
-    def print_from_tags(self):
+    def print_from_tags(self) -> None:
         if self.fromtags:
             self.print_metadata(self.fromtags, Fore.YELLOW)
         else:
             print(Fore.RED + "No new data parsed from tags")
 
-    def print_from_desc(self):
+    def print_from_desc(self) -> None:
         if self.fromdesc:
             self.print_metadata(self.fromdesc, Fore.GREEN)
         else:
             print(Fore.RED + "No new data parsed from tags parsed from description")
 
-    def print_resolved(self, print_all: bool = False):
+    def print_resolved(self, print_all: bool = False) -> None:
         if "performer:" in " ".join(self.resolved.keys()):
             print("  Performers:")
             for tag_id, tag_data in constants.performer_tags.items():
@@ -135,7 +135,7 @@ class MusicTags:
                 self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
         print("")
 
-    def switch_album_to_disc_subtitle(self, manual_album_name: str):
+    def switch_album_to_disc_subtitle(self, manual_album_name: str) -> None:
         """
         Switches the original album tag to the discsubtitle tag so that it will be used in the comparison for that tag,
         rather than album, which is not used when the album is set manually.
@@ -144,43 +144,43 @@ class MusicTags:
         if original_album is not None and original_album != [manual_album_name]:
             self.original["discsubtitle"] = original_album
 
-    def discard_upload_date(self):
+    def discard_upload_date(self) -> None:
         """
         If the date is just the upload date, discard it
         """
         if self.original.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original["date"][0]):
             self.original.pop("date", None)
 
-    def merge_original_metadata(self, original_metadata: OggOpus):
+    def merge_original_metadata(self, original_metadata: OggOpus) -> None:
         for key, value in original_metadata.values():
             self.original[key] = value
 
-    def set_youtube_tags(self, youtube_tags: Tags):
+    def set_youtube_tags(self, youtube_tags: Tags) -> None:
         self.youtube = youtube_tags
 
-    def set_original_tags(self, original_tags: Tags):
+    def set_original_tags(self, original_tags: Tags) -> None:
         self.original = original_tags
 
-    def set_tags_from_description(self, from_desc_tags: Tags):
+    def set_tags_from_description(self, from_desc_tags: Tags) -> None:
         self.fromdesc = from_desc_tags
 
-    def set_tags_from_old_tags(self, tags_from_old_tags: Tags):
+    def set_tags_from_old_tags(self, tags_from_old_tags: Tags) -> None:
         self.fromtags = tags_from_old_tags
 
-    def set_resolved_tags(self, resolved: Tags):
+    def set_resolved_tags(self, resolved: Tags) -> None:
         self.resolved = resolved
 
-    def prune_final_metadata(self):
+    def prune_final_metadata(self) -> None:
         self.resolved["language"] = ["[Removed]"]
         self.resolved["compatible_brands"] = ["[Removed]"]
         self.resolved["minor_version"] = ["[Removed]"]
         self.resolved["major_brand"] = ["[Removed]"]
         self.resolved["vendor_id"] = ["[Removed]"]
 
-    def add_source_tag(self):
+    def add_source_tag(self) -> None:
         self.resolved["comment"] = ["youtube-dl"]
 
-    def get_field(self, field: str, only_new=False) -> list[str]:
+    def get_field(self, field: str, only_new: bool = False) -> list[str]:
         old_value = self.original.get(field, [])
         yt_value = self.youtube.get(field, [])
         from_desc_value = self.fromdesc.get(field, [])
@@ -190,7 +190,7 @@ class MusicTags:
         else:
             return Utils().remove_duplicates(old_value + yt_value + from_desc_value + from_tags_value)
 
-    def adjust_metadata(self):
+    def adjust_metadata(self) -> None:
 
         # Date should be safe to get from description
         date = self.youtube.get("date", None)
@@ -358,7 +358,7 @@ class MusicTags:
             elif original_artist:
                 self.resolved["albumartist"] = original_artist
 
-    def modify_resolved_field(self):
+    def modify_resolved_field(self) -> None:
         key = " "
         val = " "
         while key and val:
@@ -370,7 +370,7 @@ class MusicTags:
             else:
                 break
 
-    def delete_tag_item(self):
+    def delete_tag_item(self) -> None:
         tags_in_resolved = []
         for tag in self.resolved.keys():
             if tag in constants.all_tags.keys() or tag in constants.performer_tags.keys():
@@ -406,7 +406,7 @@ class MusicTags:
                 if len(self.resolved[selected_tag]) == 0:
                     self.resolved.pop(selected_tag)
 
-    def check_any_new_data_exists(self):
+    def check_any_new_data_exists(self) -> bool:
         new_content_exists = False
         all_new_fields = [key for key in self.youtube.keys()]
         all_new_fields += [key for key in self.fromdesc.keys()]
