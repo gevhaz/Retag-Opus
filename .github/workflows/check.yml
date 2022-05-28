@@ -39,3 +39,6 @@ jobs:
 
       - name: Check import sorting with isort
         run: poetry run isort --check --diff --color .
+
+      - name: Check type annotation with mypy
+        run: poetry run mypy --strict .
