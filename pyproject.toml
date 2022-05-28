@@ -9,6 +9,16 @@ line-length = 120
 profile = "black"
 line_length = 120
 
+[[tool.mypy.overrides]]
+module = [
+    "colorama",
+    "shtab",
+    "mutagen",
+    "mutagen.oggopus",
+    "simple_term_menu"
+]
+ignore_missing_imports = true
+
 [tool.poetry]
 name = "retag_opus"
 version = "0.1.0"

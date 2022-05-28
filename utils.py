@@ -4,14 +4,14 @@ from pathlib import Path
 from typing import List
 
 from colorama import Fore
-from simple_term_menu import TerminalMenu  # type: ignore
+from simple_term_menu import TerminalMenu
 
 import constants
 
 
 class Utils:
     @staticmethod
-    def remove_duplicates(duplicates: list) -> list:
+    def remove_duplicates(duplicates: list[str]) -> list[str]:
         return list(dict.fromkeys(duplicates))
 
     @staticmethod
@@ -42,7 +42,7 @@ class Utils:
         return file_name
 
     @staticmethod
-    def select_single_tag(candidates: list[str]):
+    def select_single_tag(candidates: list[str]) -> list[str]:
         """
         Let's the user select one out of the candidate tags and returns a list with that as the only item. The user can
         also choose to skip with q, escape, or choosing the --No change-- item.
@@ -62,5 +62,5 @@ class Utils:
         return []
 
     @staticmethod
-    def exit_now():
+    def exit_now() -> None:
         sys.exit(0)

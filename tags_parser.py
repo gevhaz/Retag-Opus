@@ -12,7 +12,7 @@ class TagsParser:
         self.tags: Dict[str, List[str]] = {}
         self.original_tags = tags
 
-    def standard_pattern(self, field_name, regex, line):
+    def standard_pattern(self, field_name: str, regex: str, line: str) -> None:
         pattern = re.compile(regex)
         pattern_match = re.match(pattern, line)
         if pattern_match:
@@ -24,7 +24,7 @@ class TagsParser:
             else:
                 self.tags[field_name] = [field_value]
 
-    def parse_tags(self):
+    def parse_tags(self) -> None:
         old_title = self.original_tags.get("title", [])
 
         old_artist = self.original_tags.get("artist", [])
@@ -83,7 +83,7 @@ class TagsParser:
             if old_title[0] != pruned_title:
                 self.tags["title"] = [pruned_title]
 
-    def process_existing_tags(self):
+    def process_existing_tags(self) -> None:
         """
         Analyze existing tags for information that can be moved into new tags.
         """

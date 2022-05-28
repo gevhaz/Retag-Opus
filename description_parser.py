@@ -9,20 +9,20 @@ Tags = dict[str, list[str]]
 
 
 class DescriptionParser:
-    def __init__(self):
+    def __init__(self) -> None:
         self.tags: Tags = {}
 
-    def parse_artist_and_title(self, source_line):
+    def parse_artist_and_title(self, source_line: str) -> tuple[list[str], str]:
         artist_and_title = source_line.split(" " + constants.INTERPUNCT + " ")
         title = Utils().prune_title(artist_and_title[0])
-        artist: list = artist_and_title[1:]
+        artist: list[str] = artist_and_title[1:]
 
         if len(artist) < 2 and ", " in artist[0]:
             artist = Utils().split_tag(artist[0])
 
         return artist, title
 
-    def standard_pattern(self, field_name, regex, line):
+    def standard_pattern(self, field_name: str, regex: str, line: str) -> None:
         pattern = re.compile(regex)
         pattern_match = re.match(pattern, line)
         if pattern_match:
@@ -34,7 +34,7 @@ class DescriptionParser:
             else:
                 self.tags[field_name] = [field_value]
 
-    def parse(self, description_tag_full: str):
+    def parse(self, description_tag_full: str) -> None:
         lines_since_title_artist: int = 1000
 
         description_tag_lines: list[str] = description_tag_full.splitlines(False)

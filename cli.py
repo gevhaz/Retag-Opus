@@ -1,11 +1,12 @@
 import argparse
+from argparse import Namespace
 
 import shtab
 
 
 class Cli:
     @staticmethod
-    def parse_arguments(version: str):
+    def parse_arguments(version: str) -> Namespace:
         parser = argparse.ArgumentParser()
 
         shtab.add_argument_to(parser, ["-s", "--print-completion"])
