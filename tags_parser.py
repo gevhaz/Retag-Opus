@@ -1,9 +1,7 @@
 import re
-
-from typing import List, Dict
+from typing import Dict, List
 
 import constants
-
 from utils import Utils
 
 INTERPUNCT = "\u00b7"

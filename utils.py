@@ -1,10 +1,10 @@
 import re
 import sys
+from pathlib import Path
+from typing import List
 
 from colorama import Fore
-from pathlib import Path
 from simple_term_menu import TerminalMenu  # type: ignore
-from typing import List
 
 import constants
 

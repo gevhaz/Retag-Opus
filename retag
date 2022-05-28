@@ -9,15 +9,15 @@ __author__ = "Simon Bengtsson"
 __version__ = "0.2.0"
 __license__ = "GPLv3"
 
-from mutagen.oggopus import OggOpus  # type: ignore
-from colorama import Fore, init  # type: ignore
 from pathlib import Path
+
+from colorama import Fore, init  # type: ignore
+from mutagen.oggopus import OggOpus  # type: ignore
 from simple_term_menu import TerminalMenu  # type: ignore
 
-from cli import Cli
 import colors
 import constants
-
+from cli import Cli
 from description_parser import DescriptionParser
 from music_tags import MusicTags
 from tags_parser import TagsParser
