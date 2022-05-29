@@ -6,7 +6,7 @@ import shtab
 
 class Cli:
     @staticmethod
-    def parse_arguments(version: str) -> Namespace:
+    def parse_arguments() -> Namespace:
         parser = argparse.ArgumentParser()
 
         shtab.add_argument_to(parser, ["-s", "--print-completion"])
@@ -40,7 +40,7 @@ class Cli:
         ).complete = shtab.DIRECTORY  # type: ignore
 
         parser.add_argument(
-            "-V", "--version", action="version", version="%(prog)s (version {version})".format(version=version)
+            "-V", "--version", action="version", version="%(prog)s (version {version})".format(version="0.2.0")
         )
 
         return parser.parse_args()
