@@ -6,6 +6,13 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-05-30
+
+### Modified
+
+- Restructure project to use Poetry.
+- Deploy this and future versions to PyPI through Github Actions.
+
 ## [0.2.0] - 2022-05-22
 
 ### Added
