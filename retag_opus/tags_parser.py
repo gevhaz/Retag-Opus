@@ -1,8 +1,8 @@
 import re
 from typing import Dict, List
 
-import constants
-from utils import Utils
+from retag_opus import constants
+from retag_opus.utils import Utils
 
 INTERPUNCT = "\u00b7"
 

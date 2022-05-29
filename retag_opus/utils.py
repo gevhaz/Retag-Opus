@@ -6,7 +6,7 @@ from typing import List
 from colorama import Fore
 from simple_term_menu import TerminalMenu
 
-import constants
+from retag_opus import constants
 
 
 class Utils:
