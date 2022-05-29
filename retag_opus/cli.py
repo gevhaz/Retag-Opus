@@ -9,7 +9,7 @@ class Cli:
     def parse_arguments() -> Namespace:
         parser = argparse.ArgumentParser()
 
-        shtab.add_argument_to(parser, ["-s", "--print-completion"])
+        shtab.add_argument_to(parser, ["-s", "--print-completion"])  # type: ignore
 
         parser.add_argument(
             "-a",
