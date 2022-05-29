@@ -40,7 +40,7 @@ class Cli:
         ).complete = shtab.DIRECTORY  # type: ignore
 
         parser.add_argument(
-            "-V", "--version", action="version", version="%(prog)s (version {version})".format(version="0.2.0")
+            "-V", "--version", action="version", version="%(prog)s (version {version})".format(version="0.3.0")
         )
 
         return parser.parse_args()
