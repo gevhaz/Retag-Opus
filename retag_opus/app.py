@@ -5,28 +5,25 @@ other tags. Existing tags are also used to produce new ones, e.g. moving strings
 the version tag.
 """
 
-__author__ = "Simon Bengtsson"
-__version__ = "0.2.0"
-__license__ = "GPLv3"
-
 from pathlib import Path
 
 from colorama import Fore, init  # type: ignore
 from mutagen.oggopus import OggOpus  # type: ignore
 from simple_term_menu import TerminalMenu  # type: ignore
 
-import colors
-import constants
-from cli import Cli
-from description_parser import DescriptionParser
-from music_tags import MusicTags
-from tags_parser import TagsParser
-from utils import Utils
+from retag_opus import colors
+from retag_opus import constants
+from retag_opus.cli import Cli
+from retag_opus.description_parser import DescriptionParser
+from retag_opus.music_tags import MusicTags
+from retag_opus.tags_parser import TagsParser
+from retag_opus.utils import Utils
 
 init(autoreset=True)
 
 
-def main(args):
+def run() -> int:
+    args = Cli.parse_arguments()
     music_dir = Path(args.dir).resolve()
     all_files = list(filter(Path.is_file, Path(music_dir).glob('*.opus')))
 
@@ -168,11 +165,4 @@ def main(args):
                         print(Fore.RED + "Something went wrong, starting over")
                         redo = True
 
-            # At any step with user input, user can choose:
-            # * Show conflicting fields
-            # * Show fields that will be changed
-
-
-if __name__ == "__main__":
-    args = Cli.parse_arguments(__version__)
-    main(args)
+    return 0
