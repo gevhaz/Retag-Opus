@@ -4,8 +4,7 @@ from colorama import Fore
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import colors
-from retag_opus import constants
+from retag_opus import colors, constants
 from retag_opus.utils import Utils
 
 Tags = dict[str, list[str]]
