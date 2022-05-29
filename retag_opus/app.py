@@ -7,12 +7,11 @@ the version tag.
 
 from pathlib import Path
 
-from colorama import Fore, init  # type: ignore
-from mutagen.oggopus import OggOpus  # type: ignore
-from simple_term_menu import TerminalMenu  # type: ignore
+from colorama import Fore, init
+from mutagen.oggopus import OggOpus
+from simple_term_menu import TerminalMenu
 
-from retag_opus import colors
-from retag_opus import constants
+from retag_opus import colors, constants
 from retag_opus.cli import Cli
 from retag_opus.description_parser import DescriptionParser
 from retag_opus.music_tags import MusicTags
@@ -25,7 +24,7 @@ init(autoreset=True)
 def run() -> int:
     args = Cli.parse_arguments()
     music_dir = Path(args.dir).resolve()
-    all_files = list(filter(Path.is_file, Path(music_dir).glob('*.opus')))
+    all_files = list(filter(Path.is_file, Path(music_dir).glob("*.opus")))
 
     if args.manual_album is not None:
         constants.all_tags["discsubtitle"] = constants.all_tags["album"].copy()
@@ -72,7 +71,7 @@ def run() -> int:
             # 3. If description exists, send it to be parsed
             if description_lines is not None:
                 desc_parser = DescriptionParser()
-                description = '\n'.join(description_lines)
+                description = "\n".join(description_lines)
                 desc_parser.parse(description)
                 tags.set_youtube_tags(desc_parser.get_tags())
                 tags.add_source_tag()
@@ -103,19 +102,19 @@ def run() -> int:
                 tags.print_resolved()
                 reshow_choices = False
                 options = [
-                        "[p] pass",
-                        "[s] save",
-                        "[r] reset",
-                        "[m] modify tag",
-                        "[d] delete item in tag",
-                        "[y] youtube description",
-                        "[a] all metadata",
-                        "[e] resolved metadata",
-                        "[q] quit"
-                        ]
+                    "[p] pass",
+                    "[s] save",
+                    "[r] reset",
+                    "[m] modify tag",
+                    "[d] delete item in tag",
+                    "[y] youtube description",
+                    "[a] all metadata",
+                    "[e] resolved metadata",
+                    "[q] quit",
+                ]
                 terminal_menu = TerminalMenu(options, title="What do you want to do?")
                 choice = terminal_menu.show()
-                print('-' * 40)
+                print("-" * 40)
 
                 action = "[q] quit"
                 if choice is not None and not isinstance(choice, tuple):
