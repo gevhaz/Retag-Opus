@@ -5,6 +5,7 @@ from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
 from retag_opus import colors, constants
+from retag_opus.exceptions import UserExitException
 from retag_opus.utils import Utils
 
 Tags = dict[str, list[str]]
@@ -262,8 +263,7 @@ class MusicTags:
                     choice = candidate_menu.show()
 
                     if choice is None:
-                        print(Fore.YELLOW + "Skipping this and all later songs")
-                        Utils().exit_now()
+                        raise UserExitException("Skipping this and all later songs")
                     elif isinstance(choice, tuple):
                         continue
 
@@ -339,8 +339,7 @@ class MusicTags:
                                 self.resolved[field] = from_desc_value
 
                         case "Quit":
-                            print(Fore.YELLOW + "Skipping this and all later songs")
-                            Utils().exit_now()
+                            raise UserExitException("Skipping this and all later songs")
 
         all_artists = self.get_field("artist")
         resolved_artist = self.resolved.get("artist")
