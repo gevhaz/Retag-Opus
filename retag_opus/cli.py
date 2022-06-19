@@ -3,6 +3,8 @@ from argparse import Namespace
 
 import shtab
 
+from retag_opus import __version__
+
 
 class Cli:
     @staticmethod
@@ -40,7 +42,10 @@ class Cli:
         ).complete = shtab.DIRECTORY  # type: ignore
 
         parser.add_argument(
-            "-V", "--version", action="version", version="%(prog)s (version {version})".format(version="0.3.0")
+            "-V",
+            "--version",
+            action="version",
+            version=f"%(prog)s (version {__version__})",
         )
 
         return parser.parse_args()
