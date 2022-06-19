@@ -14,6 +14,7 @@ from simple_term_menu import TerminalMenu
 from retag_opus import colors, constants
 from retag_opus.cli import Cli
 from retag_opus.description_parser import DescriptionParser
+from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import MusicTags
 from retag_opus.tags_parser import TagsParser
 from retag_opus.utils import Utils
@@ -85,7 +86,11 @@ def run() -> int:
                 break
 
             # 4. For each field, if there are conflicts, ask user input
-            tags.adjust_metadata()
+            try:
+                tags.adjust_metadata()
+            except UserExitException as e:
+                print(f"RetagOpus exited successfully: {e}")
+                return 0
 
             # 4.5 Get rid of shady tags
             tags.prune_final_metadata()
@@ -122,8 +127,8 @@ def run() -> int:
 
                 match action:
                     case "[q] quit":
-                        print(Fore.YELLOW + "Skipping this and all later songs")
-                        Utils().exit_now()
+                        print("RetagOpus exited successfully: Skipping this and all later songs")
+                        return 0
                     case "[s] save":
                         for tag, data in tags.resolved.items():
                             if data == ["[Removed]"]:
