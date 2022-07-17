@@ -1,3 +1,4 @@
+"""Main module for the RetagOpus program. The execution starts here."""
 import sys
 
 from retag_opus import app

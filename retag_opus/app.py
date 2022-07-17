@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""
-Script to parse a "description" tag in a song, corresponding to the youtube version of the song, and parse it to produce
-other tags. Existing tags are also used to produce new ones, e.g. moving strings like "2020 Remix" from the title tag to
-the version tag.
+"""An app to transfer YouTube data about a song to the song metadata.
+
+This in ann app that parses a "description" tag in a song, corresponding
+to the youtube version of the song, and parse it to produce other tags.
+Existing tags are also used to produce new ones, e.g. moving strings
+like "2020 Remix" from the title tag to the version tag.
 """
 
 from pathlib import Path
@@ -21,8 +23,11 @@ from retag_opus.utils import Utils
 
 init(autoreset=True)
 
+Tags = dict[str, list[str]]
+
 
 def run() -> int:
+    """Run all the functionality of the app."""
     args = Cli.parse_arguments()
     music_dir = Path(args.dir).resolve()
     all_files = list(filter(Path.is_file, Path(music_dir).glob("*.opus")))
@@ -43,7 +48,7 @@ def run() -> int:
 
             # 1. Read the data and make basic improvements
             old_metadata: OggOpus = OggOpus(file_path)
-            old_tags = {}
+            old_tags: Tags = {}
             tag_source = {}
             for key, val in old_metadata.items():
                 old_tags[key] = val
@@ -51,18 +56,18 @@ def run() -> int:
                 tag_source[key] = colors.md_col
             tags = MusicTags()
 
-            tags.set_original_tags(old_tags)
+            tags.original = old_tags
             tags.discard_upload_date()
             if args.manual_album is not None:
                 tags.switch_album_to_disc_subtitle(args.manual_album)
 
             prepare_resolved = old_tags.copy()
-            tags.set_resolved_tags(prepare_resolved)
+            tags.resolved = prepare_resolved
 
             old_tags_parser = TagsParser(tags.original)
             old_tags_parser.parse_tags()
-            old_tags_parser.process_existing_tags()
-            tags.set_tags_from_old_tags(old_tags_parser.get_tags())
+            old_tags_parser.clean_original_tags()
+            tags.fromtags = old_tags_parser.tags
 
             # 2. Get description
             description_lines: list[str] | None = old_metadata.get("synopsis")
@@ -74,12 +79,12 @@ def run() -> int:
                 desc_parser = DescriptionParser()
                 description = "\n".join(description_lines)
                 desc_parser.parse(description)
-                tags.set_youtube_tags(desc_parser.get_tags())
+                tags.youtube = desc_parser.tags
                 tags.add_source_tag()
 
                 new_tags_parser = TagsParser(tags.youtube)
                 new_tags_parser.parse_tags()
-                tags.set_tags_from_description(new_tags_parser.get_tags())
+                tags.fromdesc = new_tags_parser.tags
 
             if not tags.check_any_new_data_exists():
                 print(Fore.YELLOW + "No new data exists. Skipping song")
@@ -87,7 +92,7 @@ def run() -> int:
 
             # 4. For each field, if there are conflicts, ask user input
             try:
-                tags.adjust_metadata()
+                tags.resolve_metadata()
             except UserExitException as e:
                 print(f"RetagOpus exited successfully: {e}")
                 return 0
@@ -99,7 +104,8 @@ def run() -> int:
             if args.manual_album is not None:
                 tags.resolved["album"] = [args.manual_album]
 
-            # 5. Show user final result and ask if it should be saved or retried, or song skipped
+            # 5. Show user final result and ask if it should be saved or
+            # retried, or song skipped
             reshow_choices = True
 
             while reshow_choices:
