@@ -1,3 +1,4 @@
+"""Module for parsing command line arguments."""
 import argparse
 from argparse import Namespace
 
@@ -5,8 +6,11 @@ import shtab
 
 
 class Cli:
+    """Class for parsing command line arguments."""
+
     @staticmethod
     def parse_arguments() -> Namespace:
+        """Create parser and parse CLI arguments, and return them."""
         parser = argparse.ArgumentParser()
 
         shtab.add_argument_to(parser, ["-s", "--print-completion"])  # type: ignore

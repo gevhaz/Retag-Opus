@@ -1,3 +1,4 @@
+"""Module containing the definition of colors used in the app."""
 from colorama import Fore
 
 yt_col = Fore.MAGENTA
