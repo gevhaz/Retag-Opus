@@ -1,3 +1,8 @@
+"""Module for parsing text in the existing metadata keys.
+
+This module is for parsing text in the existing metadata keys, rather
+that the YouTube description.
+"""
 import re
 from typing import Dict, List
 
@@ -8,23 +13,25 @@ INTERPUNCT = "\u00b7"
 
 
 class TagsParser:
+    """Clean and parse already existing sets of tags.
+
+    This class is for working with a set of tags and parsing metadata
+    from them, such as the version of a song (e.g. "live version"), but
+    also for cleaning up the tags by e.g. splitting them by pre-defined
+    delimeters.
+    """
+
     def __init__(self, tags: Dict[str, List[str]]):
+        """Set attributs of the TagsParser."""
         self.tags: Dict[str, List[str]] = {}
         self.original_tags = tags
 
-    def standard_pattern(self, field_name: str, regex: str, line: str) -> None:
-        pattern = re.compile(regex)
-        pattern_match = re.match(pattern, line)
-        if pattern_match:
-            field_value = pattern_match.groups()[len(pattern_match.groups()) - 1]
-            field_value = field_value.strip()
-            if self.tags.get(field_name):
-                self.tags[field_name].append(field_value)
-                self.tags[field_name] = Utils().remove_duplicates(self.tags[field_name])
-            else:
-                self.tags[field_name] = [field_value]
-
     def parse_tags(self) -> None:
+        """Look through old tags for metadata.
+
+        Go through some of the existing tags and see if they contain
+        information that should go into another tag.
+        """
         old_title = self.original_tags.get("title", [])
 
         old_artist = self.original_tags.get("artist", [])
@@ -83,11 +90,16 @@ class TagsParser:
             if old_title[0] != pruned_title:
                 self.tags["title"] = [pruned_title]
 
-    def process_existing_tags(self) -> None:
-        """
-        Analyze existing tags for information that can be moved into new tags.
-        """
+    def clean_original_tags(self) -> None:
+        """Clean up original tags.
 
+        Remove the date tag if it is on a format that probably means
+        that it's just the YouTube upload date, rather than the release
+        date.
+
+        Also split the genre and artist tag into a list if they contains
+        pre-defined separators.
+        """
         # If the date is just the upload date, discard it
         if self.original_tags.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original_tags["date"][0]):
             self.original_tags.pop("date", None)
@@ -100,6 +112,3 @@ class TagsParser:
                 new_tag = Utils().split_tag(tags_tag[0])
                 if new_tag != tags_tag:
                     self.tags[tag] = new_tag
-
-    def get_tags(self) -> Dict[str, List[str]]:
-        return self.tags

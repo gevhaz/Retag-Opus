@@ -1,3 +1,4 @@
+"""Module with helper functions for the rest of the app."""
 import re
 import sys
 from pathlib import Path
@@ -10,12 +11,21 @@ from retag_opus import constants
 
 
 class Utils:
+    """Class containing static utility functions."""
+
     @staticmethod
     def remove_duplicates(duplicates: list[str]) -> list[str]:
+        """Remove duplicate elemets from given list."""
         return list(dict.fromkeys(duplicates))
 
     @staticmethod
     def prune_title(original_title: str) -> str:
+        """Clean up title tag value.
+
+        Remove things such as live version specification and featured
+        artist information from the title of a song, and remove leading
+        and trailing whitespace.
+        """
         pruned = original_title
         for pattern in constants.tag_parse_patterns.values():
             pruned = re.sub(pattern, r"\1 \3", pruned)
@@ -23,10 +33,16 @@ class Utils:
 
     @staticmethod
     def split_tag(input: str) -> List[str]:
+        """Split the provided tag by pre-defined delimeters."""
         return re.split(", | and | & |; ", input)
 
     @staticmethod
     def file_path_to_song_data(file_path: Path) -> str:
+        """Convert file name to readable string.
+
+        Produce a string with song title and artist on a readable format
+        from the name of the file being worked with.
+        """
         file_name = str(file_path)
         basename = re.match(".*/(.*)", file_name)
         if basename:
@@ -43,13 +59,16 @@ class Utils:
 
     @staticmethod
     def select_single_tag(candidates: list[str]) -> list[str]:
-        """
-        Let's the user select one out of the candidate tags and returns a list with that as the only item. The user can
-        also choose to skip with q, escape, or choosing the --No change-- item.
+        """Select a single value to keep for a tag from a menu.
+
+        Let's the user select one out of the candidate tags and returns
+        a list with that as the only item. The user can also choose to
+        skip with q, escape, or choosing the --No change-- item.
 
         :param candidates: The list of tags to choose between.
 
-        :return: A list with the selected candidate or an empty list if none is selected.
+        :return: A list with the selected candidate or an empty list if
+        none is selected.
         """
         candidates.append("--No change--")
         choose_one_tag_menu = TerminalMenu(candidates, title="Choose one tag to use")
@@ -63,4 +82,5 @@ class Utils:
 
     @staticmethod
     def exit_now() -> None:
+        """Immediately exit the program."""
         sys.exit(0)

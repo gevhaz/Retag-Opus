@@ -1,3 +1,8 @@
+"""Module for holding constants.
+
+This module holds variables that should be constant and can be accessed
+in other parts of the app.
+"""
 from typing import TypedDict
 
 INTERPUNCT = "\u00b7"
@@ -7,6 +12,8 @@ SEP = " | "
 
 
 class ParsingReference(TypedDict):
+    """This is dictionary with a tag name and regex for parsing it."""
+
     print: str
     pattern: list[str]
 

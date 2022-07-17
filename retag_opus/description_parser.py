@@ -1,3 +1,4 @@
+"""Module for parsing a YouTube descripton into metadata tags."""
 import re
 
 from retag_opus import constants
@@ -9,10 +10,23 @@ Tags = dict[str, list[str]]
 
 
 class DescriptionParser:
+    """Parse tags from YouTube description."""
+
     def __init__(self) -> None:
+        """Create tags dictionary that will hold the parsed tags."""
         self.tags: Tags = {}
 
     def parse_artist_and_title(self, source_line: str) -> tuple[list[str], str]:
+        """Parse artist and title from standard ContentID line.
+
+        The standard ContentID description contains an interpunct
+        character separating title and the artists. This function gets
+        the artist and title of the song for this line.
+
+        :param source_line: A string containing an interpunct character.
+
+        :return: List or artists and title of song as string.
+        """
         artist_and_title = source_line.split(" " + constants.INTERPUNCT + " ")
         title = Utils().prune_title(artist_and_title[0])
         artist: list[str] = artist_and_title[1:]
@@ -23,6 +37,12 @@ class DescriptionParser:
         return artist, title
 
     def standard_pattern(self, field_name: str, regex: str, line: str) -> None:
+        """Parse metadata from line with regex and put in field_name.
+
+        Use a regex on a standard format to extract metadata from the
+        string line and set the result to the tag field_value. If the
+        value already exists, remove duplicate values.
+        """
         pattern = re.compile(regex)
         pattern_match = re.match(pattern, line)
         if pattern_match:
@@ -35,6 +55,14 @@ class DescriptionParser:
                 self.tags[field_name] = [field_value]
 
     def parse(self, description_tag_full: str) -> None:
+        """Parse the provided youtube description.
+
+        Parses the given description and puts the resulting tags in the
+        internal tags variable of the object.
+
+        :param description_tag_full: The full YouTube description as a
+            string.
+        """
         lines_since_title_artist: int = 1000
 
         description_tag_lines: list[str] = description_tag_full.splitlines(False)
@@ -100,6 +128,3 @@ class DescriptionParser:
         date = self.tags.get("date")
         if copyright_date and not date:
             self.tags["date"] = copyright_date
-
-    def get_tags(self) -> Tags:
-        return self.tags

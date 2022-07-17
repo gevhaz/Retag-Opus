@@ -1,7 +1,7 @@
+"""Module for storing tags from different sources and printing them."""
 import re
 
 from colorama import Fore
-from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
 from retag_opus import colors, constants
@@ -12,39 +12,64 @@ Tags = dict[str, list[str]]
 
 
 class MusicTags:
-    """
-    Stores tags for one song as a dictionary on the same format as the one provided by the OggOpus object.
+    """Store tags from different sources for a song.
+
+    Stores tags for one song as a dictionary on the same format as the
+    one provided by the OggOpus object.
     """
 
     def __init__(self) -> None:
+        """Create empty attributes for each source."""
         self.original: Tags = {}
         self.youtube: Tags = {}
         self.fromtags: Tags = {}
         self.fromdesc: Tags = {}
         self.resolved: Tags = {}
 
-    def print_metadata_key(self, key_type: str, key: str, key_col: str, data: Tags) -> None:
+    def print_metadata_key(
+        self,
+        key_type: str,
+        key: str,
+        key_col: str,
+        data: Tags,
+    ) -> None:
+        """Print a single metadata key in specified color.
+
+        :param key_type: Printed name of key.
+        :param key: What key to print.
+        :param key_col: Color to print the data in.
+        :param data: The tags from which to get the given key.
+        """
         value = constants.SEP.join(data.get(key, [Fore.BLACK + "Not found"])).replace(" ", constants.SPACE)
         print("  " + key_type + ": " + key_col + value)
 
-    def print_metadata(self, data: Tags, col: str) -> None:
-        if "performer:" in " ".join(data.keys()):
+    def print_metadata(self, metadata: Tags, col: str) -> None:
+        """Print metadata of given set of tags in specifed color.
+
+        :param metadata: The set of tags to print.
+        :param col: The color to print the tags in.
+        """
+        if "performer:" in " ".join(metadata.keys()):
             print("  Performers:")
             for tag_id, tag_data in constants.performer_tags.items():
-                if tag_id in data and data[tag_id] is not None:
-                    self.print_metadata_key(tag_data["print"], tag_id, col, data)
+                if tag_id in metadata and metadata[tag_id] is not None:
+                    self.print_metadata_key(tag_data["print"], tag_id, col, metadata)
         for tag_id, tag_data in constants.all_tags.items():
-            self.print_metadata_key(tag_data["print"], tag_id, col, data)
+            self.print_metadata_key(tag_data["print"], tag_id, col, metadata)
         print("")
 
     def get_tag_data(self, tag_id: str) -> list[str]:
-        """
-        Returns a list of all values for a specific tag from various sources with color depending on source.
+        """Get data from all sources for given tag.
+
+        Returns a list of all values for a specific tag from various
+        sources with color depending on source.
 
         :param tag_id: The tag name for which data should be returned
 
-        :return: List with strings containing the value the given tag has in different sources with color codes that
-        differ between sources. If no source contains the tag, an empty list is returned.
+        :return: List with strings containing the value the given tag
+        has in different sources with color codes that differ between
+        sources. If no source contains the tag, an empty list is
+        returned.
         """
         print_data: list[str] = []
         original = self.original.get(tag_id)
@@ -62,6 +87,11 @@ class MusicTags:
         return print_data
 
     def print_all(self) -> None:
+        """Print all tags from all sources.
+
+        Print a block of text with all data from all sources for a given
+        tag name, differentiated by color.
+        """
         performer_block = []
         for tag_id, tag_data in constants.performer_tags.items():
             tag_all_values = self.get_tag_data(tag_id)
@@ -85,30 +115,46 @@ class MusicTags:
             print(Fore.RED + "There's no data to be printed")
 
     def print_youtube(self) -> None:
+        """Print all tags parsed from youtube description."""
         if self.youtube:
             self.print_metadata(self.youtube, colors.yt_col)
         else:
             print(Fore.RED + "No new data parsed from description")
 
     def print_original(self) -> None:
+        """Print tags from original file.
+
+        Print tags from the original file, if they are in the predefined
+        set of tags.
+        """
         if self.original:
             self.print_metadata(self.original, colors.md_col)
         else:
             print(Fore.RED + "There were no pre-existing tags for this file")
 
     def print_from_tags(self) -> None:
+        """Print all tags parsed from original tags."""
         if self.fromtags:
             self.print_metadata(self.fromtags, Fore.YELLOW)
         else:
             print(Fore.RED + "No new data parsed from tags")
 
     def print_from_desc(self) -> None:
+        """Print all tags parsed from YouTube description tags."""
         if self.fromdesc:
             self.print_metadata(self.fromdesc, Fore.GREEN)
         else:
             print(Fore.RED + "No new data parsed from tags parsed from description")
 
     def print_resolved(self, print_all: bool = False) -> None:
+        """Print resolved tags.
+
+        Print the tags in the "resolved" set, meaning that they have
+        been assumed to be correct or that they have been manually
+        selected to be right.
+
+        :param print_all: Print tags even if they haven't been changed.
+        """
         if "performer:" in " ".join(self.resolved.keys()):
             print("  Performers:")
             for tag_id, tag_data in constants.performer_tags.items():
@@ -136,41 +182,25 @@ class MusicTags:
         print("")
 
     def switch_album_to_disc_subtitle(self, manual_album_name: str) -> None:
-        """
-        Switches the original album tag to the discsubtitle tag so that it will be used in the comparison for that tag,
-        rather than album, which is not used when the album is set manually.
+        """Move album tag to discsubtitle tag.
+
+        Switches the original album tag to the discsubtitle tag so that
+        it will be used in the comparison for that tag, rather than
+        album, which is not used when the album is set manually.
+
+        :param manual_album_name: What to use as the new album tag.
         """
         original_album = self.original.pop("album", None)
         if original_album is not None and original_album != [manual_album_name]:
             self.original["discsubtitle"] = original_album
 
     def discard_upload_date(self) -> None:
-        """
-        If the date is just the upload date, discard it
-        """
+        """If the date is just the upload date, discard it."""
         if self.original.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original["date"][0]):
             self.original.pop("date", None)
 
-    def merge_original_metadata(self, original_metadata: OggOpus) -> None:
-        for key, value in original_metadata.values():
-            self.original[key] = value
-
-    def set_youtube_tags(self, youtube_tags: Tags) -> None:
-        self.youtube = youtube_tags
-
-    def set_original_tags(self, original_tags: Tags) -> None:
-        self.original = original_tags
-
-    def set_tags_from_description(self, from_desc_tags: Tags) -> None:
-        self.fromdesc = from_desc_tags
-
-    def set_tags_from_old_tags(self, tags_from_old_tags: Tags) -> None:
-        self.fromtags = tags_from_old_tags
-
-    def set_resolved_tags(self, resolved: Tags) -> None:
-        self.resolved = resolved
-
     def prune_final_metadata(self) -> None:
+        """Remove tags that are not useful."""
         self.resolved["language"] = ["[Removed]"]
         self.resolved["compatible_brands"] = ["[Removed]"]
         self.resolved["minor_version"] = ["[Removed]"]
@@ -178,9 +208,16 @@ class MusicTags:
         self.resolved["vendor_id"] = ["[Removed]"]
 
     def add_source_tag(self) -> None:
+        """Add a comment tag with the value 'youtube-dl'."""
         self.resolved["comment"] = ["youtube-dl"]
 
     def get_field(self, field: str, only_new: bool = False) -> list[str]:
+        """Get values for field from all sources.
+
+        :param field: Tag to get values for.
+        :param only_new: Whether to include the value of the field in
+            the original music file.
+        """
         old_value = self.original.get(field, [])
         yt_value = self.youtube.get(field, [])
         from_desc_value = self.fromdesc.get(field, [])
@@ -190,8 +227,18 @@ class MusicTags:
         else:
             return Utils().remove_duplicates(old_value + yt_value + from_desc_value + from_tags_value)
 
-    def adjust_metadata(self) -> None:
+    def resolve_metadata(self) -> None:
+        """Merge the metadata from the different sources.
 
+        Use the acquired metadata from all sources to produce a set of
+        "resolved" tags. A few tags will automatically be used, but most
+        require user interaction to resolve. The user is presented with
+        menus where the selection happens. It's also possible to make
+        manual edits to the tags.
+
+        :raises UserExitException: Raised when the user chooses to quit
+            the app.
+        """
         # Date should be safe to get from description
         date = self.youtube.get("date", None)
         if date and date != self.original.get("date"):
@@ -252,7 +299,8 @@ class MusicTags:
                         print("Parsed from YouTube tags: " + Fore.GREEN + " | ".join(from_desc_value))
                         candidates.append("Parsed from Youtube tags")
 
-                    # There have to be choices available for it to make sense to stay in the loop
+                    # There have to be choices available for it to make
+                    # sense to stay in the loop
                     if len(candidates) == 0:
                         break
 
@@ -357,6 +405,7 @@ class MusicTags:
                 self.resolved["albumartist"] = original_artist
 
     def modify_resolved_field(self) -> None:
+        """Manually add key-value pairs to the set of resolved tags."""
         key = " "
         val = " "
         while key and val:
@@ -369,6 +418,12 @@ class MusicTags:
                 break
 
     def delete_tag_item(self) -> None:
+        """Present a menu for removing tags and remove selected ones.
+
+        Presents the user with a prompt to fill in a field name from
+        which to remove keys. The user can then select what values to
+        remove from the list of values from this key.
+        """
         tags_in_resolved = []
         for tag in self.resolved.keys():
             if tag in constants.all_tags.keys() or tag in constants.performer_tags.keys():
@@ -405,6 +460,13 @@ class MusicTags:
                     self.resolved.pop(selected_tag)
 
     def check_any_new_data_exists(self) -> bool:
+        """Check whether there are new tags in the sources.
+
+        Check whether the parsing has produced any values for tags that
+        weren't already in the metadata of the music file.
+
+        :return: True if there are new values found, otherwise False.
+        """
         new_content_exists = False
         all_new_fields = [key for key in self.youtube.keys()]
         all_new_fields += [key for key in self.fromdesc.keys()]
@@ -414,7 +476,8 @@ class MusicTags:
             all_sources = set(self.get_field(tag))
             original_tags = set(self.original.get(tag, []))
             if not original_tags.issuperset(all_sources):
-                # If there are no new tags, the set of all tags should not contain anything that is not already in the
+                # If there are no new tags, the set of all tags should
+                # not contain anything that is not already in the
                 # original tags.
                 new_content_exists = True
 
@@ -422,7 +485,8 @@ class MusicTags:
             original_tags = set(self.original.get(tag, []))
             resolved_tags = set(self.resolved.get(tag, []))
             if not original_tags.issuperset(resolved_tags):
-                # There may be some automatically added tags in resolved. Check that resolved doesn't contain any tag
+                # There may be some automatically added tags in
+                # resolved. Check that resolved doesn't contain any tag
                 # that doesn't already exist in the original tags.
                 new_content_exists = True
 
