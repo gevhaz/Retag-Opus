@@ -79,7 +79,7 @@ class DescriptionParser:
                     self.tags["artist"] = Utils().remove_duplicates(youtube_artist)
                 self.tags["title"] = [youtube_title]
 
-            if lines_since_title_artist == 1:
+            if lines_since_title_artist == 2:
                 if "discsubtitle" in constants.all_tags:
                     self.tags["discsubtitle"] = [description_line.strip()]
                 else:
