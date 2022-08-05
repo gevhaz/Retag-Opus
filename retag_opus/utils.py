@@ -84,3 +84,14 @@ class Utils:
     def exit_now() -> None:
         """Immediately exit the program."""
         sys.exit(0)
+
+    @staticmethod
+    def is_equal_when_stripped(values_1: list[str], values_2: list[str]) -> bool:
+        """Compare lists disregarding whitespace.
+
+        Check if content of lists of strings are the same after strings
+        have been stripped.
+        """
+        cleaned_values_1 = [v.strip() for v in values_1]
+        cleaned_values_2 = [v.strip() for v in values_2]
+        return sorted(cleaned_values_1) == sorted(cleaned_values_2)

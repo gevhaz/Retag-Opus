@@ -274,10 +274,15 @@ class MusicTags:
                     Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data: "
                     f"{self.resolved[field]}."
                 )
-            elif yt_value == old_value and len(old_value) > 0:
+            elif Utils.is_equal_when_stripped(yt_value, old_value) and len(old_value) > 0:
                 print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
-            elif from_desc_value == old_value and len(old_value) > 0:
+                self.resolved[field] = [v.strip() for v in old_value]
+            elif Utils.is_equal_when_stripped(from_desc_value, old_value) and len(old_value) > 0:
                 print(Fore.GREEN + f"{field.title()}: Metadata matches parsed YouTube tags.")
+                self.resolved[field] = [v.strip() for v in old_value]
+            elif Utils.is_equal_when_stripped(from_tags_value, old_value) and len(old_value) > 0:
+                print(Fore.GREEN + f"{field.title()}: Metadata matches parsed original tags.")
+                self.resolved[field] = [v.strip() for v in old_value]
             else:
                 redo = True
                 print("-----------------------------------------------")
@@ -286,15 +291,15 @@ class MusicTags:
                     redo = False
                     candidates = []
                     print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
-                    if len(old_value) > 0:
-                        print("Exisiting metadata:  " + colors.md_col + " | ".join(old_value))
-                        candidates.append("Existing metadata")
                     if len(yt_value) > 0:
                         print("YouTube description: " + colors.yt_col + " | ".join(yt_value))
                         candidates.append("YouTube description")
                     if len(from_tags_value) > 0:
                         print("Parsed from original tags: " + Fore.YELLOW + " | ".join(from_tags_value))
                         candidates.append("Parsed from original tags")
+                    if len(old_value) > 0:
+                        print("Exisiting metadata:  " + colors.md_col + " | ".join(old_value))
+                        candidates.append("Existing metadata")
                     if len(from_desc_value) > 0:
                         print("Parsed from YouTube tags: " + Fore.GREEN + " | ".join(from_desc_value))
                         candidates.append("Parsed from Youtube tags")
@@ -394,6 +399,8 @@ class MusicTags:
         original_artist = self.original.get("artist")
 
         if len(all_artists) > 1:
+            print("-----------------------------------------------")
+            self.print_resolved(print_all=True)
             print(Fore.BLUE + "Select the album artist:")
             one_artist = Utils().select_single_tag(all_artists)
             if len(one_artist) > 0:
