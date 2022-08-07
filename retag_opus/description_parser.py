@@ -68,8 +68,9 @@ class DescriptionParser:
         description_tag_lines: list[str] = description_tag_full.splitlines(False)
 
         for description_line in description_tag_lines:
-            description_line = description_line.replace("\n", "")
             description_line = re.sub("\n", "", description_line)
+            if re.match(r"^\s*$", description_line):
+                continue
             lines_since_title_artist = lines_since_title_artist + 1
             # Artist and title
             if INTERPUNCT in description_line:
@@ -79,7 +80,7 @@ class DescriptionParser:
                     self.tags["artist"] = Utils().remove_duplicates(youtube_artist)
                 self.tags["title"] = [youtube_title]
 
-            if lines_since_title_artist == 2:
+            if lines_since_title_artist == 1:
                 if "discsubtitle" in constants.all_tags:
                     self.tags["discsubtitle"] = [description_line.strip()]
                 else:
