@@ -34,7 +34,9 @@ class Utils:
     @staticmethod
     def split_tag(input: str) -> List[str]:
         """Split the provided tag by pre-defined delimeters."""
-        return re.split(", | and | & |; ", input)
+        split_tags = re.split(", | and | & |; ", input)
+        split_pruned_tags = [t.strip() for t in split_tags]
+        return split_pruned_tags
 
     @staticmethod
     def file_path_to_song_data(file_path: Path) -> str:
