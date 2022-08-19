@@ -83,3 +83,51 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song", Utils.prune_title(unpruned_title_2))
         self.assertEqual("A song", Utils.prune_title(unpruned_title_3))
         self.assertEqual("A song", Utils.prune_title(unpruned_title_4))
+
+    def test_prune_featuring_from_title(self):
+        """Test that remix version information is pruned from title."""
+        unpruned_title_1 = "A song (featuring artist)"
+        unpruned_title_2 = "A song (Featuring artist)"
+        unpruned_title_3 = "A song (FeatUring artist)"
+        unpruned_title_4 = "A song [featuring artist]"
+        unpruned_title_5 = "A song (feat. artist)"
+        unpruned_title_6 = "A song (ft. artist)"
+        unpruned_title_7 = "A song feat. artist"
+        unpruned_title_8 = "A song ft. artist"
+        unpruned_title_9 = "A song feat. artist and second artist"
+        unpruned_title_10 = "A song ft. artist"
+        unpruned_title_11 = "A song (ft. another artist & a, third)"
+        unpruned_title_12 = "A song ft. an artist, another artist"
+        unpruned_title_13 = "A song Ft an artist"
+        unpruned_title_14 = "A song(ft. an artist)"
+
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_1))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_2))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_3))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_4))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_5))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_6))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_7))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_8))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_9))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_10))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_11))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_12))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_13))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_14))
+
+    def test_split_tags(self):
+        """Test that tags are split at given characters and pruned."""
+        unsplit_tag_1 = "an artist and another artist"
+        unsplit_tag_2 = "an artist, another artist & a third artist"
+        unsplit_tag_3 = "an artist, another artist and a third artist"
+        unsplit_tag_4 = "an artist and  another artist and a third artist"
+        unsplit_tag_5 = "an artist; another artist"
+        unsplit_tag_6 = "an artist ; another artist"
+
+        self.assertEqual(["an artist", "another artist"], Utils.split_tag(unsplit_tag_1))
+        self.assertEqual(["an artist", "another artist", "a third artist"], Utils.split_tag(unsplit_tag_2))
+        self.assertEqual(["an artist", "another artist", "a third artist"], Utils.split_tag(unsplit_tag_3))
+        self.assertEqual(["an artist", "another artist", "a third artist"], Utils.split_tag(unsplit_tag_4))
+        self.assertEqual(["an artist", "another artist"], Utils.split_tag(unsplit_tag_5))
+        self.assertEqual(["an artist", "another artist"], Utils.split_tag(unsplit_tag_6))
