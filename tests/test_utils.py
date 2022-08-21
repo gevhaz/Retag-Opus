@@ -8,20 +8,20 @@ from retag_opus.utils import Utils
 class TestUtils(unittest.TestCase):
     """Test the Utils class."""
 
-    def test_remove_duplicates(self):
+    def test_remove_duplicates(self) -> None:
         """Test that duplicates are removed."""
         duplicates = ["alpha", "beta", "alpha"]
         unduplicated = Utils.remove_duplicates(duplicates)
         self.assertEqual(2, len(unduplicated))
         self.assertListEqual(["alpha", "beta"], unduplicated)
 
-    def test_prune_title_remove_whitespace(self):
+    def test_prune_title_remove_whitespace(self) -> None:
         """Test that title has surrounding whitespace removed."""
         unpruned_title = " title of the song "
         pruned_title = Utils.prune_title(unpruned_title)
         self.assertEqual("title of the song", pruned_title)
 
-    def test_prune_live_from_title(self):
+    def test_prune_live_from_title(self) -> None:
         """Test that live version information is pruned from title."""
         unpruned_title_1 = "A song (live)"
         unpruned_title_2 = "A song [live]"
@@ -38,7 +38,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song", Utils.prune_title(unpruned_title_6))
         self.assertEqual("Spring (för livet)", Utils.prune_title(unpruned_title_7))
 
-    def test_prune_remix_from_title(self):
+    def test_prune_remix_from_title(self) -> None:
         """Test that remix version information is pruned from title."""
         unpruned_title_1 = "A song (person's remix)"
         unpruned_title_2 = "A song (person's Remix)"
@@ -53,7 +53,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("3 Gerald remix", Utils.prune_title(unpruned_title_5))
         self.assertEqual("Summers Gonna Hurt You", Utils.prune_title(unpruned_title_6))
 
-    def test_prune_remaster_from_title(self):
+    def test_prune_remaster_from_title(self) -> None:
         """Test that remix version information is pruned from title."""
         unpruned_title_1 = "A song (1934 remaster)"
         unpruned_title_2 = "A song (1934 remaster)"
@@ -74,7 +74,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song", Utils.prune_title(unpruned_title_7))
         self.assertEqual("A song", Utils.prune_title(unpruned_title_8))
 
-    def test_prune_instrumental_from_title(self):
+    def test_prune_instrumental_from_title(self) -> None:
         """Test that remix version information is pruned from title."""
         unpruned_title_1 = "A song (instrumental)"
         unpruned_title_2 = "A song (Instrumental)"
@@ -85,7 +85,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song", Utils.prune_title(unpruned_title_3))
         self.assertEqual("A song", Utils.prune_title(unpruned_title_4))
 
-    def test_prune_featuring_from_title(self):
+    def test_prune_featuring_from_title(self) -> None:
         """Test that remix version information is pruned from title."""
         unpruned_title_1 = "A song (featuring artist)"
         unpruned_title_2 = "A song (Featuring artist)"
@@ -117,7 +117,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song", Utils.prune_title(unpruned_title_13))
         self.assertEqual("A song", Utils.prune_title(unpruned_title_14))
 
-    def test_split_tags(self):
+    def test_split_tags(self) -> None:
         """Test that tags are split at given characters and pruned."""
         unsplit_tag_1 = "an artist and another artist"
         unsplit_tag_2 = "an artist, another artist & a third artist"
@@ -133,7 +133,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(["an artist", "another artist"], Utils.split_tag(unsplit_tag_5))
         self.assertEqual(["an artist", "another artist"], Utils.split_tag(unsplit_tag_6))
 
-    def test_file_path_to_song_title(self):
+    def test_file_path_to_song_title(self) -> None:
         """Test that a file path can be converted to a song title."""
         song = Path("<artist> - <title>.opus")
         song_nested = Path("path/to/<artist> - <title>.opus")
