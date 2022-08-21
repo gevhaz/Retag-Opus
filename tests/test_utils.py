@@ -1,5 +1,6 @@
 """Tests for utils.py."""
 import unittest
+from pathlib import Path
 
 from retag_opus.utils import Utils
 
@@ -131,3 +132,21 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(["an artist", "another artist", "a third artist"], Utils.split_tag(unsplit_tag_4))
         self.assertEqual(["an artist", "another artist"], Utils.split_tag(unsplit_tag_5))
         self.assertEqual(["an artist", "another artist"], Utils.split_tag(unsplit_tag_6))
+
+    def test_file_path_to_song_title(self):
+        """Test that a file path can be converted to a song title."""
+        song = Path("<artist> - <title>.opus")
+        song_nested = Path("path/to/<artist> - <title>.opus")
+        song_topic = Path("<artist - Topic> - <title>.opus")
+        playlist = Path("<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
+        playlist_nested = Path("path/to/<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
+        only_title = Path("<a song title>.opus")
+        no_angle_brackets = Path("a song title.opus")
+
+        self.assertEqual("artist - title", Utils.file_path_to_song_data(song))
+        self.assertEqual("artist - title", Utils.file_path_to_song_data(song_nested))
+        self.assertEqual("artist - title", Utils.file_path_to_song_data(song_topic))
+        self.assertEqual("Artist - Title of Song", Utils.file_path_to_song_data(playlist))
+        self.assertEqual("Artist - Title of Song", Utils.file_path_to_song_data(playlist_nested))
+        self.assertEqual("a song title", Utils.file_path_to_song_data(only_title))
+        self.assertEqual("a song title", Utils.file_path_to_song_data(no_angle_brackets))
