@@ -45,19 +45,23 @@ class Utils:
         Produce a string with song title and artist on a readable format
         from the name of the file being worked with.
         """
-        file_name = str(file_path)
-        basename = re.match(".*/(.*)", file_name)
-        if basename:
-            match = basename.groups()[0]
-            file_name = match
-            name_playlist = re.match("<(.*)> - <(.*)> - <(.*)> - <(.*)>.opus", file_name)
-            name_single = re.match("<(.*)> - <(.*)>.opus", file_name)
-            if name_playlist:
-                file_name = name_playlist.groups()[1] + " - " + name_playlist.groups()[2]
-            elif name_single:
-                file_name = name_single.groups()[0] + " - " + name_single.groups()[1]
-
-        return file_name
+        text_to_print = str(file_path)
+        basename_match = re.match(r"(.+/)*(.*).opus", text_to_print)
+        print(file_path)
+        if basename_match:
+            basename = basename_match.groups()[1]
+            print(basename)
+            text_to_print = basename
+            playlist_match = re.match(r"<(.*)> - <(.*?)(?: - Topic)*> - <(.*)> - <(.*)>", text_to_print)
+            artist_title_match = re.match("<(.*?)(?: - Topic)*> - <(.*)>", text_to_print)
+            title_only_match = re.match("<(.*)>", text_to_print)
+            if playlist_match:
+                text_to_print = playlist_match.groups()[1] + " - " + playlist_match.groups()[2]
+            elif artist_title_match:
+                text_to_print = artist_title_match.groups()[0] + " - " + artist_title_match.groups()[1]
+            elif title_only_match:
+                text_to_print = title_only_match.groups()[0]
+        return text_to_print
 
     @staticmethod
     def select_single_tag(candidates: list[str]) -> list[str]:
