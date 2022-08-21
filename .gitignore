@@ -4,3 +4,4 @@ todo-retag
 __pycache__
 dist
 .hypothesis
+.coverage

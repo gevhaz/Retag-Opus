@@ -1,3 +1,11 @@
+[tool.coverage.run]
+branch = true
+source = [ "./retag_opus/" ]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 7
+
 [tool.pyright]
 pythonVersion = "3.10"
 pythonPlatform = "Linux"
