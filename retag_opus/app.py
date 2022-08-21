@@ -44,7 +44,7 @@ def run() -> int:
             redo = False
             # Print info about file and progress
             print(Fore.BLUE + f"\nSong {idx + 1} of {len(all_files)}")
-            print(Fore.BLUE + f"----- File: {file_name} -----")
+            print(Fore.BLUE + f"----- Song: {file_name} -----")
 
             # 1. Read the data and make basic improvements
             old_metadata: OggOpus = OggOpus(file_path)
