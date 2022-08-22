@@ -2,6 +2,9 @@
 import unittest
 from pathlib import Path
 
+from mock import patch
+from mock.mock import MagicMock
+
 from retag_opus.utils import Utils
 
 
@@ -133,20 +136,101 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(["an artist", "another artist"], Utils.split_tag(unsplit_tag_5))
         self.assertEqual(["an artist", "another artist"], Utils.split_tag(unsplit_tag_6))
 
-    def test_file_path_to_song_title(self) -> None:
-        """Test that a file path can be converted to a song title."""
+    def test_playlist_file_path_to_song_title(self) -> None:
+        """Test paths on playlist format can be converted to a title."""
+        playlist = Path("<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
+        playlist_nested = Path("path/to/<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
+
+        self.assertEqual("Artist - Title of Song", Utils.file_path_to_song_data(playlist))
+        self.assertEqual("Artist - Title of Song", Utils.file_path_to_song_data(playlist_nested))
+
+    def test_title_only_file_path_to_song_title(self) -> None:
+        """Test paths on title only format can be converted to title."""
+        only_title = Path("<a song title>.opus")
+        no_angle_brackets = Path("a song title.opus")
+
+        self.assertEqual("a song title", Utils.file_path_to_song_data(only_title))
+        self.assertEqual("a song title", Utils.file_path_to_song_data(no_angle_brackets))
+
+    def test_artist_title_file_path_to_song_title(self) -> None:
+        """Test paths on artist-title format converts to a title."""
         song = Path("<artist> - <title>.opus")
         song_nested = Path("path/to/<artist> - <title>.opus")
         song_topic = Path("<artist - Topic> - <title>.opus")
-        playlist = Path("<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
-        playlist_nested = Path("path/to/<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
-        only_title = Path("<a song title>.opus")
-        no_angle_brackets = Path("a song title.opus")
 
         self.assertEqual("artist - title", Utils.file_path_to_song_data(song))
         self.assertEqual("artist - title", Utils.file_path_to_song_data(song_nested))
         self.assertEqual("artist - title", Utils.file_path_to_song_data(song_topic))
-        self.assertEqual("Artist - Title of Song", Utils.file_path_to_song_data(playlist))
-        self.assertEqual("Artist - Title of Song", Utils.file_path_to_song_data(playlist_nested))
-        self.assertEqual("a song title", Utils.file_path_to_song_data(only_title))
-        self.assertEqual("a song title", Utils.file_path_to_song_data(no_angle_brackets))
+
+    def test_basename_not_found(self) -> None:
+        """Test that path is returned when no basename can be found."""
+        song = Path("test/<artist> - <title>.mp3")
+
+        self.assertEqual("test/<artist> - <title>.mp3", Utils.file_path_to_song_data(song))
+
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_select_single_tag(self, mock_choice: MagicMock) -> None:
+        """Test that a candidate from a list can be selected."""
+        candidates = ["candidate 1", "candidate 2", "candidate 3"]
+        mock_choice.return_value = 1  # second option
+        actual_outcome = Utils.select_single_tag(candidates)
+        self.assertListEqual(["candidate 2"], actual_outcome)
+
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_select_single_tag_no_choice(self, mock_choice: MagicMock) -> None:
+        """Test that selection of no choice results in empty list."""
+        candidates = ["candidate 1", "candidate 2", "candidate 3"]
+        mock_choice.return_value = None  # no option selected
+        actual_outcome = Utils.select_single_tag(candidates)
+        self.assertEqual(0, len(actual_outcome))
+
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_select_single_tag_multiple_choices(self, mock_choice: MagicMock) -> None:
+        """Test that multiple selection is not allowed."""
+        candidates = ["candidate 1", "candidate 2", "candidate 3"]
+        mock_choice.return_value = [1, 2]  # second and third option
+        actual_outcome = Utils.select_single_tag(candidates)
+        self.assertEqual(0, len(actual_outcome))
+
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_select_single_tag_no_change(self, mock_choice: MagicMock) -> None:
+        """Test that it's possible to use the 'no choice' option."""
+        candidates = ["candidate 1", "candidate 2", "candidate 3"]
+        mock_choice.return_value = 3  # "no choice" option
+        actual_outcome = Utils.select_single_tag(candidates)
+        self.assertEqual(0, len(actual_outcome))
+
+    def test_exit_now(self) -> None:
+        """Test that the exit_now function raises exception."""
+        with self.assertRaises(SystemExit):
+            Utils.exit_now()
+
+    def test_equal_when_stripped(self) -> None:
+        """Test that lists with different whitespace/order are equal."""
+        self.assertTrue(
+            Utils.is_equal_when_stripped(
+                ["value 1", "value 2  ", "value 3"],
+                ["value 1", "value 2", "value 3"],
+            )
+        )
+        self.assertTrue(
+            Utils.is_equal_when_stripped(
+                ["value 1", "value 2", "value 3"],
+                ["value 1", "value 3", "value 2"],
+            )
+        )
+        self.assertTrue(
+            Utils.is_equal_when_stripped(
+                ["value 1", "value 2  ", "value 3"],
+                ["value 1", "value 3", "value 2  "],
+            )
+        )
+
+    def test_equal_when_stripped_different(self) -> None:
+        """Test that lists with different whitespace/order are equal."""
+        self.assertFalse(
+            Utils.is_equal_when_stripped(
+                ["value 1", "value 2  ", "value  3"],
+                ["value 1", "value 2", "value 3"],
+            )
+        )
