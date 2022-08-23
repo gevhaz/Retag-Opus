@@ -26,8 +26,8 @@ class MusicTags:
         self.fromdesc: Tags = {}
         self.resolved: Tags = {}
 
+    @staticmethod
     def print_metadata_key(
-        self,
         key_type: str,
         key: str,
         key_col: str,
@@ -40,10 +40,12 @@ class MusicTags:
         :param key_col: Color to print the data in.
         :param data: The tags from which to get the given key.
         """
-        value = constants.SEP.join(data.get(key, [Fore.BLACK + "Not found"])).replace(" ", constants.SPACE)
-        print("  " + key_type + ": " + key_col + value)
+        value = constants.SEP.join(data.get(key, ["Not found"])).replace(" ", constants.SPACE)
+        key_col = key_col if data.get(key) else Fore.BLACK
+        print("  " + key_type + ": " + key_col + value + Fore.RESET)
 
-    def print_metadata(self, metadata: Tags, col: str) -> None:
+    @staticmethod
+    def print_metadata(metadata: Tags, col: str) -> None:
         """Print metadata of given set of tags in specifed color.
 
         :param metadata: The set of tags to print.
@@ -53,9 +55,9 @@ class MusicTags:
             print("  Performers:")
             for tag_id, tag_data in constants.performer_tags.items():
                 if tag_id in metadata and metadata[tag_id] is not None:
-                    self.print_metadata_key(tag_data["print"], tag_id, col, metadata)
+                    MusicTags.print_metadata_key(tag_data["print"], tag_id, col, metadata)
         for tag_id, tag_data in constants.all_tags.items():
-            self.print_metadata_key(tag_data["print"], tag_id, col, metadata)
+            MusicTags.print_metadata_key(tag_data["print"], tag_id, col, metadata)
         print("")
 
     def get_tag_data(self, tag_id: str) -> list[str]:
