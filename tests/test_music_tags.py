@@ -50,3 +50,52 @@ class TestUtils(unittest.TestCase):
         )
 
         self.assertEqual(expected, captured.out)
+
+    def test_get_tag_data_one_source(self) -> None:
+        """Test getting tags from one source."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        actual = tags.get_tag_data("artist")
+        expected = [f"{Fore.CYAN}artist 1"]
+        self.assertListEqual(expected, actual)
+
+    def test_get_tag_data_two_sources(self) -> None:
+        """Test getting tags from two source."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        actual = tags.get_tag_data("artist")
+        expected = [f"{Fore.CYAN}artist 1", f"{Fore.MAGENTA}artist 2"]
+        self.assertListEqual(expected, actual)
+
+    def test_get_tag_data_two_overlapping_sources(self) -> None:
+        """Test get tags from two sources where a value is in both."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 1", "artist 2"]}
+        actual = tags.get_tag_data("artist")
+        expected = [f"{Fore.CYAN}artist 1", f"{Fore.MAGENTA}artist 1 | artist 2"]
+        self.assertListEqual(expected, actual)
+
+    def test_get_tag_data_no_values(self) -> None:
+        """Test getting tags from one source."""
+        tags = MusicTags()
+        actual = tags.get_tag_data("artist")
+        expected: list[str] = []
+        self.assertListEqual(expected, actual)
+
+    def test_get_tag_data_all_sources(self) -> None:
+        """Test getting tags from two source."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"artist": ["artist 4"]}
+        actual = tags.get_tag_data("artist")
+        expected = [
+            f"{Fore.CYAN}artist 1",
+            f"{Fore.MAGENTA}artist 2",
+            f"{Fore.YELLOW}artist 3",
+            f"{Fore.GREEN}artist 4",
+        ]
+        self.assertListEqual(expected, actual)
