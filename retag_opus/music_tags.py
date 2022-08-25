@@ -51,7 +51,7 @@ class MusicTags:
         :param metadata: The set of tags to print.
         :param col: The color to print the tags in.
         """
-        if "performer:" in " ".join(metadata.keys()):
+        if any(t in constants.performer_tags.keys() for t in metadata.keys()):
             print("  Performers:")
             for tag_id, tag_data in constants.performer_tags.items():
                 if tag_id in metadata and metadata[tag_id] is not None:
@@ -79,13 +79,13 @@ class MusicTags:
         fromdesc = self.fromdesc.get(tag_id)
         fromtags = self.fromtags.get(tag_id)
         if original:
-            print_data.append(colors.md_col + " | ".join(original))
+            print_data.append(colors.md_col + " | ".join(original) + Fore.RESET)
         if youtube and original != youtube:
-            print_data.append(colors.yt_col + " | ".join(youtube))
+            print_data.append(colors.yt_col + " | ".join(youtube) + Fore.RESET)
         if fromtags and fromtags != original:
-            print_data.append(Fore.YELLOW + " | ".join(fromtags))
+            print_data.append(Fore.YELLOW + " | ".join(fromtags) + Fore.RESET)
         if fromdesc and fromdesc != original:
-            print_data.append(Fore.GREEN + " | ".join(fromdesc))
+            print_data.append(Fore.GREEN + " | ".join(fromdesc) + Fore.RESET)
         return print_data
 
     def print_all(self) -> None:
@@ -95,26 +95,29 @@ class MusicTags:
         tag name, differentiated by color.
         """
         performer_block = []
+        there_are_tags = False
         for tag_id, tag_data in constants.performer_tags.items():
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
-                performer_block.append(Fore.WHITE + tag_data["print"] + ": " + f"{Fore.WHITE} | ".join(tag_all_values))
+                there_are_tags = True
+                performer_block.append(tag_data["print"] + ": " + " | ".join(tag_all_values))
 
         main_block = []
         for tag_id, tag_data in constants.all_tags.items():
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
-                main_block.append(Fore.WHITE + tag_data["print"] + ": " + f"{Fore.WHITE} | ".join(tag_all_values))
+                there_are_tags = True
+                main_block.append(tag_data["print"] + ": " + " | ".join(tag_all_values))
             else:
-                main_block.append(Fore.WHITE + tag_data["print"] + ": " + Fore.BLACK + "Not set")
+                main_block.append(tag_data["print"] + ": " + Fore.BLACK + "Not set" + Fore.RESET)
 
-        if len(performer_block + main_block) > 0:
+        if there_are_tags:
             if len(performer_block) > 0:
-                print(Fore.BLUE + "Performers:")
+                print("Performers:")
                 print("\n".join(performer_block))
             print("\n".join(main_block) + "\n")
         else:
-            print(Fore.RED + "There's no data to be printed")
+            print(Fore.RED + "There's no data to be printed" + Fore.RESET)
 
     def print_youtube(self) -> None:
         """Print all tags parsed from youtube description."""
