@@ -124,7 +124,7 @@ class MusicTags:
         if self.youtube:
             self.print_metadata(self.youtube, colors.yt_col)
         else:
-            print(Fore.RED + "No new data parsed from description")
+            print(Fore.RED + "No new data parsed from description" + Fore.RESET)
 
     def print_original(self) -> None:
         """Print tags from original file.
@@ -135,21 +135,21 @@ class MusicTags:
         if self.original:
             self.print_metadata(self.original, colors.md_col)
         else:
-            print(Fore.RED + "There were no pre-existing tags for this file")
+            print(Fore.RED + "There were no pre-existing tags for this file" + Fore.RESET)
 
     def print_from_tags(self) -> None:
         """Print all tags parsed from original tags."""
         if self.fromtags:
             self.print_metadata(self.fromtags, Fore.YELLOW)
         else:
-            print(Fore.RED + "No new data parsed from tags")
+            print(Fore.RED + "No new data parsed from tags" + Fore.RESET)
 
     def print_from_desc(self) -> None:
         """Print all tags parsed from YouTube description tags."""
         if self.fromdesc:
             self.print_metadata(self.fromdesc, Fore.GREEN)
         else:
-            print(Fore.RED + "No new data parsed from tags parsed from description")
+            print(Fore.RED + "No new data parsed from tags parsed from description" + Fore.RESET)
 
     def print_resolved(self, print_all: bool = False) -> None:
         """Print resolved tags.
@@ -165,12 +165,15 @@ class MusicTags:
             for tag_id, tag_data in constants.performer_tags.items():
                 resolved_tag = self.resolved.get(tag_id)
                 all_sources_tag = self.get_tag_data(tag_id)
+                # If the user chose to remove a tag that existed before
                 if resolved_tag == ["[Removed]"]:
                     self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
-                elif resolved_tag != self.original.get(tag_id):
+                # If the resolved tag differs from the original tag
+                elif resolved_tag != self.original.get(tag_id) and self.resolved.get(tag_id) is not None:
                     self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
+                # original and resolved are equal, but other tags exist
                 elif len(all_sources_tag) > 0 and print_all:
-                    print("  " + Fore.WHITE + tag_data["print"] + ": " + f"{Fore.WHITE} | ".join(all_sources_tag))
+                    print("  " + tag_data["print"] + ": " + " | ".join(all_sources_tag))
                 else:
                     self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
         for tag_id, tag_data in constants.all_tags.items():
@@ -178,10 +181,10 @@ class MusicTags:
             all_sources_tag = self.get_tag_data(tag_id)
             if resolved_tag == ["[Removed]"]:
                 self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
-            elif resolved_tag != self.original.get(tag_id):
+            elif resolved_tag != self.original.get(tag_id) and self.resolved.get(tag_id) is not None:
                 self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
             elif len(all_sources_tag) > 0 and print_all:
-                print("  " + Fore.WHITE + tag_data["print"] + ": " + f"{Fore.WHITE} | ".join(all_sources_tag))
+                print("  " + tag_data["print"] + ": " + " | ".join(all_sources_tag))
             else:
                 self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
         print("")

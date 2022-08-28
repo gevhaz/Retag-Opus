@@ -224,9 +224,6 @@ class TestUtils(unittest.TestCase):
             f"Publisher: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Lyricist: {Fore.BLACK}Not set{Fore.RESET}\n\n"
         )
-        print("------")
-        sys.stdout.write(captured.out)
-        print("------")
         self.assertEqual(expected, captured.out)
 
     def test_print_all_with_no_data(self) -> None:
@@ -234,7 +231,470 @@ class TestUtils(unittest.TestCase):
         tags = MusicTags()
         tags.print_all()
         captured = self.capsys.readouterr()  # type: ignore
+        expected = f"{Fore.RED}There's no data to be printed{Fore.RESET}\n"
+        self.assertEqual(expected, captured.out)
+
+    def test_print_youtube(self) -> None:
+        """Test printing data from youtube tags."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"], "performer:vocals": ["artist 5"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.print_youtube()
+        captured = self.capsys.readouterr()  # type: ignore
         expected = (
-            f"{Fore.RED}There's no data to be printed{Fore.RESET}\n"
+            "  Performers:\n"
+            f"  - Vocals: {Fore.MAGENTA}artist 5{Fore.RESET}\n"
+            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.MAGENTA}artist 2{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
+        self.assertEqual(expected, captured.out)
+
+    def test_print_youtube_no_data(self) -> None:
+        """Test printing data from youtube tags when there are none."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.print_youtube()
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = f"{Fore.RED}No new data parsed from description{Fore.RESET}\n"
+        self.assertEqual(expected, captured.out)
+
+    def test_print_original_tags(self) -> None:
+        """Test printing original tags, including performer tags."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 2"], "performer:vocals": ["artist 5"]}
+        tags.youtube = {"artist": ["artist 1"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.print_original()
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = (
+            "  Performers:\n"
+            f"  - Vocals: {Fore.CYAN}artist 5{Fore.RESET}\n"
+            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.CYAN}artist 2{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+        )
+        self.assertEqual(expected, captured.out)
+
+    def test_print_original_tags_no_data(self) -> None:
+        """Test printing original tags when there are none."""
+        tags = MusicTags()
+        tags.youtube = {"artist": ["artist 1"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.print_original()
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = f"{Fore.RED}There were no pre-existing tags for this file{Fore.RESET}\n"
+        self.assertEqual(expected, captured.out)
+
+    def test_print_from_tags(self) -> None:
+        """Test printing tags parsed from original tags."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 3"]}
+        tags.youtube = {"artist": ["artist 1"]}
+        tags.fromtags = {"artist": ["artist 2"], "performer:vocals": ["artist 5"]}
+        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.print_from_tags()
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = (
+            "  Performers:\n"
+            f"  - Vocals: {Fore.YELLOW}artist 5{Fore.RESET}\n"
+            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.YELLOW}artist 2{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+        )
+        self.assertEqual(expected, captured.out)
+
+    def test_print_from_tags_no_data(self) -> None:
+        """Test print tags parsed from original tags when none exist."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 3"]}
+        tags.youtube = {"artist": ["artist 1"]}
+        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.print_from_tags()
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = f"{Fore.RED}No new data parsed from tags{Fore.RESET}\n"
+        self.assertEqual(expected, captured.out)
+
+    def test_print_from_descripton(self) -> None:
+        """Test print tags parsed from description, with performers."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 3"]}
+        tags.youtube = {"artist": ["artist 1"]}
+        tags.fromtags = {"performer:vocals": ["artist 4"]}
+        tags.fromdesc = {"artist": ["artist 2"], "performer:vocals": ["artist 5"]}
+        tags.print_from_desc()
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = (
+            "  Performers:\n"
+            f"  - Vocals: {Fore.GREEN}artist 5{Fore.RESET}\n"
+            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.GREEN}artist 2{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+        )
+        self.assertEqual(expected, captured.out)
+
+    def test_print_from_descripton_from_tags(self) -> None:
+        """Test print tags parsed from description, with no data."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 3"]}
+        tags.youtube = {"artist": ["artist 1"]}
+        tags.fromtags = {"performer:vocals": ["artist 4"]}
+        tags.print_from_desc()
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = f"{Fore.RED}No new data parsed from tags parsed from description{Fore.RESET}\n"
+        self.assertEqual(expected, captured.out)
+
+    def test_print_resolved(self) -> None:
+        """Test that resolved tags can be printed."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"], "title": ["title 1"]}
+        tags.resolved = {"artist": ["artist 1"], "title": ["title 2"], "producer": ["[Removed]"]}
+        tags.print_resolved(print_all=False)
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = (
+            f"  Title: {Fore.GREEN}title 2{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.CYAN}artist 1{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+        )
+        self.assertEqual(expected, captured.out)
+
+    def test_print_resolved_with_performers(self) -> None:
+        """Test that resolved tags print, including performers."""
+        tags = MusicTags()
+        tags.original = {"performer:vocals": ["artist 1"], "performer:violin": ["artist 1"]}
+        tags.resolved = {
+            "performer:vocals": ["artist 1"],
+            "performer:violin": ["artist 2"],
+            "performer:keyboard": ["[Removed]"],
+        }
+        tags.print_resolved(print_all=False)
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = (
+            "  Performers:\n"
+            f"  - Vocals: {Fore.CYAN}artist 1{Fore.RESET}\n"
+            f"  - Background Vocals: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Drums: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Percussion: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Keyboard: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  - Piano: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Synthesizer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Electric guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Bass guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Acoustic guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Ukulele: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Violin: {Fore.GREEN}artist 2{Fore.RESET}\n"
+            f"  - Double bass: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Cello: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Programming: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Saxophone: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Flute: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+        )
+        sys.stdout.write(captured.out)
+        self.assertEqual(expected, captured.out)
+
+    def test_print_all_resolved_with_performers(self) -> None:
+        """Test that resolved tags print, including performers.
+
+        Test printing of resolved tags with the argument to print all
+        set to true.
+        """
+        tags = MusicTags()
+        tags.original = {
+            "performer:vocals": ["artist 1"],
+            "performer:violin": ["artist 1"],
+            "performer:guitar": ["artist 3"],
+        }
+        tags.youtube = {
+            "performer:guitar": ["artist 4"],
+        }
+        tags.resolved = {
+            "performer:vocals": ["artist 1"],
+            "performer:violin": ["artist 2"],
+            "performer:keyboard": ["[Removed]"],
+        }
+        tags.print_resolved(print_all=True)
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = (
+            "  Performers:\n"
+            f"  - Vocals: {Fore.CYAN}artist 1{Fore.RESET}\n"
+            f"  - Background Vocals: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Drums: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Percussion: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Keyboard: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  - Piano: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Synthesizer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Guitar: {Fore.CYAN}artist 3{Fore.RESET} | {Fore.MAGENTA}artist 4{Fore.RESET}\n"
+            f"  - Electric guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Bass guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Acoustic guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Ukulele: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Violin: {Fore.GREEN}artist 2{Fore.RESET}\n"
+            f"  - Double bass: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Cello: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Programming: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Saxophone: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Flute: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+        )
+        self.assertEqual(expected, captured.out)
+
+    def test_print_resolved_with_performers(self) -> None:
+        """Test that resolved tags print, including performers.
+
+        Test printing of resolved tags with the argument to print all
+        set to false.
+        """
+        tags = MusicTags()
+        tags.original = {
+            "performer:vocals": ["artist 1"],
+            "performer:violin": ["artist 1"],
+            "performer:guitar": ["artist 3"],
+        }
+        tags.youtube = {
+            "performer:guitar": ["artist 4"],
+        }
+        tags.resolved = {
+            "performer:vocals": ["artist 1"],
+            "performer:violin": ["artist 2"],
+            "performer:keyboard": ["[Removed]"],
+        }
+        tags.print_resolved(print_all=False)
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = (
+            "  Performers:\n"
+            f"  - Vocals: {Fore.CYAN}artist 1{Fore.RESET}\n"
+            f"  - Background Vocals: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Drums: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Percussion: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Keyboard: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  - Piano: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Synthesizer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Electric guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Bass guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Acoustic guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Ukulele: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Violin: {Fore.GREEN}artist 2{Fore.RESET}\n"
+            f"  - Double bass: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Cello: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Programming: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Saxophone: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  - Flute: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+        )
+        self.assertEqual(expected, captured.out)
+
+    def test_print_all_resolved_without_performers(self) -> None:
+        """Test that resolved tags print, not including performers.
+
+        Test printing of resolved tags with the argument to print all
+        set to true.
+        """
+        tags = MusicTags()
+        tags.original = {
+            "artist": ["artist 1", "artist 2"],
+            "title": ["title 1"],
+            "producer": ["person 1"],
+            "arranger": ["artist 1"],
+        }
+        tags.youtube = {
+            "arranger": ["artist 2"],
+        }
+        tags.resolved = {
+            "artist": ["artist 1", "artist 2"],
+            "title": ["title 2"],
+            "producer": ["[Removed]"],
+        }
+        tags.print_resolved(print_all=True)
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = (
+            f"  Title: {Fore.GREEN}title 2{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.CYAN}artist 1 | artist 2{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.CYAN}artist 1{Fore.RESET} | {Fore.MAGENTA}artist 2{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+        )
+        self.assertEqual(expected, captured.out)
+
+    def test_print_resolved_without_performers(self) -> None:
+        """Test that resolved tags print, not including performers.
+
+        Test printing of resolved tags with the argument to print all
+        set to false.
+        """
+        tags = MusicTags()
+        tags.original = {
+            "artist": ["artist 1", "artist 2"],
+            "title": ["title 1"],
+            "producer": ["person 1"],
+            "arranger": ["artist 1"],
+        }
+        tags.youtube = {
+            "arranger": ["artist 2"],
+        }
+        tags.resolved = {
+            "artist": ["artist 1", "artist 2"],
+            "title": ["title 2"],
+            "producer": ["[Removed]"],
+        }
+        tags.print_resolved(print_all=False)
+        captured = self.capsys.readouterr()  # type: ignore
+        expected = (
+            f"  Title: {Fore.GREEN}title 2{Fore.RESET}\n"
+            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Artist(s): {Fore.CYAN}artist 1 | artist 2{Fore.RESET}\n"
+            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Producer: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+        )
+        sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
