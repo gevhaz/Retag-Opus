@@ -437,7 +437,10 @@ class TestUtils(unittest.TestCase):
     def test_print_resolved_with_performers(self) -> None:
         """Test that resolved tags print, including performers."""
         tags = MusicTags()
-        tags.original = {"performer:vocals": ["artist 1"], "performer:violin": ["artist 1"]}
+        tags.original = {
+            "performer:vocals": ["artist 1"],
+            "performer:violin": ["artist 1"],
+        }
         tags.resolved = {
             "performer:vocals": ["artist 1"],
             "performer:violin": ["artist 2"],
@@ -548,11 +551,11 @@ class TestUtils(unittest.TestCase):
         )
         self.assertEqual(expected, captured.out)
 
-    def test_print_resolved_with_performers(self) -> None:
+    def test_print_resolved_with_performers_multiple_sources(self) -> None:
         """Test that resolved tags print, including performers.
 
         Test printing of resolved tags with the argument to print all
-        set to false.
+        set to false when there are several sources with relevant tags.
         """
         tags = MusicTags()
         tags.original = {
@@ -708,9 +711,7 @@ class TestUtils(unittest.TestCase):
         originally on in the discsubtitle tag.
         """
         tags = MusicTags()
-        tags.original = {
-            "album": ["album 1"]
-        }
+        tags.original = {"album": ["album 1"]}
         tags.switch_album_to_disc_subtitle("album 2")
         actual_album = tags.original.get("album")
         actual_discsubtitle = tags.original.get("discsubtitle")
@@ -728,9 +729,7 @@ class TestUtils(unittest.TestCase):
     def test_switch_album_to_disc_subtitle_identical_tags(self) -> None:
         """Test that discsubtitle tag is not added when duplicated."""
         tags = MusicTags()
-        tags.original = {
-            "album": ["album 1"]
-        }
+        tags.original = {"album": ["album 1"]}
         tags.switch_album_to_disc_subtitle("album 1")
         self.assertNotIn("album", tags.original)
         self.assertNotIn("discsubtitle", tags.original)
@@ -738,24 +737,20 @@ class TestUtils(unittest.TestCase):
     def test_discard_upload_date_bad_date(self) -> None:
         """Test that bad upload dates are removed."""
         tags = MusicTags()
-        tags.original = {
-            "date": ["20220202"]
-        }
+        tags.original = {"date": ["20220202"]}
         tags.discard_upload_date()
         self.assertNotIn("date", tags.original)
 
     def test_discard_upload_date_good_date(self) -> None:
         """Test that good upload dates are not removed."""
         tags = MusicTags()
-        tags.original = {
-            "date": ["2022-02-02"]
-        }
+        tags.original = {"date": ["2022-02-02"]}
         tags.discard_upload_date()
         actual_date = tags.original.get("date")
         assert actual_date is not None
         self.assertListEqual(["2022-02-02"], actual_date)
 
-    def test_prune_final_metadata(self) -> None:
+    def test_prune_resolved_tags(self) -> None:
         """Test that useless tags are removed."""
         tags = MusicTags()
         tags.resolved = {
@@ -764,7 +759,7 @@ class TestUtils(unittest.TestCase):
             "minor_version": ["The minor version"],
             "major_brand": ["brand"],
             "vendor_id": ["id of the vendor"],
-            "date": ["2022-02-02"]
+            "date": ["2022-02-02"],
         }
         tags.prune_resolved_tags()
         self.assertEqual(6, len(tags.resolved))
@@ -778,9 +773,7 @@ class TestUtils(unittest.TestCase):
     def test_add_source_tag(self) -> None:
         """Test that the "youtube-dl" source tag is added."""
         tags = MusicTags()
-        tags.resolved = {
-            "date": ["2022-02-02"]
-        }
+        tags.resolved = {"date": ["2022-02-02"]}
         tags.add_source_tag()
         self.assertEqual(2, len(tags.resolved))
         self.assertEqual(["youtube-dl"], tags.resolved.get("comment"))
