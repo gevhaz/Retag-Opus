@@ -754,3 +754,72 @@ class TestUtils(unittest.TestCase):
         actual_date = tags.original.get("date")
         assert actual_date is not None
         self.assertListEqual(["2022-02-02"], actual_date)
+
+    def test_prune_final_metadata(self) -> None:
+        """Test that useless tags are removed."""
+        tags = MusicTags()
+        tags.resolved = {
+            "language": ["eng"],
+            "compatible_brands": ["a brand"],
+            "minor_version": ["The minor version"],
+            "major_brand": ["brand"],
+            "vendor_id": ["id of the vendor"],
+            "date": ["2022-02-02"]
+        }
+        tags.prune_resolved_tags()
+        self.assertEqual(6, len(tags.resolved))
+        self.assertEqual(["2022-02-02"], tags.resolved.get("date"))
+        self.assertEqual(["[Removed]"], tags.resolved.get("language"))
+        self.assertEqual(["[Removed]"], tags.resolved.get("compatible_brands"))
+        self.assertEqual(["[Removed]"], tags.resolved.get("minor_version"))
+        self.assertEqual(["[Removed]"], tags.resolved.get("major_brand"))
+        self.assertEqual(["[Removed]"], tags.resolved.get("vendor_id"))
+
+    def test_add_source_tag(self) -> None:
+        """Test that the "youtube-dl" source tag is added."""
+        tags = MusicTags()
+        tags.resolved = {
+            "date": ["2022-02-02"]
+        }
+        tags.add_source_tag()
+        self.assertEqual(2, len(tags.resolved))
+        self.assertEqual(["youtube-dl"], tags.resolved.get("comment"))
+
+    def test_get_field_only_new(self) -> None:
+        """Test getting data from all new sources for a given tag."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"artist": ["artist 2"]}
+        actual_tags = tags.get_field("artist", only_new=True)
+        self.assertEqual(2, len(actual_tags))
+        self.assertNotIn("artist 1", actual_tags)
+        self.assertIn("artist 2", actual_tags)
+        self.assertIn("artist 3", actual_tags)
+
+    def test_get_field_include_original(self) -> None:
+        """Test getting data from all sources for a given tag."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"artist": ["artist 2"]}
+        actual_tags = tags.get_field("artist", only_new=False)
+        self.assertEqual(3, len(actual_tags))
+        self.assertIn("artist 1", actual_tags)
+        self.assertIn("artist 2", actual_tags)
+        self.assertIn("artist 3", actual_tags)
+
+    def test_get_field_that_does_not_exist(self) -> None:
+        """Test getting data from all sources for a non-existent tag."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"artist": ["artist 2"]}
+        actual_tags = tags.get_field("title", only_new=False)
+        self.assertEqual(0, len(actual_tags))
+        self.assertNotIn("artist 1", actual_tags)
+        self.assertNotIn("artist 2", actual_tags)
+        self.assertNotIn("artist 3", actual_tags)
