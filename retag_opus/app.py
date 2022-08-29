@@ -98,7 +98,7 @@ def run() -> int:
                 return 0
 
             # 4.5 Get rid of shady tags
-            tags.prune_final_metadata()
+            tags.prune_resolved_tags()
 
             # 4.5.1 Manually set album
             if args.manual_album is not None:
