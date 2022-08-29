@@ -698,3 +698,59 @@ class TestUtils(unittest.TestCase):
         )
         sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
+
+    def test_switch_album_to_disc_subtitle(self) -> None:
+        """Test the album and discsubtitle switching function.
+
+        The function is used when the user want to set a specific album
+        for all songs being retagged, so that they are in a compilation
+        of songs, while preserving data about which album the song was
+        originally on in the discsubtitle tag.
+        """
+        tags = MusicTags()
+        tags.original = {
+            "album": ["album 1"]
+        }
+        tags.switch_album_to_disc_subtitle("album 2")
+        actual_album = tags.original.get("album")
+        actual_discsubtitle = tags.original.get("discsubtitle")
+        self.assertIsNone(actual_album)
+        assert actual_discsubtitle is not None
+        self.assertListEqual(["album 1"], actual_discsubtitle)
+
+    def test_switch_album_to_disc_subtitle_no_album(self) -> None:
+        """Test that the function works when no album tag."""
+        tags = MusicTags()
+        tags.switch_album_to_disc_subtitle("album 2")
+        self.assertNotIn("album", tags.original)
+        self.assertNotIn("discsubtitle", tags.original)
+
+    def test_switch_album_to_disc_subtitle_identical_tags(self) -> None:
+        """Test that discsubtitle tag is not added when duplicated."""
+        tags = MusicTags()
+        tags.original = {
+            "album": ["album 1"]
+        }
+        tags.switch_album_to_disc_subtitle("album 1")
+        self.assertNotIn("album", tags.original)
+        self.assertNotIn("discsubtitle", tags.original)
+
+    def test_discard_upload_date_bad_date(self) -> None:
+        """Test that bad upload dates are removed."""
+        tags = MusicTags()
+        tags.original = {
+            "date": ["20220202"]
+        }
+        tags.discard_upload_date()
+        self.assertNotIn("date", tags.original)
+
+    def test_discard_upload_date_good_date(self) -> None:
+        """Test that good upload dates are not removed."""
+        tags = MusicTags()
+        tags.original = {
+            "date": ["2022-02-02"]
+        }
+        tags.discard_upload_date()
+        actual_date = tags.original.get("date")
+        assert actual_date is not None
+        self.assertListEqual(["2022-02-02"], actual_date)
