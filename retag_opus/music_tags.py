@@ -207,7 +207,7 @@ class MusicTags:
         if self.original.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original["date"][0]):
             self.original.pop("date", None)
 
-    def prune_final_metadata(self) -> None:
+    def prune_resolved_tags(self) -> None:
         """Remove tags that are not useful."""
         self.resolved["language"] = ["[Removed]"]
         self.resolved["compatible_brands"] = ["[Removed]"]
