@@ -816,3 +816,48 @@ class TestUtils(unittest.TestCase):
         self.assertNotIn("artist 1", actual_tags)
         self.assertNotIn("artist 2", actual_tags)
         self.assertNotIn("artist 3", actual_tags)
+
+    def test_check_any_new_data_exists(self) -> None:
+        """Test checking for new data."""
+        tags = MusicTags()
+
+        # No tags at all
+        self.assertFalse(tags.check_any_new_data_exists())
+
+        # Only original tags
+        tags.original = {"artist": ["artist 1"]}
+        self.assertFalse(tags.check_any_new_data_exists())
+
+        # Other sources have same value for tag as original
+        tags.youtube = {"artist": ["artist 1"]}
+        tags.fromtags = {"artist": ["artist 1"]}
+        tags.fromdesc = {"artist": ["artist 1"]}
+        self.assertFalse(tags.check_any_new_data_exists())
+
+        # There actually are new values for the tag
+        tags.youtube = {"artist": ["artist 2"]}
+        self.assertTrue(tags.check_any_new_data_exists())
+        tags.fromtags = {"artist": ["artist 3"]}
+        self.assertTrue(tags.check_any_new_data_exists())
+        tags.fromdesc = {"artist": ["artist 2"]}
+        self.assertTrue(tags.check_any_new_data_exists())
+
+    def test_check_any_new_data_exists_resolved(self) -> None:
+        """Check that there are no new values in the resolved tags.
+
+        Tags may be automaticall added to the resolved tags so we need
+        to check that set also.
+        """
+        tags = MusicTags()
+
+        # Only resolved has tags
+        tags.resolved = {"artist": ["artist 1"]}
+        self.assertTrue(tags.check_any_new_data_exists())
+
+        # Identical tag in resolved
+        tags.original = {"artist": ["artist 1"]}
+        self.assertFalse(tags.check_any_new_data_exists())
+
+        # New tag in resolved
+        tags.resolved = {"artist": ["artist 2"]}
+        self.assertTrue(tags.check_any_new_data_exists())
