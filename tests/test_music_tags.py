@@ -4,6 +4,8 @@ import unittest
 
 import pytest
 from colorama import Fore
+from mock import patch
+from mock.mock import MagicMock
 
 from retag_opus.music_tags import MusicTags
 
@@ -861,3 +863,76 @@ class TestUtils(unittest.TestCase):
         # New tag in resolved
         tags.resolved = {"artist": ["artist 2"]}
         self.assertTrue(tags.check_any_new_data_exists())
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_delete_tag_item(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test deleting one value from a tag list."""
+        mock_show.side_effect = [0, 1]  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2"]}
+        tags.delete_tag_item()
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_delete_tag_item_two_items(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test deleting two values from a tag list."""
+        mock_show.side_effect = [0, [1, 2]]  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2", "artist 3"]}
+        tags.delete_tag_item()
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_delete_tag_item_zero_items(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test deleting zero values from a tag list."""
+        mock_show.side_effect = [0, None]  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2"]}
+        tags.delete_tag_item()
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(f"{Fore.YELLOW}Returning without removing anything{Fore.RESET}\n", captured.out)
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_delete_tag_item_all_items(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test deleting all values from a tag list.
+
+        When all values are removed, the tag itself should also be
+        removed (not kept with an empty list).
+        """
+        mock_show.side_effect = [0, [0, 1, 2]]  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2", "artist 3"]}
+        tags.delete_tag_item()
+        self.assertNotIn("artist", tags.resolved)
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_delete_tag_item_quit(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test quitting witout deleting tag.
+
+        The function is for deleting values from a tag, but the user can
+        also chose to quit witout deleting anyting. Test that nothing is
+        deleted and that the quitting text is printed.
+        """
+        mock_show.side_effect = [1]  # Where a choice is returned from the menu (quit)
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2"]}
+        tags.delete_tag_item()
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(f"{Fore.YELLOW}Returning without removing anything{Fore.RESET}\n", captured.out)

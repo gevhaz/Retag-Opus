@@ -449,7 +449,7 @@ class MusicTags:
         tag_index = removal_menu.show()
 
         if tag_index is None or isinstance(tag_index, tuple) or tags_in_resolved[tag_index] == "Quit":
-            print(Fore.YELLOW + "Returning without removing anything")
+            print(Fore.YELLOW + "Returning without removing anything" + Fore.RESET)
         else:
             selected_tag = tags_in_resolved[tag_index]
             items_in_tag = self.resolved.get(selected_tag, []).copy()
@@ -466,7 +466,7 @@ class MusicTags:
             if isinstance(items_to_remove, int):
                 items_to_remove = [items_to_remove]
             elif items_to_remove is None or len(items_to_remove) == 0:
-                print(Fore.YELLOW + "Returning without removing anything")
+                print(Fore.YELLOW + "Returning without removing anything" + Fore.RESET)
                 return
 
             for item in items_to_remove:
