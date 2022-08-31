@@ -424,13 +424,11 @@ class MusicTags:
         key = " "
         val = " "
         while key and val:
-            print("Enter key and value (newline cancels):")
+            print("Enter key and value (newline cancels, sequence ' | ' splits tag):")
             key = input("  Key: ")
             val = input("  Value: ")
             if key and val:
-                self.resolved[key] = [val]
-            else:
-                break
+                self.resolved[key] = val.split(" | ")
 
     def delete_tag_item(self) -> None:
         """Present a menu for removing tags and remove selected ones.

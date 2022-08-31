@@ -878,6 +878,18 @@ class TestUtils(unittest.TestCase):
 
     @patch("retag_opus.utils.TerminalMenu.__init__")
     @patch("retag_opus.utils.TerminalMenu.show")
+    def test_delete_tag_item_performer(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test deleting one value from a tag list."""
+        mock_show.side_effect = [0, 1]  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.resolved = {"performer:vocals": ["artist 1", "artist 2"]}
+        tags.delete_tag_item()
+        self.assertEqual(["artist 1"], tags.resolved.get("performer:vocals"))
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
     def test_delete_tag_item_two_items(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test deleting two values from a tag list."""
         mock_show.side_effect = [0, [1, 2]]  # Where a choice is returned from the menu
@@ -936,3 +948,43 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(f"{Fore.YELLOW}Returning without removing anything{Fore.RESET}\n", captured.out)
+
+    @patch("retag_opus.music_tags.input")
+    def test_modify_resolved_field(self, mock_input: MagicMock) -> None:
+        """Test modifying a field.
+
+        If the user gives a comma-seperated list of artists, it should
+        be split.
+        """
+        mock_input.side_effect = ["artist", "artist 3 | artist 4", "", ""]
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2"]}
+        tags.modify_resolved_field()
+        self.assertEqual(["artist 3", "artist 4"], tags.resolved.get("artist"))
+
+    @patch("retag_opus.music_tags.input")
+    def test_modify_resolved_field_exit_immediately(self, mock_input: MagicMock) -> None:
+        """Test exiting without modifying a field."""
+        mock_input.side_effect = ["", ""]
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2"]}
+        tags.modify_resolved_field()
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+
+    @patch("retag_opus.music_tags.input")
+    def test_modify_resolved_field_no_value(self, mock_input: MagicMock) -> None:
+        """Test that nothing is changed if no value is given."""
+        mock_input.side_effect = ["artist", ""]
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2"]}
+        tags.modify_resolved_field()
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+
+    @patch("retag_opus.music_tags.input")
+    def test_modify_resolved_field_no_key(self, mock_input: MagicMock) -> None:
+        """Test that nothing is changed if no key is given."""
+        mock_input.side_effect = ["", "artist 1"]
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2"]}
+        tags.modify_resolved_field()
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
