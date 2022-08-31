@@ -880,13 +880,25 @@ class TestUtils(unittest.TestCase):
     @patch("retag_opus.utils.TerminalMenu.show")
     def test_delete_tag_item_performer(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test deleting one value from a tag list."""
-        mock_show.side_effect = [0, 1]  # Where a choice is returned from the menu
+        mock_show.side_effect = [1, 1]  # Where a choice is returned from the menu
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
         tags = MusicTags()
-        tags.resolved = {"performer:vocals": ["artist 1", "artist 2"]}
+        tags.resolved = {"artist": ["artist 1"], "performer:vocals": ["artist 1", "artist 2"]}
         tags.delete_tag_item()
         self.assertEqual(["artist 1"], tags.resolved.get("performer:vocals"))
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_delete_tag_item_unknown_tag(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test deleting one value from a tag list."""
+        mock_show.side_effect = [0, 0]  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.resolved = {"unknown_key": ["artist 1"]}
+        tags.delete_tag_item()
+        self.assertEqual(["artist 1"], tags.resolved.get("unknown_key"))
 
     @patch("retag_opus.utils.TerminalMenu.__init__")
     @patch("retag_opus.utils.TerminalMenu.show")
