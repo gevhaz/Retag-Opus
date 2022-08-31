@@ -4,7 +4,7 @@ source = [ "./retag_opus/" ]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 36.9
+fail_under = 37
 
 [tool.pyright]
 pythonVersion = "3.10"
