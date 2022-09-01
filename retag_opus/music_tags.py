@@ -235,190 +235,6 @@ class MusicTags:
         else:
             return Utils().remove_duplicates(old_value + yt_value + from_desc_value + from_tags_value)
 
-    def resolve_metadata(self) -> None:
-        """Merge the metadata from the different sources.
-
-        Use the acquired metadata from all sources to produce a set of
-        "resolved" tags. A few tags will automatically be used, but most
-        require user interaction to resolve. The user is presented with
-        menus where the selection happens. It's also possible to make
-        manual edits to the tags.
-
-        :raises UserExitException: Raised when the user chooses to quit
-            the app.
-        """
-        # Date should be safe to get from description
-        date = self.youtube.get("date", None)
-        if date and date != self.original.get("date"):
-            self.resolved["date"] = date
-
-        md_artist = self.original.get("artist")
-        yt_artist = self.youtube.get("artist")
-        if md_artist is not None and len(md_artist) == 1 and Utils().split_tag(md_artist[0]) == yt_artist:
-            if yt_artist is not None:
-                self.resolved["artist"] = yt_artist
-
-        # Compare all fields
-        all_new_fields = [key for key in self.youtube.keys()]
-        all_new_fields += [key for key in self.fromdesc.keys()]
-        all_new_fields += [key for key in self.fromtags.keys()]
-        all_new_fields = Utils.remove_duplicates(all_new_fields)
-        for field in all_new_fields:
-            old_value = self.original.get(field, [])
-            yt_value = self.youtube.get(field, [])
-            from_desc_value = self.fromdesc.get(field, [])
-            from_tags_value = self.fromtags.get(field, [])
-            all_new_sources = self.get_field(field, only_new=True)
-            if old_value is None and len(all_new_sources) > 0 and field != "albumartist":
-                if len(yt_value) > 0:
-                    self.resolved[field] = yt_value
-                elif len(from_tags_value) > 0:
-                    self.resolved[field] = from_tags_value
-                elif len(from_desc_value) > 0:
-                    self.resolved[field] = from_desc_value
-                else:
-                    continue
-                print(
-                    Fore.YELLOW + f"{field.title()}: No value exists in metadata. Using parsed data: "
-                    f"{self.resolved[field]}."
-                )
-            elif Utils.is_equal_when_stripped(yt_value, old_value) and len(old_value) > 0:
-                print(Fore.GREEN + f"{field.title()}: Metadata matches YouTube description.")
-                self.resolved[field] = [v.strip() for v in old_value]
-            elif Utils.is_equal_when_stripped(from_desc_value, old_value) and len(old_value) > 0:
-                print(Fore.GREEN + f"{field.title()}: Metadata matches parsed YouTube tags.")
-                self.resolved[field] = [v.strip() for v in old_value]
-            elif Utils.is_equal_when_stripped(from_tags_value, old_value) and len(old_value) > 0:
-                print(Fore.GREEN + f"{field.title()}: Metadata matches parsed original tags.")
-                self.resolved[field] = [v.strip() for v in old_value]
-            else:
-                redo = True
-                print("-----------------------------------------------")
-                self.print_resolved(print_all=True)
-                while redo:
-                    redo = False
-                    candidates = []
-                    print(Fore.RED + f"{field.title()}: Mismatch between values in description and metadata:")
-                    if len(yt_value) > 0:
-                        print("YouTube description: " + colors.yt_col + " | ".join(yt_value))
-                        candidates.append("YouTube description")
-                    if len(from_tags_value) > 0:
-                        print("Parsed from original tags: " + Fore.YELLOW + " | ".join(from_tags_value))
-                        candidates.append("Parsed from original tags")
-                    if len(old_value) > 0:
-                        print("Exisiting metadata:  " + colors.md_col + " | ".join(old_value))
-                        candidates.append("Existing metadata")
-                    if len(from_desc_value) > 0:
-                        print("Parsed from YouTube tags: " + Fore.GREEN + " | ".join(from_desc_value))
-                        candidates.append("Parsed from Youtube tags")
-
-                    # There have to be choices available for it to make
-                    # sense to stay in the loop
-                    if len(candidates) == 0:
-                        break
-
-                    candidates.append("Other action")
-                    candidates.append("Quit")
-
-                    candidate_menu = TerminalMenu(candidates)
-                    choice = candidate_menu.show()
-
-                    if choice is None:
-                        raise UserExitException("Skipping this and all later songs")
-                    elif isinstance(choice, tuple):
-                        continue
-
-                    match candidates[choice]:
-                        case "Other action":
-
-                            default_action = "[g] Go back"
-                            other_choices = [
-                                "[s] Select items from a list",
-                                "[m] Manually fill in tag",
-                                "[p] Print description metadata",
-                                "[r] Remove field",
-                                default_action,
-                            ]
-
-                            other_choice_menu = TerminalMenu(other_choices, title="Choose the source you want to use:")
-                            choice = other_choice_menu.show()
-
-                            action = default_action
-                            if choice is not None and not isinstance(choice, tuple):
-                                action = other_choices[choice]
-
-                            match action:
-                                case "[m] Manually fill in tag":
-                                    self.resolved[field] = [input("Value: ")]
-                                case "[p] Print description metadata":
-                                    print("-----------------------------------------------")
-                                    self.print_youtube()
-                                    redo = True
-                                case "[s] Select items from a list":
-                                    available_tags = self.get_field(field)
-                                    tag_selection_menu = TerminalMenu(
-                                        available_tags,
-                                        title="Select the items you want in this tag",
-                                        multi_select=True,
-                                        show_multi_select_hint=True,
-                                        multi_select_empty_ok=True,
-                                        multi_select_select_on_accept=False,
-                                    )
-
-                                    items = tag_selection_menu.show()
-                                    if isinstance(items, int):
-                                        items = [items]
-                                    elif items is None:
-                                        print(Fore.RED + "Invalid choice, try again")
-                                        redo = True
-                                        break
-
-                                    self.resolved[field] = []
-                                    for item in items:
-                                        self.resolved[field].append(available_tags[item])
-                                case "[r] Remove field":
-                                    self.resolved[field] = ["[Removed]"]
-                                case "[g] Go back":
-                                    redo = True
-                                case _:
-                                    print(Fore.RED + "Invalid choice, try again")
-                                    redo = True
-
-                        case "Existing metadata":
-                            self.resolved[field] = self.original.get(field, [])
-
-                        case "YouTube description":
-                            if yt_value is not None:
-                                self.resolved[field] = yt_value
-
-                        case "Parsed from original tags":
-                            if from_tags_value is not None:
-                                self.resolved[field] = from_tags_value
-
-                        case "Parsed from Youtube tags":
-                            if from_desc_value is not None:
-                                self.resolved[field] = from_desc_value
-
-                        case "Quit":
-                            raise UserExitException("Skipping this and all later songs")
-
-        all_artists = self.get_field("artist")
-        resolved_artist = self.resolved.get("artist")
-        original_artist = self.original.get("artist")
-
-        if len(all_artists) > 1:
-            print("-----------------------------------------------")
-            self.print_resolved(print_all=True)
-            print(Fore.BLUE + "Select the album artist:")
-            one_artist = Utils().select_single_tag(all_artists)
-            if len(one_artist) > 0:
-                self.resolved["albumartist"] = one_artist
-        elif not self.original.get("albumartist"):
-            if resolved_artist:
-                self.resolved["albumartist"] = resolved_artist
-            elif original_artist:
-                self.resolved["albumartist"] = original_artist
-
     def modify_resolved_field(self) -> None:
         """Manually add key-value pairs to the set of resolved tags."""
         key = " "
@@ -504,3 +320,215 @@ class MusicTags:
                 new_content_exists = True
 
         return new_content_exists
+
+    def determine_album_artist(self) -> None:
+        """Choose value to use for albumartist tag."""
+        all_artists = self.get_field("artist")
+        resolved_artist = self.resolved.get("artist")
+        original_artist = self.original.get("artist")
+
+        if len(all_artists) > 1:
+            print("-----------------------------------------------")
+            self.print_resolved(print_all=True)
+            print(Fore.BLUE + "Select the album artist:")
+            one_artist = Utils().select_single_tag(all_artists)
+            if len(one_artist) > 0:
+                self.resolved["albumartist"] = one_artist
+        elif not self.original.get("albumartist"):
+            if resolved_artist:
+                self.resolved["albumartist"] = resolved_artist
+            elif original_artist:
+                self.resolved["albumartist"] = original_artist
+
+    def default_to_youtube_date(self) -> None:
+        """If youtube has date data, use that for resolved."""
+        date = self.youtube.get("date", None)
+        if date and date != self.original.get("date"):
+            self.resolved["date"] = date
+
+    def set_artist_if_obvious(self) -> None:
+        """Set the resolved artist if it's good for sure.
+
+        If the original tag and the youtube tags are identical
+        with regards to the artist tag, assume that it is correct.
+        """
+        md_artist = self.original.get("artist")
+        yt_artist = self.youtube.get("artist")
+        if md_artist is not None and len(md_artist) == 1 and Utils().split_tag(md_artist[0]) == yt_artist:
+            if yt_artist is not None:
+                self.resolved["artist"] = yt_artist
+
+    def manually_adjust_tag_when_resolving(self, tag_name: str) -> bool:
+        """Perform a manual action on a tag when no source is right.
+
+        For the tag with the given name, manually fill choose its
+        content. Either completely manually or with help from the
+        found tags.
+
+        When neither the original tag, nor any of the new ones has the
+        right value, the user can remove the whole tag, one or more
+        values in it, a specific value from the found ones, or just
+        manually write the tag.
+        """
+        default_action = "[g] Go back"
+        other_choices = [
+            "[s] Select items from a list",
+            "[m] Manually fill in tag",
+            "[p] Print description metadata",
+            "[r] Remove field",
+            default_action,
+        ]
+
+        other_choice_menu = TerminalMenu(other_choices, title="Choose the source you want to use:")
+        choice = other_choice_menu.show()
+
+        action = default_action
+        if choice is not None and not isinstance(choice, tuple):
+            action = other_choices[choice]
+
+        match action:
+            case "[m] Manually fill in tag":
+                self.resolved[tag_name] = [input("Value: ")]
+                return False
+            case "[p] Print description metadata":
+                print("-----------------------------------------------")
+                self.print_youtube()
+                return True
+            case "[s] Select items from a list":
+                available_tags = self.get_field(tag_name)
+                tag_selection_menu = TerminalMenu(
+                    available_tags,
+                    title="Select the items you want in this tag",
+                    multi_select=True,
+                    show_multi_select_hint=True,
+                    multi_select_empty_ok=True,
+                    multi_select_select_on_accept=False,
+                )
+
+                items = tag_selection_menu.show()
+                if isinstance(items, int):
+                    items = [items]
+                elif items is None:
+                    print(Fore.RED + "Invalid choice, try again")
+                    return True
+
+                self.resolved[tag_name] = []
+                for item in items:
+                    self.resolved[tag_name].append(available_tags[item])
+
+                return False
+            case "[r] Remove field":
+                self.resolved[tag_name] = ["[Removed]"]
+                return False
+            case "[g] Go back":
+                return True
+            case _:
+                print(Fore.RED + "Invalid choice, try again")
+                return True
+
+    def resolve_metadata(self) -> None:
+        """Merge the metadata from the different sources.
+
+        Use the acquired metadata from all sources to produce a set of
+        "resolved" tags. A few tags will automatically be used, but most
+        require user interaction to resolve. The user is presented with
+        menus where the selection happens. It's also possible to make
+        manual edits to the tags.
+
+        :raises UserExitException: Raised when the user chooses to quit
+            the app.
+        """
+        all_tags_with_new_data = [tag_name for tag_name in self.youtube.keys()]
+        all_tags_with_new_data += [tag_name for tag_name in self.fromdesc.keys()]
+        all_tags_with_new_data += [tag_name for tag_name in self.fromtags.keys()]
+        all_tags_with_new_data = Utils.remove_duplicates(all_tags_with_new_data)
+
+        for tag_name in all_tags_with_new_data:
+            old_value = self.original.get(tag_name, [])
+            yt_value = self.youtube.get(tag_name, [])
+            from_desc_value = self.fromdesc.get(tag_name, [])
+            from_tags_value = self.fromtags.get(tag_name, [])
+            all_values = self.get_field(tag_name, only_new=True)
+
+            if old_value is None and len(all_values) > 0 and tag_name != "albumartist":
+                if len(yt_value) > 0:
+                    self.resolved[tag_name] = yt_value
+                elif len(from_tags_value) > 0:
+                    self.resolved[tag_name] = from_tags_value
+                elif len(from_desc_value) > 0:
+                    self.resolved[tag_name] = from_desc_value
+                else:
+                    continue
+                print(
+                    Fore.YELLOW + f"{tag_name.title()}: No value exists in metadata. Using parsed data: "
+                    f"{self.resolved[tag_name]}."
+                )
+            elif Utils.is_equal_when_stripped(yt_value, old_value) and len(old_value) > 0:
+                print(Fore.GREEN + f"{tag_name.title()}: Metadata matches YouTube description.")
+                self.resolved[tag_name] = [v.strip() for v in old_value]
+            elif Utils.is_equal_when_stripped(from_desc_value, old_value) and len(old_value) > 0:
+                print(Fore.GREEN + f"{tag_name.title()}: Metadata matches parsed YouTube tags.")
+                self.resolved[tag_name] = [v.strip() for v in old_value]
+            elif Utils.is_equal_when_stripped(from_tags_value, old_value) and len(old_value) > 0:
+                print(Fore.GREEN + f"{tag_name.title()}: Metadata matches parsed original tags.")
+                self.resolved[tag_name] = [v.strip() for v in old_value]
+            else:
+                redo = True
+                print("-----------------------------------------------")
+                self.print_resolved(print_all=True)
+                while redo:
+                    redo = False
+                    candidates = []
+                    print(Fore.RED + f"{tag_name.title()}: Mismatch between values in description and metadata:")
+                    if len(yt_value) > 0:
+                        print("YouTube description: " + colors.yt_col + " | ".join(yt_value))
+                        candidates.append("YouTube description")
+                    if len(from_tags_value) > 0:
+                        print("Parsed from original tags: " + Fore.YELLOW + " | ".join(from_tags_value))
+                        candidates.append("Parsed from original tags")
+                    if len(old_value) > 0:
+                        print("Exisiting metadata:  " + colors.md_col + " | ".join(old_value))
+                        candidates.append("Existing metadata")
+                    if len(from_desc_value) > 0:
+                        print("Parsed from YouTube tags: " + Fore.GREEN + " | ".join(from_desc_value))
+                        candidates.append("Parsed from Youtube tags")
+
+                    # There have to be choices available for it to make
+                    # sense to stay in the loop
+                    if len(candidates) == 0:
+                        break
+
+                    candidates.append("Other action")
+                    candidates.append("Quit")
+
+                    candidate_menu = TerminalMenu(candidates)
+                    choice = candidate_menu.show()
+
+                    if choice is None:
+                        raise UserExitException("Skipping this and all later songs")
+                    elif isinstance(choice, tuple):
+                        continue
+
+                    match candidates[choice]:
+                        case "Other action":
+                            redo = self.manually_adjust_tag_when_resolving(tag_name)
+
+                        case "Existing metadata":
+                            self.resolved[tag_name] = old_value
+
+                        case "YouTube description":
+                            if yt_value is not None:
+                                self.resolved[tag_name] = yt_value
+
+                        case "Parsed from original tags":
+                            if from_tags_value is not None:
+                                self.resolved[tag_name] = from_tags_value
+
+                        case "Parsed from Youtube tags":
+                            if from_desc_value is not None:
+                                self.resolved[tag_name] = from_desc_value
+
+                        case "Quit":
+                            raise UserExitException("Skipping this and all later songs")
+
+        self.determine_album_artist()
