@@ -342,8 +342,8 @@ class MusicTags:
 
     def default_to_youtube_date(self) -> None:
         """If youtube has date data, use that for resolved."""
-        date = self.youtube.get("date", None)
-        if date and date != self.original.get("date"):
+        date = self.youtube.get("date")
+        if date:
             self.resolved["date"] = date
 
     def set_artist_if_obvious(self) -> None:

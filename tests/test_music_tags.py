@@ -1087,3 +1087,24 @@ class TestUtils(unittest.TestCase):
         tags.original = {"albumartist": ["artist 2"]}
         tags.determine_album_artist()
         self.assertEqual(None, tags.resolved.get("albumartist"))
+
+    def test_default_to_youtube_date_protect_original(self) -> None:
+        """Test that youtube date not overwrites original."""
+        tags = MusicTags()
+        tags.youtube = {"date": ["1991-01-01"]}
+        tags.original = {"date": ["2022-09-03"]}
+        tags.default_to_youtube_date()
+        self.assertEqual(["1991-01-01"], tags.resolved.get("date"))
+
+    def test_default_to_youtube_date_use_when_appropriate(self) -> None:
+        """Test that youtube date is used."""
+        tags = MusicTags()
+        tags.youtube = {"date": ["1991-01-01"]}
+        tags.default_to_youtube_date()
+        self.assertEqual(["1991-01-01"], tags.resolved.get("date"))
+
+    def test_default_to_youtube_date_no_change_with_no_youtube(self) -> None:
+        """Test that no data is changed when no youtube date exists."""
+        tags = MusicTags()
+        tags.default_to_youtube_date()
+        self.assertNotIn("date", tags.resolved)
