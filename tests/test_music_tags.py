@@ -1000,3 +1000,90 @@ class TestUtils(unittest.TestCase):
         tags.resolved = {"artist": ["artist 1", "artist 2"]}
         tags.modify_resolved_field()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+
+    @patch("retag_opus.utils.Utils.select_single_tag")
+    def test_determine_album_artist_select_one(self, select_single_tag: MagicMock) -> None:
+        """Test that album artist can be picked up normally."""
+        expected_artist = ["artist 4"]
+        select_single_tag.return_value = expected_artist
+        tags = MusicTags()
+
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.determine_album_artist()
+        self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
+
+    @patch("retag_opus.utils.Utils.select_single_tag")
+    def test_determine_album_artist_select_two(self, select_single_tag: MagicMock) -> None:
+        """Test that two album artists can be selected."""
+        expected_artist = ["artist 2", "artist 4"]
+        select_single_tag.return_value = expected_artist
+        tags = MusicTags()
+
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.determine_album_artist()
+        self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
+
+    @patch("retag_opus.utils.Utils.select_single_tag")
+    def test_determine_album_artist_select_zero(self, select_single_tag: MagicMock) -> None:
+        """Test that no tag is added when nothing is selected."""
+        select_single_tag.return_value = []
+        tags = MusicTags()
+
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.determine_album_artist()
+        self.assertNotIn("albumartist", tags.resolved)
+
+    def test_determine_album_artist_only_old_exist(self) -> None:
+        """Test that two album artists can be selected.
+
+        When only the original tags have an artist, use that one as
+        albumartist without asking.
+        """
+        tags = MusicTags()
+
+        tags.original = {"artist": ["artist 1"]}
+        tags.determine_album_artist()
+        self.assertEqual(["artist 1"], tags.resolved.get("albumartist"))
+
+    def test_determine_album_artist_old_and_resolved_exist(self) -> None:
+        """Test that resolved artist is preferred.
+
+        When resolved artist is found, that should be used.
+        """
+        tags = MusicTags()
+
+        tags.original = {"artist": ["artist 1"]}
+        tags.resolved = {"artist": ["artist 2"]}
+        tags.determine_album_artist()
+        self.assertEqual(["artist 2"], tags.resolved.get("albumartist"))
+
+    def test_determine_album_artist_no_artist_or_albumartist(self) -> None:
+        """Test nothing is added when nothing to choose from."""
+        tags = MusicTags()
+
+        tags.determine_album_artist()
+        self.assertNotIn("albumartist", tags.resolved)
+
+    def test_determine_album_artist_one_exists(self) -> None:
+        """Test that no change is made when album artist is good.
+
+        When there is only one artist in all sources, and there already
+        is an albumartist in the original tags, there is no need to make
+        any changes to the album artist because there is only one to
+        choose from.
+        """
+        tags = MusicTags()
+
+        tags.fromtags = {"artist": ["artist 1"]}
+        tags.original = {"albumartist": ["artist 2"]}
+        tags.determine_album_artist()
+        self.assertEqual(None, tags.resolved.get("albumartist"))
