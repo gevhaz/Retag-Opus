@@ -354,8 +354,12 @@ class MusicTags:
         """
         md_artist = self.original.get("artist")
         yt_artist = self.youtube.get("artist")
-        if md_artist is not None and len(md_artist) == 1 and Utils().split_tag(md_artist[0]) == yt_artist:
-            if yt_artist is not None:
+        if md_artist is not None and yt_artist is not None:
+            if (
+                len(md_artist) == 1
+                and Utils.split_tag(md_artist[0]) == yt_artist
+                or Utils.is_equal_when_stripped(md_artist, yt_artist)
+            ):
                 self.resolved["artist"] = yt_artist
 
     def manually_adjust_tag_when_resolving(self, tag_name: str) -> bool:

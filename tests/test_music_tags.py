@@ -1108,3 +1108,47 @@ class TestUtils(unittest.TestCase):
         tags = MusicTags()
         tags.default_to_youtube_date()
         self.assertNotIn("date", tags.resolved)
+
+    def test_set_artist_if_obvious_when_obvious(self) -> None:
+        """Test that when artist is identical, it is auto-resolved."""
+        tags = MusicTags()
+        tags.youtube = {"artist": ["artist 1"]}
+        tags.original = {"artist": ["artist 1"]}
+        tags.set_artist_if_obvious()
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+
+    def test_set_artist_if_obvious_when_not_obvious(self) -> None:
+        """Test resolved not set when youtube and original differ."""
+        tags = MusicTags()
+        tags.youtube = {"artist": ["artist 1"]}
+        tags.original = {"artist": ["artist 2"]}
+        tags.set_artist_if_obvious()
+        self.assertNotIn("artist", tags.resolved)
+
+    def test_set_artist_if_obvious_when_no_youtube_artist(self) -> None:
+        """Test don't change anything when either artist is missing."""
+        tags1 = MusicTags()
+        tags1.original = {"artist": ["artist 2"]}
+        tags1.set_artist_if_obvious()
+        self.assertNotIn("artist", tags1.resolved)
+
+        tags2 = MusicTags()
+        tags2.original = {"artist": ["artist 2"]}
+        tags2.set_artist_if_obvious()
+        self.assertNotIn("artist", tags2.resolved)
+
+    def test_set_artist_if_obvious_when_not_split_in_original(self) -> None:
+        """Test setting obvious artist."""
+        tags = MusicTags()
+        tags.youtube = {"artist": ["artist 1", "artist 2"]}
+        tags.original = {"artist": ["artist 1, artist 2"]}
+        tags.set_artist_if_obvious()
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+
+    def test_set_artist_if_obvious_when_list_in_original_tags(self) -> None:
+        """Test setting obvious artist."""
+        tags = MusicTags()
+        tags.youtube = {"artist": ["artist 1", "artist 2"]}
+        tags.original = {"artist": ["artist 1", "artist 2"]}
+        tags.set_artist_if_obvious()
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
