@@ -780,6 +780,15 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(2, len(tags.resolved))
         self.assertEqual(["youtube-dl"], tags.resolved.get("comment"))
 
+    def test_preserve_original_comment_when_adding_source(self) -> None:
+        """Test that source tag doesn't overwrite."""
+        tags = MusicTags()
+        tags.original = {"comment": ["test"]}
+        tags.resolved = {"date": ["2022-02-02"]}
+        tags.add_source_tag()
+        self.assertEqual(2, len(tags.resolved))
+        self.assertEqual(["test", "youtube-dl"], tags.resolved.get("comment"))
+
     def test_get_field_only_new(self) -> None:
         """Test getting data from all new sources for a given tag."""
         tags = MusicTags()
