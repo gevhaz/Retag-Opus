@@ -374,25 +374,29 @@ class MusicTags:
         values in it, a specific value from the found ones, or just
         manually write the tag.
         """
-        default_action = "[g] Go back"
         other_choices = [
             "[s] Select items from a list",
             "[m] Manually fill in tag",
             "[p] Print description metadata",
             "[r] Remove field",
-            default_action,
+            "[g] Go back"
         ]
 
         other_choice_menu = TerminalMenu(other_choices, title="Choose the source you want to use:")
         choice = other_choice_menu.show()
 
-        action = default_action
-        if choice is not None and not isinstance(choice, tuple):
+        action = ""
+        if isinstance(choice, int):
             action = other_choices[choice]
 
         match action:
             case "[m] Manually fill in tag":
-                self.resolved[tag_name] = [input("Value: ")]
+                manual_tag = input("Value: ")
+                if manual_tag:
+                    self.resolved[tag_name] = [manual_tag]
+                else:
+                    print("No input, not changing tag")
+                    return True
                 return False
             case "[p] Print description metadata":
                 print("-----------------------------------------------")
@@ -424,10 +428,8 @@ class MusicTags:
             case "[r] Remove field":
                 self.resolved[tag_name] = ["[Removed]"]
                 return False
-            case "[g] Go back":
-                return True
             case _:
-                print(Fore.RED + "Invalid choice, try again")
+                print("Going back to previous menu")
                 return True
 
     def resolve_metadata(self) -> None:
