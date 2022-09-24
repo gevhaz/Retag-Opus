@@ -1161,3 +1161,119 @@ class TestUtils(unittest.TestCase):
         tags.original = {"artist": ["artist 1", "artist 2"]}
         tags.set_artist_if_obvious()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_manually_adjust_tag_when_resolving_no_choice(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test no choice or multiple choice not allowed.
+
+        The tested function shows a menu with options for making manual
+        adjustments to a tag. It shouldn't be possible to make no
+        choice or multiple choices, but we test it here for safety.
+        Expectation is a return with value True.
+        """
+        tags = MusicTags()
+
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.return_value = None  # Where a choice is returned from the menu
+
+        expected = "Going back to previous menu\n"
+
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+        captured = self.capsys.readouterr()  # type: ignore
+
+        self.assertTrue(repeat)
+        self.assertEqual(expected, captured.out)
+
+        mock_show.return_value = (0, 1)  # Where a choice is returned from the menu
+
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+        captured = self.capsys.readouterr()  # type: ignore
+
+        self.assertTrue(repeat)
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_manually_adjust_tag_when_resolving_go_back(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test going back to previous menu."""
+        tags = MusicTags()
+
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.return_value = None  # Where a choice is returned from the menu
+
+        expected = "Going back to previous menu\n"
+
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+        captured = self.capsys.readouterr()  # type: ignore
+
+        self.assertTrue(repeat)
+        self.assertEqual(expected, captured.out)
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("builtins.input")
+    def test_manually_adjust_tag_when_resolving_manual(
+        self,
+        mock_input: MagicMock,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+    ) -> None:
+        """Test manually adjusting tag, with and without input."""
+        tags = MusicTags()
+
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.return_value = 1  # Where a choice is returned from the menu
+        mock_input.return_value = "artist 1"
+
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+
+        self.assertFalse(repeat)
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+
+        tags.resolved = {}
+        mock_input.return_value = ""
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+        captured = self.capsys.readouterr()  # type: ignore
+
+        self.assertTrue(repeat)
+        self.assertNotIn("artist", tags.resolved)
+        self.assertEqual("No input, not changing tag\n", captured.out)
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("retag_opus.music_tags.MusicTags.print_youtube")
+    def test_manually_adjust_tag_when_resolving_print_description_data(
+        self,
+        mock_print_youtube: MagicMock,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+    ) -> None:
+        """Test that description printing function called when asked."""
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.return_value = 2  # Where a choice is returned from the menu
+        mock_print_youtube.side_effect = "test"
+
+        tags = MusicTags()
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+
+        self.assertTrue(repeat)
+        mock_print_youtube.assert_called_once()
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_manually_adjust_tag_when_resolving_remove_tag(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+    ) -> None:
+        """Test removing a tag."""
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.return_value = 3  # Where a choice is returned from the menu
+
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1", "artist 2"]}
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+
+        self.assertFalse(repeat)
+        self.assertEqual(["[Removed]"], tags.resolved.get("artist"))
+        self.assertEqual(["artist 1", "artist 2"], tags.original.get("artist"))
