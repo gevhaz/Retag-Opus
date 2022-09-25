@@ -1323,3 +1323,104 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(repeat)
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
         self.assertEqual(Fore.RED + "Invalid choice, try again\n", captured.out)
+
+    def test_resolve_metadata_defaults_positive(self) -> None:
+        """Test defaults taken from any source when lacking other data.
+
+        When there is no original data and there aren't multiple
+        sources of new data, we can just use the one we found since
+        there is no alternative. The user can manually change it later
+        if they want.
+        """
+        # Parsed from description
+        tags = MusicTags()
+        tags.youtube = {"artist": ["artist 1"]}
+
+        tags.resolve_metadata()
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+        self.assertEqual(
+            Fore.YELLOW + "Artist: No value exists in metadata. Using parsed data: ['artist 1']." + Fore.RESET + "\n",
+            captured.out,
+        )
+
+        # Parsed from description tags
+        tags = MusicTags()
+        tags.fromdesc = {"artist": ["artist 1"]}
+
+        tags.resolve_metadata()
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+        self.assertEqual(
+            Fore.YELLOW + "Artist: No value exists in metadata. Using parsed data: ['artist 1']." + Fore.RESET + "\n",
+            captured.out,
+        )
+
+    def test_resolve_metadata_defaults_negative(self) -> None:
+        """Test no defaults taken when no good data exists.
+
+        There shouldn't be any tags parsed from original tags when there
+        are no original tags. And if there just are no tags, nothing
+        should happen.
+        """
+        # No tags at all
+        tags = MusicTags()
+
+        tags.resolve_metadata()
+        self.assertEqual({}, tags.resolved)
+
+        # Parsed from original tags
+        tags = MusicTags()
+
+        tags.fromtags = {"artist": ["artist 1"]}
+        tags.resolve_metadata()
+        self.assertEqual({}, tags.resolved)
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    def test_resolve_metadata_equal_when_stripped(self, mock_album_artist: MagicMock) -> None:
+        """Test that new metadata autoresolves when equal when stripped.
+
+        If a new source differs from the original only in that one of
+        them has some extra whitespace, remove the whitespace and use
+        that value.
+        """
+        mock_album_artist.return_value = None
+
+        # Youtube
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 1 "]}
+
+        tags.resolve_metadata()
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+        self.assertEqual(
+            Fore.GREEN + "Artist: Metadata matches YouTube description tags." + Fore.RESET + "\n",
+            captured.out,
+        )
+
+        # Parsed from description
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.fromdesc = {"artist": ["artist 1 "]}
+
+        tags.resolve_metadata()
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+        self.assertEqual(
+            Fore.GREEN + "Artist: Metadata matches tags parsed from YouTube tags." + Fore.RESET + "\n",
+            captured.out,
+        )
+
+        # Parsed from original tags
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.fromtags = {"artist": ["artist 1 "]}
+
+        tags.resolve_metadata()
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+        self.assertEqual(
+            Fore.GREEN + "Artist: Metadata matches tags parsed from original tags." + Fore.RESET + "\n",
+            captured.out,
+        )
