@@ -379,7 +379,7 @@ class MusicTags:
             "[m] Manually fill in tag",
             "[p] Print description metadata",
             "[r] Remove field",
-            "[g] Go back"
+            "[g] Go back",
         ]
 
         other_choice_menu = TerminalMenu(other_choices, title="Choose the source you want to use:")
@@ -456,28 +456,29 @@ class MusicTags:
             from_tags_value = self.fromtags.get(tag_name, [])
             all_values = self.get_field(tag_name, only_new=True)
 
-            if old_value is None and len(all_values) > 0 and tag_name != "albumartist":
+            if not old_value and len(all_values) > 0 and tag_name != "albumartist":
                 if len(yt_value) > 0:
                     self.resolved[tag_name] = yt_value
-                elif len(from_tags_value) > 0:
-                    self.resolved[tag_name] = from_tags_value
                 elif len(from_desc_value) > 0:
                     self.resolved[tag_name] = from_desc_value
                 else:
                     continue
                 print(
                     Fore.YELLOW + f"{tag_name.title()}: No value exists in metadata. Using parsed data: "
-                    f"{self.resolved[tag_name]}."
+                    f"{self.resolved[tag_name]}." + Fore.RESET
                 )
             elif Utils.is_equal_when_stripped(yt_value, old_value) and len(old_value) > 0:
-                print(Fore.GREEN + f"{tag_name.title()}: Metadata matches YouTube description.")
+                print(Fore.GREEN + f"{tag_name.title()}: Metadata matches YouTube description tags." + Fore.RESET)
                 self.resolved[tag_name] = [v.strip() for v in old_value]
+                continue
             elif Utils.is_equal_when_stripped(from_desc_value, old_value) and len(old_value) > 0:
-                print(Fore.GREEN + f"{tag_name.title()}: Metadata matches parsed YouTube tags.")
+                print(Fore.GREEN + f"{tag_name.title()}: Metadata matches tags parsed from YouTube tags." + Fore.RESET)
                 self.resolved[tag_name] = [v.strip() for v in old_value]
+                continue
             elif Utils.is_equal_when_stripped(from_tags_value, old_value) and len(old_value) > 0:
-                print(Fore.GREEN + f"{tag_name.title()}: Metadata matches parsed original tags.")
+                print(Fore.GREEN + f"{tag_name.title()}: Metadata matches tags parsed from original tags." + Fore.RESET)
                 self.resolved[tag_name] = [v.strip() for v in old_value]
+                continue
             else:
                 redo = True
                 print("-----------------------------------------------")
