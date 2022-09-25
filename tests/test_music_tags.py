@@ -1277,3 +1277,49 @@ class TestUtils(unittest.TestCase):
         self.assertFalse(repeat)
         self.assertEqual(["[Removed]"], tags.resolved.get("artist"))
         self.assertEqual(["artist 1", "artist 2"], tags.original.get("artist"))
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_manually_adjust_tag_when_resolving_select(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+    ) -> None:
+        """Test selecting tag from list."""
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1, artist 2"]}
+        tags.youtube = {"artist": ["artist 1", "artist 2"]}
+
+        mock_show.side_effect = [0, 1]  # Second menu
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+
+        self.assertFalse(repeat)
+        self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+
+        mock_show.side_effect = [0, 0]  # Second menu
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+
+        self.assertFalse(repeat)
+        self.assertEqual(["artist 1, artist 2"], tags.resolved.get("artist"))
+
+        mock_show.side_effect = [0, 2]  # Second menu
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+
+        self.assertFalse(repeat)
+        self.assertEqual(["artist 2"], tags.resolved.get("artist"))
+
+        mock_show.side_effect = [0, [1, 2]]  # Second menu
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+
+        self.assertFalse(repeat)
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+
+        mock_show.side_effect = [0, None]  # Second menu
+        repeat = tags.manually_adjust_tag_when_resolving("artist")
+        captured = self.capsys.readouterr()  # type: ignore
+
+        self.assertTrue(repeat)
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+        self.assertEqual(Fore.RED + "Invalid choice, try again\n", captured.out)
