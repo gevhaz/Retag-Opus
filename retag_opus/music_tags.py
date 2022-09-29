@@ -486,24 +486,24 @@ class MusicTags:
                 while redo:
                     redo = False
                     candidates = []
-                    print(Fore.RED + f"{tag_name.title()}: Mismatch between values in description and metadata:")
+                    print(
+                        Fore.RED
+                        + f"{tag_name.title()}: Mismatch between values in description and metadata:"
+                        + Fore.RESET
+                    )
                     if len(yt_value) > 0:
-                        print("YouTube description: " + colors.yt_col + " | ".join(yt_value))
+                        print("YouTube description: " + colors.yt_col + " | ".join(yt_value) + Fore.RESET)
                         candidates.append("YouTube description")
                     if len(from_tags_value) > 0:
-                        print("Parsed from original tags: " + Fore.YELLOW + " | ".join(from_tags_value))
+                        print("Parsed from original tags: " + Fore.YELLOW + " | ".join(from_tags_value) + Fore.RESET)
                         candidates.append("Parsed from original tags")
-                    if len(old_value) > 0:
-                        print("Exisiting metadata:  " + colors.md_col + " | ".join(old_value))
-                        candidates.append("Existing metadata")
-                    if len(from_desc_value) > 0:
-                        print("Parsed from YouTube tags: " + Fore.GREEN + " | ".join(from_desc_value))
-                        candidates.append("Parsed from Youtube tags")
 
-                    # There have to be choices available for it to make
-                    # sense to stay in the loop
-                    if len(candidates) == 0:
-                        break
+                    print("Exisiting metadata:  " + colors.md_col + " | ".join(old_value) + Fore.RESET)
+                    candidates.append("Existing metadata")
+
+                    if len(from_desc_value) > 0:
+                        print("Parsed from YouTube tags: " + Fore.GREEN + " | ".join(from_desc_value) + Fore.RESET)
+                        candidates.append("Parsed from Youtube tags")
 
                     candidates.append("Other action")
                     candidates.append("Quit")
@@ -511,10 +511,8 @@ class MusicTags:
                     candidate_menu = TerminalMenu(candidates)
                     choice = candidate_menu.show()
 
-                    if choice is None:
+                    if not isinstance(choice, int):
                         raise UserExitException("Skipping this and all later songs")
-                    elif isinstance(choice, tuple):
-                        continue
 
                     match candidates[choice]:
                         case "Other action":
