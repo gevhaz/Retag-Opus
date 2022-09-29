@@ -6,6 +6,7 @@ import pytest
 from colorama import Fore
 from mock import patch
 from mock.mock import MagicMock
+from retag_opus.exceptions import UserExitException
 
 from retag_opus.music_tags import MusicTags
 
@@ -1422,5 +1423,246 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
             Fore.GREEN + "Artist: Metadata matches tags parsed from original tags." + Fore.RESET + "\n",
+            captured.out,
+        )
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_print_all_sources(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+        mock_album_artist: MagicMock,
+    ) -> None:
+        """Test printing available new metadata."""
+        mock_album_artist.return_value = None
+        mock_show.return_value = 0  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromdesc = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 2"]}
+
+        tags.resolve_metadata()
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(
+            (
+                "-----------------------------------------------\n"
+                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                "  Artist(s): "
+                f"{Fore.CYAN}artist 1{Fore.RESET} | "
+                f"{Fore.MAGENTA}artist 2{Fore.RESET} | "
+                f"{Fore.YELLOW}artist 2{Fore.RESET} | "
+                f"{Fore.GREEN}artist 2{Fore.RESET}\n"
+                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
+                f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
+                f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
+                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
+            ),
+            captured.out,
+        )
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_do_not_print_lines_for_empty_source(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+        mock_album_artist: MagicMock,
+    ) -> None:
+        """Test that empty sources don't get printed."""
+        mock_album_artist.return_value = None
+        mock_show.return_value = 0  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        self.maxDiff = None
+
+        # With only youtube
+        tags_only_youtube = MusicTags()
+        tags_only_youtube.original = {"artist": ["artist 1"]}
+        tags_only_youtube.youtube = {"artist": ["artist 2"]}
+
+        tags_only_youtube.resolve_metadata()
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(
+            (
+                "-----------------------------------------------\n"
+                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                "  Artist(s): "
+                f"{Fore.CYAN}artist 1{Fore.RESET} | "
+                f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
+                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
+                f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
+                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+            ),
+            captured.out,
+        )
+
+        # With only from youtube tags
+        tags_only_from_desc = MusicTags()
+        tags_only_from_desc.original = {"artist": ["artist 1"]}
+        tags_only_from_desc.fromdesc = {"artist": ["artist 2"]}
+
+        tags_only_from_desc.resolve_metadata()
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(
+            (
+                "-----------------------------------------------\n"
+                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                "  Artist(s): "
+                f"{Fore.CYAN}artist 1{Fore.RESET} | "
+                f"{Fore.GREEN}artist 2{Fore.RESET}\n"
+                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
+                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
+            ),
+            captured.out,
+        )
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_skip_song(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+        mock_album_artist: MagicMock,
+    ) -> None:
+        """Test skipping a song when resolving metadata.
+
+        There are two ways. Either pressing escape, which returns None
+        from the menu, or selecting 'Quit'
+        """
+        mock_album_artist.return_value = None
+        mock_show.return_value = None  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromdesc = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 2"]}
+
+        with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
+            tags.resolve_metadata()
+
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(
+            (
+                "-----------------------------------------------\n"
+                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                "  Artist(s): "
+                f"{Fore.CYAN}artist 1{Fore.RESET} | "
+                f"{Fore.MAGENTA}artist 2{Fore.RESET} | "
+                f"{Fore.YELLOW}artist 2{Fore.RESET} | "
+                f"{Fore.GREEN}artist 2{Fore.RESET}\n"
+                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
+                f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
+                f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
+                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
+            ),
+            captured.out,
+        )
+
+        mock_show.return_value = 5  # Where a choice is returned from the menu
+        with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
+            tags.resolve_metadata()
+
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(
+            (
+                "-----------------------------------------------\n"
+                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                "  Artist(s): "
+                f"{Fore.CYAN}artist 1{Fore.RESET} | "
+                f"{Fore.MAGENTA}artist 2{Fore.RESET} | "
+                f"{Fore.YELLOW}artist 2{Fore.RESET} | "
+                f"{Fore.GREEN}artist 2{Fore.RESET}\n"
+                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
+                f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
+                f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
+                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
+            ),
             captured.out,
         )
