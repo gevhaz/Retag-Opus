@@ -522,16 +522,13 @@ class MusicTags:
                             self.resolved[tag_name] = old_value
 
                         case "YouTube description":
-                            if yt_value is not None:
-                                self.resolved[tag_name] = yt_value
+                            self.resolved[tag_name] = yt_value
 
                         case "Parsed from original tags":
-                            if from_tags_value is not None:
-                                self.resolved[tag_name] = from_tags_value
+                            self.resolved[tag_name] = from_tags_value
 
                         case "Parsed from Youtube tags":
-                            if from_desc_value is not None:
-                                self.resolved[tag_name] = from_desc_value
+                            self.resolved[tag_name] = from_desc_value
 
                         case "Quit":
                             raise UserExitException("Skipping this and all later songs")

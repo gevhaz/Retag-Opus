@@ -1666,3 +1666,112 @@ class TestUtils(unittest.TestCase):
             ),
             captured.out,
         )
+
+    @patch("retag_opus.music_tags.MusicTags.manually_adjust_tag_when_resolving")
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_other_action(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+        mock_album_artist: MagicMock,
+        mock_manual_adjust: MagicMock,
+    ) -> None:
+        """Test the "other action" function is called when requested."""
+        mock_album_artist.return_value = None
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.return_value = 4  # Where a choice is returned from the menu
+
+        # The "other action" function
+        mock_manual_adjust.return_value = False
+
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromdesc = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 2"]}
+
+        tags.resolve_metadata()
+
+        mock_manual_adjust.assert_called_once()
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_choosing_source(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+        mock_album_artist: MagicMock,
+    ) -> None:
+        """Test choosing the source to use when resolving."""
+        mock_album_artist.return_value = None
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags_youtube = MusicTags()
+        tags_youtube.original = {"artist": ["artist 1"]}
+        tags_youtube.youtube = {"artist": ["artist 2"]}
+        tags_youtube.fromdesc = {"artist": ["artist 3"]}
+        tags_youtube.fromtags = {"artist": ["artist 4"]}
+
+        mock_show.return_value = 0  # Youtube is first in list
+        tags_youtube.resolve_metadata()
+        self.assertEqual(["artist 2"], tags_youtube.resolved.get("artist"))
+
+        tags_fromtags = MusicTags()
+        tags_fromtags.original = {"artist": ["artist 1"]}
+        tags_fromtags.youtube = {"artist": ["artist 2"]}
+        tags_fromtags.fromdesc = {"artist": ["artist 3"]}
+        tags_fromtags.fromtags = {"artist": ["artist 4"]}
+
+        mock_show.return_value = 1  # From tagsription is second in list
+        tags_fromtags.resolve_metadata()
+        self.assertEqual(["artist 4"], tags_fromtags.resolved.get("artist"))
+
+        tags_original = MusicTags()
+        tags_original.original = {"artist": ["artist 1"]}
+        tags_original.youtube = {"artist": ["artist 2"]}
+        tags_original.fromdesc = {"artist": ["artist 3"]}
+        tags_original.fromtags = {"artist": ["artist 4"]}
+
+        mock_show.return_value = 2  # From tagsription is second in list
+        tags_original.resolve_metadata()
+        self.assertEqual(["artist 1"], tags_original.resolved.get("artist"))
+
+        tags_fromdesc = MusicTags()
+        tags_fromdesc.original = {"artist": ["artist 1"]}
+        tags_fromdesc.youtube = {"artist": ["artist 2"]}
+        tags_fromdesc.fromdesc = {"artist": ["artist 3"]}
+        tags_fromdesc.fromtags = {"artist": ["artist 4"]}
+
+        mock_show.return_value = 3  # From description is second in list
+        tags_fromdesc.resolve_metadata()
+        self.assertEqual(["artist 3"], tags_fromdesc.resolved.get("artist"))
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_choosing_source_and_album_artist(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+    ) -> None:
+        """Test that choosing an artist and then album artist works.
+
+        The album artist should be one of the values for the artist tags
+        of the available sources. Test That those show up as
+        alternatives when selecting the album artist, and that both tags
+        are correct in the end.
+        """
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.side_effect = [0, 1]  # Youtube artist in both cases
+
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromdesc = {"artist": ["artist 3"]}
+
+        tags.resolve_metadata()
+
+        self.assertEqual(["artist 2"], tags.resolved.get("artist"))
+        self.assertEqual(["artist 2"], tags.resolved.get("albumartist"))
