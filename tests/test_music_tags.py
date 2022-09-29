@@ -6,8 +6,8 @@ import pytest
 from colorama import Fore
 from mock import patch
 from mock.mock import MagicMock
-from retag_opus.exceptions import UserExitException
 
+from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import MusicTags
 
 Tags = dict[str, list[str]]
@@ -1775,3 +1775,32 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(["artist 2"], tags.resolved.get("artist"))
         self.assertEqual(["artist 2"], tags.resolved.get("albumartist"))
+
+    @patch("retag_opus.music_tags.MusicTags.manually_adjust_tag_when_resolving")
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_looping(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+        mock_manual_adjust: MagicMock,
+    ) -> None:
+        """Test that looping works when resolving.
+
+        When first choosing other action, a loop should happen. This is
+        tested by first mocking a choice of 'other action', and only
+        after that an exit. Even though exit is not chosen the first
+        time, we still exit because the menu is presented again.
+        """
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.side_effect = [2, 3]  # Youtube artist in both cases
+
+        # The "other action" function
+        mock_manual_adjust.return_value = True
+
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+
+        with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
+            tags.resolve_metadata()
