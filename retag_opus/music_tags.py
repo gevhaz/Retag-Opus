@@ -530,7 +530,7 @@ class MusicTags:
                         case "Parsed from Youtube tags":
                             self.resolved[tag_name] = from_desc_value
 
-                        case "Quit":
+                        case _:
                             raise UserExitException("Skipping this and all later songs")
 
         self.determine_album_artist()
