@@ -22,7 +22,7 @@ class TagsParser:
     """
 
     def __init__(self, tags: Dict[str, List[str]]):
-        """Set attributs of the TagsParser."""
+        """Set attributes of the TagsParser."""
         self.tags: Dict[str, List[str]] = {}
         self.original_tags = tags
 
@@ -90,20 +90,13 @@ class TagsParser:
             if old_title[0] != pruned_title:
                 self.tags["title"] = [pruned_title]
 
-    def clean_original_tags(self) -> None:
-        """Clean up original tags.
+    def split_select_original_tags(self) -> None:
+        """Split certain original tags on predefined separators.
 
-        Remove the date tag if it is on a format that probably means
-        that it's just the YouTube upload date, rather than the release
-        date.
-
-        Also split the genre and artist tag into a list if they contains
-        pre-defined separators.
+        Split the genre and artist tag into a list if they contains
+        pre-defined separators. New tags are only set if there is
+        anything that differs from the old tags.
         """
-        # If the date is just the upload date, discard it
-        if self.original_tags.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original_tags["date"][0]):
-            self.original_tags.pop("date", None)
-
         tags_to_split = ["genre", "artist"]
 
         for tag in tags_to_split:
