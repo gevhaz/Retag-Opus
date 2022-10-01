@@ -66,7 +66,7 @@ def run() -> int:
 
             old_tags_parser = TagsParser(tags.original)
             old_tags_parser.parse_tags()
-            old_tags_parser.clean_original_tags()
+            old_tags_parser.split_select_original_tags()
             tags.fromtags = old_tags_parser.tags
 
             # 2. Get description
