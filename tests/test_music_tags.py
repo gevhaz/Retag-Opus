@@ -13,7 +13,7 @@ from retag_opus.music_tags import MusicTags
 Tags = dict[str, list[str]]
 
 
-class TestUtils(unittest.TestCase):
+class TestMusicTags(unittest.TestCase):
     """Test the MusicTags class."""
 
     @pytest.fixture(autouse=True)
