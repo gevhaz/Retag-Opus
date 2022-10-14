@@ -307,3 +307,10 @@ class TestTagsParser(unittest.TestCase):
         tags_parser.parse_tags()
         self.assertEqual(["Live at famous arena", "Artist remix", "2022 remaster"], tags_parser.tags.get("version"))
         self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+
+    def test_parse_tags_no_title(self) -> None:
+        """Test that everything works fine with no title."""
+        tags_parser = TagsParser({"artist": ["artist 1, artist 2"]})
+        tags_parser.parse_tags()
+        self.assertNotIn("title", tags_parser.tags)
+        self.assertNotIn("artist", tags_parser.tags)
