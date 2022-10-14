@@ -97,7 +97,7 @@ class TestTagsParser(unittest.TestCase):
         titles = [
             "title (live at the famous arena)",
             "title [live at the famous arena]",
-            ]
+        ]
 
         for title in titles:
             tags_parser = TagsParser({"title": [title]})
@@ -119,3 +119,57 @@ class TestTagsParser(unittest.TestCase):
         tags_parser.tags = {}  # Make sure no tags remain and ruin tests
         tags_parser.parse_tags()
         self.assertEqual(["Live: Paris, 2001"], tags_parser.tags.get("version"))
+
+    def test_parse_tags_remaster(self) -> None:
+        """Test parsing remaster version."""
+        test_cases = [
+            {
+                "original_title": "Song name (Remastered)",
+                "expected_version": "Remastered",
+            },
+            {
+                "original_title": "Song name [Remastered]",
+                "expected_version": "Remastered",
+            },
+            {
+                "original_title": "Song name (2007 Remaster)",
+                "expected_version": "2007 Remaster",
+            },
+            {
+                "original_title": "Song name (Remastered Version)",
+                "expected_version": "Remastered Version",
+            },
+            {
+                "original_title": "Song name (Remastered 2015)",
+                "expected_version": "Remastered 2015",
+            },
+            {
+                "original_title": "Song name - remastered 2005",
+                "expected_version": "remastered 2005",
+            },
+            {
+                "original_title": "Song name - Remastered 2005",
+                "expected_version": "Remastered 2005",
+            },
+            {
+                "original_title": "Song name - 1999 - Remaster",
+                "expected_version": "1999 - Remaster",
+            },
+            {
+                "original_title": "Song name - Remastered",
+                "expected_version": "Remastered",
+            },
+        ]
+
+        for test_case in test_cases:
+            tags_parser = TagsParser({"title": [test_case["original_title"]]})
+            tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+            tags_parser.parse_tags()
+            self.assertEqual([test_case["expected_version"]], tags_parser.tags.get("version"))
+            self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+
+        tags_parser = TagsParser({"title": ["Song name (With another paretheses) (1996 Remastered Version)"]})
+        tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+        tags_parser.parse_tags()
+        self.assertEqual(["1996 Remastered Version"], tags_parser.tags.get("version"))
+        self.assertEqual(["Song name (With another paretheses)"], tags_parser.tags.get("title"))
