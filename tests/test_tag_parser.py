@@ -64,3 +64,58 @@ class TestTagsParser(unittest.TestCase):
         tags_parser.split_select_original_tags()
         self.assertNotIn("artist", tags_parser.tags)
         self.assertNotIn("genre", tags_parser.tags)
+
+    def test_parse_tags_featuring(self) -> None:
+        """Test parsing featuring artists."""
+        titles = [
+            "title featuring artist name",
+            "title feat artist name",
+            "title feat. artist name",
+            "title Ft. artist name",
+            "title Featuring artist name",
+            "title Feat artist name",
+            "title FEAT. artist name",
+            "title ft. artist name",
+            "title (featuring artist name) more text",
+            "title (feat artist name) more text",
+            "title (feat. artist name) more text",
+            "title (ft. artist name) more text",
+            "title [featuring artist name] more text",
+            "title [feat artist name] more text",
+            "title [feat. artist name] more text",
+            "title [ft. artist name] more text",
+        ]
+
+        for title in titles:
+            tags_parser = TagsParser({"title": [title]})
+            tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+            tags_parser.parse_tags()
+            self.assertEqual(["artist name"], tags_parser.tags.get("artist"))
+
+    def test_parse_tags_live(self) -> None:
+        """Test parsing live version."""
+        titles = [
+            "title (live at the famous arena)",
+            "title [live at the famous arena]",
+            ]
+
+        for title in titles:
+            tags_parser = TagsParser({"title": [title]})
+            tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+            tags_parser.parse_tags()
+            self.assertEqual(["live at the famous arena"], tags_parser.tags.get("version"))
+
+        tags_parser = TagsParser({"title": ["title (Live at the famous arena)"]})
+        tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+        tags_parser.parse_tags()
+        self.assertEqual(["Live at the famous arena"], tags_parser.tags.get("version"))
+
+        tags_parser = TagsParser({"title": ["Song (Live)"]})
+        tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+        tags_parser.parse_tags()
+        self.assertEqual(["Live"], tags_parser.tags.get("version"))
+
+        tags_parser = TagsParser({"title": ["Wing [Live: Paris, 2001]"]})
+        tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+        tags_parser.parse_tags()
+        self.assertEqual(["Live: Paris, 2001"], tags_parser.tags.get("version"))
