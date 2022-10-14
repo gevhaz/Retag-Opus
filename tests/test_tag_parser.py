@@ -199,3 +199,11 @@ class TestTagsParser(unittest.TestCase):
         tags_parser.parse_tags()
         self.assertEqual(["Instrumental"], tags_parser.tags.get("genre"))
         self.assertEqual(["Song name (continued)"], tags_parser.tags.get("title"))
+
+    def test_parse_tags_instrumental_and_keep_old_genre(self) -> None:
+        """Test that old genres are kept when parsing instrumental."""
+        tags_parser = TagsParser({"title": ["Song name (instrumental)"], "genre": ["Rock"]})
+        tags_parser.tags = {}
+        tags_parser.parse_tags()
+        self.assertEqual(["Rock", "Instrumental"], tags_parser.tags.get("genre"))
+        self.assertEqual(["Song name"], tags_parser.tags.get("title"))
