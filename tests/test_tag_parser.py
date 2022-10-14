@@ -207,3 +207,36 @@ class TestTagsParser(unittest.TestCase):
         tags_parser.parse_tags()
         self.assertEqual(["Rock", "Instrumental"], tags_parser.tags.get("genre"))
         self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+
+    def test_parse_tags_remix(self) -> None:
+        """Test parsing songs as remixed."""
+        tags_parser = TagsParser({"title": ["Song name (Artist Remix)"]})
+        tags_parser.tags = {}
+        tags_parser.parse_tags()
+        self.assertEqual(["Artist Remix"], tags_parser.tags.get("version"))
+        self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+
+        tags_parser = TagsParser({"title": ["Song name (Remix) [feat. Second Artist]"]})
+        tags_parser.tags = {}
+        tags_parser.parse_tags()
+        self.assertEqual(["Remix"], tags_parser.tags.get("version"))
+        self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+        self.assertEqual(["Second Artist"], tags_parser.tags.get("artist"))
+
+        tags_parser = TagsParser({"title": ["Song name - Second Artist Remix"]})
+        tags_parser.tags = {}
+        tags_parser.parse_tags()
+        self.assertEqual(["Second Artist Remix"], tags_parser.tags.get("version"))
+        self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+
+        tags_parser = TagsParser({"title": ["Song name Remix"]})
+        tags_parser.tags = {}
+        tags_parser.parse_tags()
+        self.assertNotIn("version", tags_parser.tags)
+        self.assertNotIn("title", tags_parser.tags)
+
+        tags_parser = TagsParser({"title": ["Song name (Artist remix)"]})
+        tags_parser.tags = {}
+        tags_parser.parse_tags()
+        self.assertEqual(["Artist remix"], tags_parser.tags.get("version"))
+        self.assertEqual(["Song name"], tags_parser.tags.get("title"))
