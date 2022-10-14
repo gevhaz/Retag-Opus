@@ -71,6 +71,11 @@ class TagsParser:
             if remix_match:
                 new_version.append(remix_match.groups()[1].strip())
 
+            remix2_regex = constants.tag_parse_patterns["remix2"]
+            remix2_match = re.match(remix2_regex, title)
+            if remix2_match:
+                new_version.append(remix2_match.groups()[1].strip())
+
             remaster_regex = constants.tag_parse_patterns["remaster"]
             remaster_match = re.match(remaster_regex, title)
             if remaster_match:
