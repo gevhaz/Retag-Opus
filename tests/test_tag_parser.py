@@ -173,3 +173,29 @@ class TestTagsParser(unittest.TestCase):
         tags_parser.parse_tags()
         self.assertEqual(["1996 Remastered Version"], tags_parser.tags.get("version"))
         self.assertEqual(["Song name (With another paretheses)"], tags_parser.tags.get("title"))
+
+    def test_parse_tags_instrumental(self) -> None:
+        """Test parsing instrumental version."""
+        tags_parser = TagsParser({"title": ["Song name (instrumental)"]})
+        tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+        tags_parser.parse_tags()
+        self.assertEqual(["Instrumental"], tags_parser.tags.get("genre"))
+        self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+
+        tags_parser = TagsParser({"title": ["Song name (Instrumental)"]})
+        tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+        tags_parser.parse_tags()
+        self.assertEqual(["Instrumental"], tags_parser.tags.get("genre"))
+        self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+
+        tags_parser = TagsParser({"title": ["Song name [Instrumental]"]})
+        tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+        tags_parser.parse_tags()
+        self.assertEqual(["Instrumental"], tags_parser.tags.get("genre"))
+        self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+
+        tags_parser = TagsParser({"title": ["Song name (continued) [Extended Instrumental Version]"]})
+        tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+        tags_parser.parse_tags()
+        self.assertEqual(["Instrumental"], tags_parser.tags.get("genre"))
+        self.assertEqual(["Song name (continued)"], tags_parser.tags.get("title"))

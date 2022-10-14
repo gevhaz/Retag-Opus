@@ -61,6 +61,11 @@ class TagsParser:
             if instrumental_match:
                 new_genre.append("Instrumental")
 
+            instrumental2_regex = constants.tag_parse_patterns["instrumental2"]
+            instrumental2_match = re.match(instrumental2_regex, title)
+            if instrumental2_match:
+                new_genre.append("Instrumental")
+
             remix_regex = constants.tag_parse_patterns["remix"]
             remix_match = re.match(remix_regex, title)
             if remix_match:
