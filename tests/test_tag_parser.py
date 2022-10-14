@@ -92,6 +92,19 @@ class TestTagsParser(unittest.TestCase):
             tags_parser.parse_tags()
             self.assertEqual(["artist name"], tags_parser.tags.get("artist"))
 
+    def test_parse_tags_featuring_artist_in_addition_to_existing(self) -> None:
+        """Test adding featuring artist to existing artist."""
+        tags_parser = TagsParser(
+            {
+                "title": ["Song name (ft. Third Artist)"],
+                "artist": ["First Artist, Second Artist"],
+            },
+        )
+        tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+        tags_parser.parse_tags()
+        self.assertEqual(["First Artist", "Second Artist", "Third Artist"], tags_parser.tags.get("artist"))
+        self.assertEqual(["Song name"], tags_parser.tags.get("title"))
+
     def test_parse_tags_live(self) -> None:
         """Test parsing live version."""
         titles = [
