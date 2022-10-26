@@ -1,7 +1,9 @@
 """Module containing the definition of colors used in the app."""
+from typing import Final
+
 from colorama import Fore
 
-yt_col = Fore.MAGENTA
-md_col = Fore.CYAN
-man_col = Fore.GREEN
-auto_col = Fore.YELLOW
+yt_col: Final[str] = Fore.MAGENTA
+md_col: Final[str] = Fore.CYAN
+man_col: Final[str] = Fore.GREEN
+auto_col: Final[str] = Fore.YELLOW

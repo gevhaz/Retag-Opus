@@ -3,12 +3,12 @@
 This module holds variables that should be constant and can be accessed
 in other parts of the app.
 """
-from typing import TypedDict
+from typing import Final, TypedDict
 
-INTERPUNCT = "\u00b7"
-SPACE = "\u00b7"
-SPACE = " "
-SEP = " | "
+INTERPUNCT: Final = "\u00b7"
+# SPACE = "\u00b7"
+SPACE: Final = " "
+SEP: Final = " | "
 
 
 class ParsingReference(TypedDict):
@@ -18,7 +18,7 @@ class ParsingReference(TypedDict):
     pattern: list[str]
 
 
-tag_parse_patterns: dict[str, str] = {
+tag_parse_patterns: Final[dict[str, str]] = {
     "featuring": r"(?i)(.*?)\s*[\(\[\ ](?:feat|ft|featuring)\.?\s+([^\]\)\(\[]+)[\)\]]*\s*(.*)",
     "remaster": r"(?i)(.*?)\s*[\(\[](\d{0,4}\s*remaster.*)[\)\]]\s*(.*)",
     "remaster2": r"(?i)(.*?)\s*-\s*(\d{0,4}.*remaster.*)(.*)",
@@ -29,7 +29,7 @@ tag_parse_patterns: dict[str, str] = {
     "remix2": r"(?i)(.+)\s*-\s*(.*remix.*)\s*(.*)",
 }
 
-all_tags: dict[str, ParsingReference] = {
+all_tags: Final[dict[str, ParsingReference]] = {
     "title": {"print": "Title", "pattern": [r".*“(.*)” by .* from ‘.*’"]},
     "album": {"print": "Album", "pattern": [r".*“.*” by .* from ‘(.*)’"]},
     "albumartist": {"print": "Album Artist", "pattern": []},
@@ -66,7 +66,7 @@ all_tags: dict[str, ParsingReference] = {
     },
 }
 
-performer_tags: dict[str, ParsingReference] = {
+performer_tags: Final[dict[str, ParsingReference]] = {
     "performer:vocals": {"print": "- Vocals", "pattern": [r"(.*, )?(Lead\s+)?[vV]ocal(?!.*[eE]ngineer).*:\s*(.+)\s*"]},
     "performer:background vocals": {
         "print": "- Background Vocals",
