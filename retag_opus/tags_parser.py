@@ -4,12 +4,12 @@ This module is for parsing text in the existing metadata keys, rather
 that the YouTube description.
 """
 import re
-from typing import Dict, List
+from typing import Dict, Final, List
 
 from retag_opus import constants
 from retag_opus.utils import Utils
 
-INTERPUNCT = "\u00b7"
+INTERPUNCT: Final[str] = "\u00b7"
 
 
 class TagsParser:
