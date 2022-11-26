@@ -2,9 +2,9 @@
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 from mock import patch
-from mock.mock import MagicMock
 
 from retag_opus.utils import Utils
 

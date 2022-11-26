@@ -1,11 +1,11 @@
 """Tests for music_tags.py."""
 import sys
 import unittest
+from unittest.mock import MagicMock
 
 import pytest
 from colorama import Fore
 from mock import patch
-from mock.mock import MagicMock
 
 from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import MusicTags
