@@ -8,6 +8,7 @@ like "2020 Remix" from the title tag to the version tag.
 """
 
 from pathlib import Path
+from typing import Sequence
 
 from colorama import Fore, init
 from mutagen.oggopus import OggOpus
@@ -26,9 +27,9 @@ init(autoreset=True)
 Tags = dict[str, list[str]]
 
 
-def run() -> int:
+def run(argv: Sequence[str] | None = None) -> int:
     """Run all the functionality of the app."""
-    args = Cli.parse_arguments()
+    args = Cli.parse_arguments(argv)
     music_dir = Path(args.dir).resolve()
     all_files = list(filter(Path.is_file, Path(music_dir).glob("*.opus")))
 
