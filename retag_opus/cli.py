@@ -1,6 +1,7 @@
 """Module for parsing command line arguments."""
 import argparse
 from argparse import Namespace
+from typing import Sequence
 
 import shtab
 
@@ -11,7 +12,7 @@ class Cli:
     """Class for parsing command line arguments."""
 
     @staticmethod
-    def parse_arguments() -> Namespace:
+    def parse_arguments(argv: Sequence[str] | None) -> Namespace:
         """Create parser and parse CLI arguments, and return them."""
         parser = argparse.ArgumentParser()
 
@@ -49,7 +50,7 @@ class Cli:
             "-V",
             "--version",
             action="version",
-            version=f"%(prog)s (version {__version__})",
+            version=f"retag (version {__version__})",
         )
 
-        return parser.parse_args()
+        return parser.parse_args(argv)
