@@ -32,6 +32,8 @@ def run(argv: Sequence[str] | None = None) -> int:
     args = Cli.parse_arguments(argv)
     music_dir = Path(args.dir).resolve()
     all_files = list(filter(Path.is_file, Path(music_dir).glob("*.opus")))
+    if not all_files:
+        print(Fore.YELLOW + f"There appears to be no .opus files in the provided directory {args.dir}")
 
     if args.manual_album is not None:
         constants.all_tags["discsubtitle"] = constants.all_tags["album"].copy()
