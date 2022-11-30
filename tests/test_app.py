@@ -43,3 +43,10 @@ class TestApp(TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(0, exit_code)
         self.assertRegex(captured.out, r"^\x1b\[33mThere appears to be no .opus files in the provided directory /tmp.*")
+
+    def test_directory_not_found(self) -> None:
+        """Providing non-existent directory."""
+        exit_code = app.run(["--directory", "/this/does/not/exist/"])
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(1, exit_code)
+        self.assertRegex(captured.out, r"^\x1b\[31m/this/does/not/exist/ is not a directory!\n")

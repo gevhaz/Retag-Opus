@@ -31,9 +31,14 @@ def run(argv: Sequence[str] | None = None) -> int:
     """Run all the functionality of the app."""
     args = Cli.parse_arguments(argv)
     music_dir = Path(args.dir).resolve()
+    if not music_dir.is_dir():
+        print(Fore.RED + f"{args.dir} is not a directory!")
+        return 1
+
     all_files = list(filter(Path.is_file, Path(music_dir).glob("*.opus")))
     if not all_files:
         print(Fore.YELLOW + f"There appears to be no .opus files in the provided directory {args.dir}")
+        return 0
 
     if args.manual_album is not None:
         constants.all_tags["discsubtitle"] = constants.all_tags["album"].copy()
