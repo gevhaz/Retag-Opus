@@ -17,6 +17,9 @@ line-length = 120
 profile = "black"
 line_length = 120
 
+[tool.mypy]
+exclude = "^tests/test_app.py"
+
 [[tool.mypy.overrides]]
 module = [
     "colorama",
