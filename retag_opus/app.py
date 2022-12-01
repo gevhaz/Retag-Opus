@@ -51,8 +51,8 @@ def run(argv: Sequence[str] | None = None) -> int:
         while redo:
             redo = False
             # Print info about file and progress
-            print(Fore.BLUE + f"\nSong {idx + 1} of {len(all_files)}")
-            print(Fore.BLUE + f"----- Song: {file_name} -----")
+            print("\n" + Fore.BLUE + f"Song {idx + 1} of {len(all_files)}" + Fore.RESET)
+            print(Fore.BLUE + f"----- Song: {file_name} -----" + Fore.RESET)
 
             # 1. Read the data and make basic improvements
             old_metadata: OggOpus = OggOpus(file_path)
@@ -95,7 +95,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                 tags.fromdesc = new_tags_parser.tags
 
             if not tags.check_any_new_data_exists() and not args.manual_album:
-                print(Fore.YELLOW + "No new data exists. Skipping song")
+                print(Fore.YELLOW + "No new data exists. Skipping song." + Fore.RESET)
                 break
 
             # 4. For each field, if there are conflicts, ask user input
