@@ -1,8 +1,11 @@
 """Tests for app.py and cli.py."""
 import re
+from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
+from colorama import Fore
+from mutagen import oggopus
 
 from retag_opus import app
 
@@ -46,3 +49,40 @@ def test_directory_not_found(capsys) -> None:
     out, _ = capsys.readouterr()  # type: ignore
     assert exit_code == 1
     assert re.match(r"^\x1b\[31m/this/does/not/exist/ is not a directory!\n", out)
+
+
+@pytest.fixture
+def music_directory():
+    """Yield path to temporary directory with fake opus file."""
+    with TemporaryDirectory() as temp_dir:
+        opus_file = Path(temp_dir) / "test.opus"
+        opus_file.touch()
+        yield temp_dir
+
+
+def test_file_without_metadata(capsys, music_directory, monkeypatch) -> None:
+    """If a file without metadata is found, xxx."""
+
+    def mockreturn(*args, **kwargs):
+        """Just return None when creating OggOpus object."""
+        return None
+
+    def mock_item(*args, **kwargs):
+        """Mock OggOpus object having no metadata."""
+        return {}
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
+    monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    actual_output, _ = capsys.readouterr()  # type: ignore
+    expected_output = (
+        "\n"
+        f"{Fore.BLUE}Song 1 of 1{Fore.RESET}\n"
+        f"{Fore.BLUE}----- Song: test -----{Fore.RESET}\n"
+        f"{Fore.YELLOW}No new data exists. Skipping song.{Fore.RESET}\n"
+    )
+
+    assert exit_code == 0
+    assert actual_output == expected_output
