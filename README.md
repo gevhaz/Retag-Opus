@@ -71,3 +71,12 @@ Latest workflow status:
 
 ![Check pipeline status badge](https://github.com/gevhaz/Retag-Opus/actions/workflows/check.yml/badge.svg)
 ![Deploy pipeline status badge](https://github.com/gevhaz/Retag-Opus/actions/workflows/deploy.yml/badge.svg)
+
+Latest version:
+
+![Latest PyPI version tag badge](https://img.shields.io/pypi/v/retag-opus)
+![Latest patch version tag badge](https://img.shields.io/github/v/tag/gevhaz/retag-opus)
+
+Acitivy since last release:
+
+![Commits since latest version badge](https://img.shields.io/github/commits-since/gevhaz/retag-opus/latest)
