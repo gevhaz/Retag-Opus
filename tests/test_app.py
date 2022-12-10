@@ -61,7 +61,7 @@ def music_directory():
 
 
 def test_file_without_metadata(capsys, music_directory, monkeypatch):
-    """If a file without metadata is found, xxx."""
+    """If a file without metadata is found, say that and exit."""
 
     def mockreturn(*args, **kwargs):
         """Just return None when creating OggOpus object."""
@@ -70,6 +70,34 @@ def test_file_without_metadata(capsys, music_directory, monkeypatch):
     def mock_item(*args, **kwargs):
         """Mock OggOpus object having no metadata."""
         return {}
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
+    monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    actual_output, _ = capsys.readouterr()
+    expected_output = (
+        "\n"
+        f"{Fore.BLUE}Song 1 of 1{Fore.RESET}\n"
+        f"{Fore.BLUE}----- Song: test -----{Fore.RESET}\n"
+        f"{Fore.YELLOW}No new data exists. Skipping song.{Fore.RESET}\n"
+    )
+
+    assert exit_code == 0
+    assert actual_output == expected_output
+
+
+def test_file_with_no_new_metadata(capsys, music_directory, monkeypatch):
+    """File with no description should be skipped."""
+
+    def mockreturn(*args, **kwargs):
+        """Just return None when creating OggOpus object."""
+        return None
+
+    def mock_item(*args, **kwargs):
+        """Mock OggOpus object having no metadata."""
+        return [("artist", ["artist 1"])]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
     monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
