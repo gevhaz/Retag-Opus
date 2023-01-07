@@ -78,9 +78,9 @@ def run(argv: Sequence[str] | None = None) -> int:
             tags.fromtags = old_tags_parser.tags
 
             # 2. Get description
-            description_lines: list[str] | None = old_metadata.get("synopsis")
+            description_lines: list[str] | None = old_tags.get("synopsis")
             if description_lines is None:
-                description_lines = old_metadata.get("description")
+                description_lines = old_tags.get("description")
 
             # 3. If description exists, send it to be parsed
             if description_lines is not None:
@@ -146,9 +146,11 @@ def run(argv: Sequence[str] | None = None) -> int:
                     case "[s] save":
                         for tag, data in tags.resolved.items():
                             if data == ["[Removed]"]:
-                                old_metadata.pop(tag, None)
+                                old_tags.pop(tag, None)
                             else:
-                                old_metadata[tag] = data
+                                old_tags[tag] = data
+                        for key, val in old_tags.items():
+                            old_metadata[key] = val
                         old_metadata.save()
                         print(Fore.GREEN + f"Metadata saved for file: {file_name}")
                     case "[r] reset":
