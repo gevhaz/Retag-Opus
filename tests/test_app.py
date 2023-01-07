@@ -7,7 +7,7 @@ import pytest
 from colorama import Fore
 from mutagen import oggopus
 
-from retag_opus import app
+from retag_opus import app, utils
 
 
 def test_print_version(capsys):
@@ -96,7 +96,7 @@ def test_file_with_no_new_metadata(capsys, music_directory, monkeypatch):
         return None
 
     def mock_item(*args, **kwargs):
-        """Mock OggOpus object having no metadata."""
+        """Mock OggOpus object having only original metadata."""
         return [("artist", ["artist 1"])]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
@@ -110,6 +110,83 @@ def test_file_with_no_new_metadata(capsys, music_directory, monkeypatch):
         f"{Fore.BLUE}Song 1 of 1{Fore.RESET}\n"
         f"{Fore.BLUE}----- Song: test -----{Fore.RESET}\n"
         f"{Fore.YELLOW}No new data exists. Skipping song.{Fore.RESET}\n"
+    )
+
+    assert exit_code == 0
+    assert actual_output == expected_output
+
+
+def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
+    """File with description and original data should handle conflict.
+
+    A file that has the artist tag set in the original metadata, but
+    also contains information about the artist in the YouTube
+    description, should ask the user how to resolve the conflicting
+    artist names.
+
+    Other basic fields from the YouTube Description should just be
+    taken as they are when there is no conflict, without user
+    interaction.
+    """
+
+    def mockreturn(*args, **kwargs):
+        """Return None when creating OggOpus object."""
+        return None
+
+    def mock_item(*args, **kwargs):
+        """Mock a YouTube description that we'll parse."""
+        return [
+            (
+                "artist",
+                ["artist 1"],
+            ),
+            (
+                "synopsis",
+                [
+                    "Provided to YouTube by Rich Men's Group Digital Ltd."
+                    "\n\nProper Goodbyes (feat. Ben Ivor) · The Global · Ben Ivor"
+                    "\n\nProper Goodbyes (feat. Ben Ivor)"
+                    "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
+                    "\n\nReleased on: 2029-08-22"
+                ],
+            ),
+        ]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
+    monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *args, **kwargs : None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
+
+    exit_code = app.run(["--directory", music_directory])
+
+    actual_output, _ = capsys.readouterr()
+    expected_output = (
+        f"\n{Fore.BLUE}Song 1 of 1{Fore.RESET}"
+        f"\n{Fore.BLUE}----- Song: test -----{Fore.RESET}"
+        f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
+        f"Using parsed data: [\"Rich Men's Group Digital Ltd.\"].{Fore.RESET}"
+        f"\n-----------------------------------------------"
+        f"\n  Title: {Fore.MAGENTA}Proper Goodbyes{Fore.RESET}"
+        f"\n  Album: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
+        f"\n  Album Artist: {Fore.MAGENTA}The Global{Fore.RESET}"
+        f"\n  Artist(s): {Fore.CYAN}artist 1{Fore.RESET} | {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
+        f"\n  Date: {Fore.MAGENTA}2029-08-22{Fore.RESET}"
+        f"\n  Genre: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Version: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Performer: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Organization: {Fore.GREEN}Rich Men's Group Digital Ltd.{Fore.RESET}"
+        f"\n  Copyright: {Fore.MAGENTA}2022 The Global under exclusive license to 5BE Ltd{Fore.RESET}"
+        f"\n  Composer: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Conductor: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Arranger: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Author: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Producer: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Publisher: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Lyricist: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n\n{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}"
+        f"\nYouTube description: {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
+        f"\nExisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}"
+        f"\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
 
     assert exit_code == 0
