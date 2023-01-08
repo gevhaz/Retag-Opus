@@ -28,7 +28,7 @@ class DescriptionParser:
         :return: List or artists and title of song as string.
         """
         artist_and_title = source_line.split(" " + constants.INTERPUNCT + " ")
-        title = Utils().prune_title(artist_and_title[0])
+        title = artist_and_title[0]
         artist: list[str] = artist_and_title[1:]
 
         if len(artist) < 2 and ", " in artist[0]:
@@ -96,7 +96,7 @@ class DescriptionParser:
 
             title = self.tags.pop("title", None)
             if title:
-                self.tags["title"] = [Utils().prune_title(title[0])]
+                self.tags["title"] = [title[0]]
 
         artist = self.tags.get("artist")
         if artist:

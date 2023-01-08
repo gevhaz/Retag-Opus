@@ -78,14 +78,14 @@ class MusicTags:
         youtube = self.youtube.get(tag_id)
         fromdesc = self.fromdesc.get(tag_id)
         fromtags = self.fromtags.get(tag_id)
-        if original:
-            print_data.append(colors.md_col + " | ".join(original) + Fore.RESET)
-        if youtube and original != youtube:
-            print_data.append(colors.yt_col + " | ".join(youtube) + Fore.RESET)
         if fromtags and fromtags != original:
             print_data.append(Fore.YELLOW + " | ".join(fromtags) + Fore.RESET)
         if fromdesc and fromdesc != original:
             print_data.append(Fore.GREEN + " | ".join(fromdesc) + Fore.RESET)
+        if original:
+            print_data.append(colors.md_col + " | ".join(original) + Fore.RESET)
+        if youtube and original != youtube:
+            print_data.append(colors.yt_col + " | ".join(youtube) + Fore.RESET)
         return print_data
 
     def print_all(self) -> None:

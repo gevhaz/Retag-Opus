@@ -153,10 +153,10 @@ class TestMusicTags(unittest.TestCase):
         tags.fromdesc = {"artist": ["artist 4"]}
         actual = tags.get_tag_data("artist")
         expected = [
-            f"{Fore.CYAN}artist 1{Fore.RESET}",
-            f"{Fore.MAGENTA}artist 2{Fore.RESET}",
             f"{Fore.YELLOW}artist 3{Fore.RESET}",
             f"{Fore.GREEN}artist 4{Fore.RESET}",
+            f"{Fore.CYAN}artist 1{Fore.RESET}",
+            f"{Fore.MAGENTA}artist 2{Fore.RESET}",
         ]
         self.assertListEqual(expected, actual)
 
@@ -174,10 +174,10 @@ class TestMusicTags(unittest.TestCase):
             f"Album: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Album Artist: {Fore.BLACK}Not set{Fore.RESET}\n"
             "Artist(s): "
-            f"{Fore.CYAN}artist 1{Fore.RESET} | "
-            f"{Fore.MAGENTA}artist 2{Fore.RESET} | "
             f"{Fore.YELLOW}artist 3{Fore.RESET} | "
-            f"{Fore.GREEN}artist 4{Fore.RESET}\n"
+            f"{Fore.GREEN}artist 4{Fore.RESET} | "
+            f"{Fore.CYAN}artist 1{Fore.RESET} | "
+            f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
             f"Date: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Genre: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Version: {Fore.BLACK}Not set{Fore.RESET}\n"
@@ -210,9 +210,9 @@ class TestMusicTags(unittest.TestCase):
             f"Album: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Album Artist: {Fore.BLACK}Not set{Fore.RESET}\n"
             "Artist(s): "
+            f"{Fore.YELLOW}artist 3{Fore.RESET} | "
             f"{Fore.CYAN}artist 1{Fore.RESET} | "
-            f"{Fore.MAGENTA}artist 2{Fore.RESET} | "
-            f"{Fore.YELLOW}artist 3{Fore.RESET}\n"
+            f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
             f"Date: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Genre: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Version: {Fore.BLACK}Not set{Fore.RESET}\n"
@@ -1455,10 +1455,10 @@ class TestMusicTags(unittest.TestCase):
                 f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
                 "  Artist(s): "
-                f"{Fore.CYAN}artist 1{Fore.RESET} | "
-                f"{Fore.MAGENTA}artist 2{Fore.RESET} | "
                 f"{Fore.YELLOW}artist 2{Fore.RESET} | "
-                f"{Fore.GREEN}artist 2{Fore.RESET}\n"
+                f"{Fore.GREEN}artist 2{Fore.RESET} | "
+                f"{Fore.CYAN}artist 1{Fore.RESET} | "
+                f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
@@ -1546,8 +1546,8 @@ class TestMusicTags(unittest.TestCase):
                 f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
                 "  Artist(s): "
-                f"{Fore.CYAN}artist 1{Fore.RESET} | "
-                f"{Fore.GREEN}artist 2{Fore.RESET}\n"
+                f"{Fore.GREEN}artist 2{Fore.RESET} | "
+                f"{Fore.CYAN}artist 1{Fore.RESET}\n"
                 f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
@@ -1603,10 +1603,10 @@ class TestMusicTags(unittest.TestCase):
                 f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
                 "  Artist(s): "
-                f"{Fore.CYAN}artist 1{Fore.RESET} | "
-                f"{Fore.MAGENTA}artist 2{Fore.RESET} | "
                 f"{Fore.YELLOW}artist 2{Fore.RESET} | "
-                f"{Fore.GREEN}artist 2{Fore.RESET}\n"
+                f"{Fore.GREEN}artist 2{Fore.RESET} | "
+                f"{Fore.CYAN}artist 1{Fore.RESET} | "
+                f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
@@ -1641,10 +1641,10 @@ class TestMusicTags(unittest.TestCase):
                 f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
                 "  Artist(s): "
-                f"{Fore.CYAN}artist 1{Fore.RESET} | "
-                f"{Fore.MAGENTA}artist 2{Fore.RESET} | "
                 f"{Fore.YELLOW}artist 2{Fore.RESET} | "
-                f"{Fore.GREEN}artist 2{Fore.RESET}\n"
+                f"{Fore.GREEN}artist 2{Fore.RESET} | "
+                f"{Fore.CYAN}artist 1{Fore.RESET} | "
+                f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
