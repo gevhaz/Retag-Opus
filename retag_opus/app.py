@@ -83,7 +83,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                 description_lines = old_tags.get("description")
 
             # 3. If description exists, send it to be parsed
-            if description_lines is not None:
+            if description_lines:
                 desc_parser = DescriptionParser()
                 description = "\n".join(description_lines)
                 desc_parser.parse(description)

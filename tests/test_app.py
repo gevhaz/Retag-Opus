@@ -189,6 +189,101 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         f"\n\n{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}"
         f"\nYouTube description: {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
         f"\nExisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}"
+        f"\nParsed from YouTube tags: {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}"
+        f"\nRetagOpus exited successfully: Skipping this and all later songs\n"
+    )
+
+    assert exit_code == 0
+    assert actual_output == expected_output
+
+
+def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monkeypatch):
+    """Conflicts between all sources should be handles.
+
+    A file that has the artist tag set in the original metadata, but
+    also contains information about the artist in the YouTube
+    description, should ask the user how to resolve the conflicting
+    artist names. To complicate things, the original data hasn't split
+    the artist field properly, so it's one long string with a comma
+    instead of a list of strings.
+
+    Other basic fields from the YouTube Description should just be
+    taken as they are when there is no conflict, without user
+    interaction.
+    """
+
+    def mockreturn(*args, **kwargs):
+        """Return None when creating OggOpus object."""
+        return None
+
+    def mock_item(*args, **kwargs):
+        """Mock tags and a YouTube description that we'll parse."""
+        return [
+            (
+                "title",
+                ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"],
+            ),
+            (
+                "artist",
+                ["artist 1 and artist 2"],
+            ),
+            (
+                "synopsis",
+                [
+                    "Provided to YouTube by Rich Men's Group Digital Ltd."
+                    "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
+                    "\n\nProper Goodbyes (feat. Ben Ivor)"
+                    "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
+                    "\n\nReleased on: 2029-08-22"
+                ],
+            ),
+        ]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
+    monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *args, **kwargs : None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
+
+    exit_code = app.run(["--directory", music_directory])
+
+    actual_output, _ = capsys.readouterr()
+    expected_output = (
+        f"\n{Fore.BLUE}Song 1 of 1{Fore.RESET}"
+        f"\n{Fore.BLUE}----- Song: test -----{Fore.RESET}"
+        f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
+        f"Using parsed data: [\"Rich Men's Group Digital Ltd.\"].{Fore.RESET}"
+        f"\n-----------------------------------------------"
+        "\n  Title: "
+        f"{Fore.YELLOW}Proper Goodbyes{Fore.RESET}"
+        f" | {Fore.GREEN}Proper Goodbyes{Fore.RESET}"
+        f" | {Fore.CYAN}Proper Goodbyes (feat. Benny Ivor) (2039 Remaster){Fore.RESET}"
+        f" | {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor) (2036 Remaster){Fore.RESET}"
+        f"\n  Album: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
+        f"\n  Album Artist: {Fore.MAGENTA}The Global{Fore.RESET}"
+        "\n  Artist(s):"
+        f" {Fore.YELLOW}artist 1 | artist 2{Fore.RESET}"
+        f" | {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}"
+        f" | {Fore.CYAN}artist 1 and artist 2{Fore.RESET}"
+        f" | {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
+        f"\n  Date: {Fore.MAGENTA}2029-08-22{Fore.RESET}"
+        f"\n  Genre: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Version: {Fore.YELLOW}2039 Remaster{Fore.RESET} | {Fore.GREEN}2036 Remaster{Fore.RESET}"
+        f"\n  Performer: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Organization: {Fore.GREEN}Rich Men's Group Digital Ltd.{Fore.RESET}"
+        f"\n  Copyright: {Fore.MAGENTA}2022 The Global under exclusive license to 5BE Ltd{Fore.RESET}"
+        f"\n  Composer: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Conductor: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Arranger: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Author: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Producer: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Publisher: {Fore.BLACK}Not found{Fore.RESET}"
+        f"\n  Lyricist: {Fore.BLACK}Not found{Fore.RESET}"
+        # All sources should show up here
+        f"\n\n{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}"
+        f"\nYouTube description: {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
+        f"\nParsed from original tags: {Fore.YELLOW}artist 1 | artist 2{Fore.RESET}"
+        f"\nExisiting metadata:  {Fore.CYAN}artist 1 and artist 2{Fore.RESET}"
+        f"\nParsed from YouTube tags: {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}"
         f"\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
 
