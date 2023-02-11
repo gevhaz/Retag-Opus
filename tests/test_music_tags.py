@@ -1375,7 +1375,7 @@ class TestMusicTags(unittest.TestCase):
 
         tags.fromtags = {"artist": ["artist 1"]}
         tags.resolve_metadata()
-        self.assertEqual({}, tags.resolved)
+        self.assertEqual({"artist": ["artist 1"], "albumartist": ["artist 1"]}, tags.resolved)
 
     @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
     def test_resolve_metadata_equal_when_stripped(self, mock_album_artist: MagicMock) -> None:
