@@ -459,6 +459,8 @@ class MusicTags:
             if not old_value and len(all_values) > 0 and tag_name != "albumartist":
                 if len(yt_value) > 0:
                     self.resolved[tag_name] = yt_value
+                elif len(from_tags_value) > 0:
+                    self.resolved[tag_name] = from_tags_value
                 elif len(from_desc_value) > 0:
                     self.resolved[tag_name] = from_desc_value
                 else:
