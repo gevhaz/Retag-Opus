@@ -86,7 +86,7 @@ def run() -> int:
                 new_tags_parser.parse_tags()
                 tags.fromdesc = new_tags_parser.tags
 
-            if not tags.check_any_new_data_exists():
+            if not tags.check_any_new_data_exists() and not args.manual_album:
                 print(Fore.YELLOW + "No new data exists. Skipping song")
                 break
 
