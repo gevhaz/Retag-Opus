@@ -154,7 +154,7 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
     monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *args, **kwargs : None)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *args, **kwargs: None)
     monkeypatch.setattr(utils.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
 
     exit_code = app.run(["--directory", music_directory])
@@ -164,9 +164,10 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         f"\n{Fore.BLUE}Song 1 of 1{Fore.RESET}"
         f"\n{Fore.BLUE}----- Song: test -----{Fore.RESET}"
         f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
-        f"Using parsed data: [\"Rich Men's Group Digital Ltd.\"].{Fore.RESET}"
+        f'Using parsed data: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
         f"\n-----------------------------------------------"
-        f"\n  Title: {Fore.GREEN}Proper Goodbyes{Fore.RESET} | {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
+        f"\n  Title: {Fore.GREEN}Proper Goodbyes{Fore.RESET} | "
+        f"{Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
         f"\n  Album: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
         f"\n  Album Artist: {Fore.MAGENTA}The Global{Fore.RESET}"
         "\n  Artist(s): "
@@ -241,7 +242,7 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
     monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *args, **kwargs : None)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *args, **kwargs: None)
     monkeypatch.setattr(utils.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
 
     exit_code = app.run(["--directory", music_directory])
@@ -251,7 +252,7 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         f"\n{Fore.BLUE}Song 1 of 1{Fore.RESET}"
         f"\n{Fore.BLUE}----- Song: test -----{Fore.RESET}"
         f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
-        f"Using parsed data: [\"Rich Men's Group Digital Ltd.\"].{Fore.RESET}"
+        f'Using parsed data: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
         f"\n-----------------------------------------------"
         "\n  Title: "
         f"{Fore.YELLOW}Proper Goodbyes{Fore.RESET}"
