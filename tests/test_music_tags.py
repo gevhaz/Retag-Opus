@@ -50,7 +50,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
 
         self.assertEqual(expected, captured.out)
@@ -79,7 +80,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
 
         self.assertEqual(expected, captured.out)
@@ -106,7 +108,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
 
         self.assertEqual(expected, captured.out)
@@ -190,7 +193,8 @@ class TestMusicTags(unittest.TestCase):
             f"Author: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Producer: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Publisher: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Lyricist: {Fore.BLACK}Not set{Fore.RESET}\n\n"
+            f"Lyricist: {Fore.BLACK}Not set{Fore.RESET}\n"
+            f"Disc subtitle: {Fore.BLACK}Not set{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -225,7 +229,8 @@ class TestMusicTags(unittest.TestCase):
             f"Author: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Producer: {Fore.BLACK}Not set{Fore.RESET}\n"
             f"Publisher: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Lyricist: {Fore.BLACK}Not set{Fore.RESET}\n\n"
+            f"Lyricist: {Fore.BLACK}Not set{Fore.RESET}\n"
+            f"Disc subtitle: {Fore.BLACK}Not set{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -265,7 +270,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -308,7 +314,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -351,7 +358,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -394,7 +402,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -433,7 +442,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.RED}[Removed]{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -487,7 +497,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
@@ -550,7 +561,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -612,7 +624,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -656,7 +669,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.RED}[Removed]{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -700,7 +714,8 @@ class TestMusicTags(unittest.TestCase):
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Producer: {Fore.RED}[Removed]{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+            f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
         sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
@@ -1471,7 +1486,8 @@ class TestMusicTags(unittest.TestCase):
                 f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
                 f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
@@ -1494,7 +1510,6 @@ class TestMusicTags(unittest.TestCase):
         mock_album_artist.return_value = None
         mock_show.return_value = 0  # Where a choice is returned from the menu
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
-        self.maxDiff = None
 
         # With only youtube
         tags_only_youtube = MusicTags()
@@ -1524,7 +1539,8 @@ class TestMusicTags(unittest.TestCase):
                 f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
                 f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
@@ -1560,7 +1576,8 @@ class TestMusicTags(unittest.TestCase):
                 f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
                 f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
                 f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
@@ -1619,7 +1636,8 @@ class TestMusicTags(unittest.TestCase):
                 f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
                 f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
@@ -1657,7 +1675,8 @@ class TestMusicTags(unittest.TestCase):
                 f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n"
+                f"  Disc subtitle: {Fore.BLACK}Not found{Fore.RESET}\n\n"
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
                 f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
