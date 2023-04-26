@@ -5,6 +5,12 @@ source = [ "./retag_opus/" ]
 [tool.coverage.report]
 show_missing = true
 fail_under = 88.75
+exclude_lines = [
+    'import sys',
+    'from retag_opus import app',
+    'if __name__ == "__main__":',
+    '    sys.exit(app.run())',
+]
 
 [tool.pyright]
 pythonVersion = "3.10"
