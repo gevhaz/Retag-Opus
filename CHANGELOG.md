@@ -1,10 +1,11 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-
-This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
+
+### Added
+
+- Information about whether the song is an "Album version" or not is now parsed
+  from the title of analyzed songs.
 
 ## [0.3.0] - 2022-05-30
 

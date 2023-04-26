@@ -105,6 +105,20 @@ class TestTagsParser(unittest.TestCase):
         self.assertEqual(["First Artist", "Second Artist", "Third Artist"], tags_parser.tags.get("artist"))
         self.assertEqual(["Song name"], tags_parser.tags.get("title"))
 
+    def test_parse_tags_albumversion(self) -> None:
+        """Test parsing "Album version" data."""
+        titles = [
+            "title of a Song (Album Version)",
+            "title of a Song [Album Version]",
+        ]
+
+        for title in titles:
+            tags_parser = TagsParser({"title": [title]})
+            tags_parser.tags = {}  # Make sure no tags remain and ruin tests
+            tags_parser.parse_tags()
+            self.assertEqual(["Album Version"], tags_parser.tags.get("version"))
+            self.assertEqual(["title of a Song"], tags_parser.tags.get("title"))
+
     def test_parse_tags_live(self) -> None:
         """Test parsing live version."""
         titles = [

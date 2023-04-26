@@ -42,6 +42,17 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song", Utils.prune_title(unpruned_title_6))
         self.assertEqual("Spring (för livet)", Utils.prune_title(unpruned_title_7))
 
+    def test_prune_albumversion_from_title(self) -> None:
+        """Test that album version information is pruned from title."""
+        unpruned_title_1 = "A song (album version)"
+        unpruned_title_2 = "A song [album version]"
+        unpruned_title_3 = "A song (alBUM VERSIon)"
+        unpruned_title_4 = "A song [alBUM VERSIon]"
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_1))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_2))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_3))
+        self.assertEqual("A song", Utils.prune_title(unpruned_title_4))
+
     def test_prune_remix_from_title(self) -> None:
         """Test that remix version information is pruned from title."""
         unpruned_title_1 = "A song (person's remix)"
