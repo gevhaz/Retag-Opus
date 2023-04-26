@@ -461,10 +461,8 @@ class MusicTags:
                     self.resolved[tag_name] = yt_value
                 elif len(from_tags_value) > 0:
                     self.resolved[tag_name] = from_tags_value
-                elif len(from_desc_value) > 0:
+                else:  # len(from_desc_value) > 0:
                     self.resolved[tag_name] = from_desc_value
-                else:
-                    continue
                 print(
                     Fore.YELLOW + f"{tag_name.title()}: No value exists in metadata. Using parsed data: "
                     f"{self.resolved[tag_name]}." + Fore.RESET

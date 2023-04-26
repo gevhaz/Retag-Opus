@@ -4,7 +4,7 @@ source = [ "./retag_opus/" ]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 88.75
+fail_under = 89.97
 exclude_lines = [
     'import sys',
     'from retag_opus import app',

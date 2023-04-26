@@ -1392,6 +1392,18 @@ class TestMusicTags(unittest.TestCase):
         tags.resolve_metadata()
         self.assertEqual({"artist": ["artist 1"], "albumartist": ["artist 1"]}, tags.resolved)
 
+    def test_resolve_metadata_empty_tag(self) -> None:
+        """Test that empty tags in original tags are skipped."""
+        # Parsed from description
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"], "title": []}
+
+        tags.resolve_metadata()
+        captured = self.capsys.readouterr()  # type: ignore
+        print(tags.resolved)
+        self.assertNotIn("artist", tags.resolved)  # No need to resolve
+        self.assertEqual(["artist 1"], tags.original.get("artist"))
+
     @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
     def test_resolve_metadata_equal_when_stripped(self, mock_album_artist: MagicMock) -> None:
         """Test that new metadata autoresolves when equal when stripped.
