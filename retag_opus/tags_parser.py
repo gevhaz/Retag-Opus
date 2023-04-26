@@ -56,6 +56,11 @@ class TagsParser:
             if live_match:
                 new_version.append(live_match.groups()[1].strip())
 
+            albumversion_regex = constants.tag_parse_patterns["albumversion"]
+            albumversion_match = re.match(albumversion_regex, title)
+            if albumversion_match:
+                new_version.append(albumversion_match.groups()[1].strip())
+
             instrumental_regex = constants.tag_parse_patterns["instrumental"]
             instrumental_match = re.match(instrumental_regex, title)
             if instrumental_match:

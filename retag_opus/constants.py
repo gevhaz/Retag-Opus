@@ -27,6 +27,7 @@ tag_parse_patterns: Final[dict[str, str]] = {
     "instrumental2": r"(?i)(.*?)\s*\[(.*instrumental.*)\]\s*(.*)",
     "remix": r"(?i)(.+)\s*\((.*remix.*?)\)\s*(.*)",
     "remix2": r"(?i)(.+)\s*-\s*(.*remix.*)\s*(.*)",
+    "albumversion": r"(?i)(.*?)\s*[\(\[](album version.*?)[\)\]]\s*(.*)",
 }
 
 all_tags: Final[dict[str, ParsingReference]] = {
