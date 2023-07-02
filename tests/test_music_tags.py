@@ -1403,6 +1403,7 @@ class TestMusicTags(unittest.TestCase):
         print(tags.resolved)
         self.assertNotIn("artist", tags.resolved)  # No need to resolve
         self.assertEqual(["artist 1"], tags.original.get("artist"))
+        self.assertEqual(captured, ("", ""))
 
     @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
     def test_resolve_metadata_equal_when_stripped(self, mock_album_artist: MagicMock) -> None:
