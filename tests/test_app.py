@@ -78,7 +78,6 @@ def music_directory():
 
 def test_file_without_metadata(capsys, music_directory, monkeypatch):
     """If a file without metadata is found, say that and exit."""
-
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: {})
 
@@ -98,7 +97,6 @@ def test_file_without_metadata(capsys, music_directory, monkeypatch):
 
 def test_file_with_no_new_metadata(capsys, music_directory, monkeypatch):
     """File with no description should be skipped."""
-
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: [("artist", ["artist 1"])])
 
@@ -128,7 +126,6 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
     taken as they are when there is no conflict, without user
     interaction.
     """
-
     metadata_no_title = [
         (
             "artist",
@@ -206,7 +203,6 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
     taken as they are when there is no conflict, without user
     interaction.
     """
-
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
     monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
@@ -267,7 +263,6 @@ def test_setting_manual_album(capsys, music_directory, monkeypatch):
     "discsubtitle" tag instead. Also double check that the album from
     the description is not set as an album tag.
     """
-
     mock_show = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
@@ -293,7 +288,6 @@ def test_setting_manual_album(capsys, music_directory, monkeypatch):
 
 def test_pass(capsys, music_directory, monkeypatch):
     """User selecting "Pass" for a song should undo changes."""
-
     mock_show = Mock()
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
@@ -323,7 +317,6 @@ def test_quit_through_escape(capsys, music_directory, monkeypatch):
     pressing escape by adding None as a side effect for the first menu
     after all tags have been selected.
     """
-
     mock_show = Mock()
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
@@ -356,7 +349,6 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     In this test, we select some tags so that they are all resolved,
     then check that the get reset before quitting.
     """
-
     mock_show = Mock()
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
