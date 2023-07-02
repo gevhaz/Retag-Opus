@@ -9,6 +9,21 @@ from mutagen import oggopus
 
 from retag_opus import app, utils
 
+metadata = [
+        ("title", ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"]),
+        ("artist", ["artist 1 and artist 2"]),
+        (
+            "synopsis",
+            [
+                "Provided to YouTube by Rich Men's Group Digital Ltd."
+                "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
+                "\n\nProper Goodbyes (feat. Ben Ivor)"
+                "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
+                "\n\nReleased on: 2029-08-22"
+            ],
+        ),
+    ]
+
 
 def test_print_version(capsys):
     """Test printing version."""
@@ -63,16 +78,8 @@ def music_directory():
 def test_file_without_metadata(capsys, music_directory, monkeypatch):
     """If a file without metadata is found, say that and exit."""
 
-    def mockreturn(*args, **kwargs):
-        """Just return None when creating OggOpus object."""
-        return None
-
-    def mock_item(*args, **kwargs):
-        """Mock OggOpus object having no metadata."""
-        return {}
-
-    monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
-    monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: {})
 
     exit_code = app.run(["--directory", music_directory])
 
@@ -91,16 +98,8 @@ def test_file_without_metadata(capsys, music_directory, monkeypatch):
 def test_file_with_no_new_metadata(capsys, music_directory, monkeypatch):
     """File with no description should be skipped."""
 
-    def mockreturn(*args, **kwargs):
-        """Just return None when creating OggOpus object."""
-        return None
-
-    def mock_item(*args, **kwargs):
-        """Mock OggOpus object having only original metadata."""
-        return [("artist", ["artist 1"])]
-
-    monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
-    monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: [("artist", ["artist 1"])])
 
     exit_code = app.run(["--directory", music_directory])
 
@@ -129,13 +128,7 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
     interaction.
     """
 
-    def mockreturn(*args, **kwargs):
-        """Return None when creating OggOpus object."""
-        return None
-
-    def mock_item(*args, **kwargs):
-        """Mock a YouTube description that we'll parse."""
-        return [
+    metadata_no_title = [
             (
                 "artist",
                 ["artist 1"],
@@ -152,9 +145,9 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
             ),
         ]
 
-    monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
-    monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *args, **kwargs: None)
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata_no_title)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
     monkeypatch.setattr(utils.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
 
     exit_code = app.run(["--directory", music_directory])
@@ -213,36 +206,9 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
     interaction.
     """
 
-    def mockreturn(*args, **kwargs):
-        """Return None when creating OggOpus object."""
-        return None
-
-    def mock_item(*args, **kwargs):
-        """Mock tags and a YouTube description that we'll parse."""
-        return [
-            (
-                "title",
-                ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"],
-            ),
-            (
-                "artist",
-                ["artist 1 and artist 2"],
-            ),
-            (
-                "synopsis",
-                [
-                    "Provided to YouTube by Rich Men's Group Digital Ltd."
-                    "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
-                    "\n\nProper Goodbyes (feat. Ben Ivor)"
-                    "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
-                    "\n\nReleased on: 2029-08-22"
-                ],
-            ),
-        ]
-
-    monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
-    monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *args, **kwargs: None)
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
     monkeypatch.setattr(utils.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
 
     exit_code = app.run(["--directory", music_directory])
@@ -301,36 +267,20 @@ def test_setting_manual_album(capsys, music_directory, monkeypatch):
     the description is not set as an album tag.
     """
 
-    def mockreturn(*args, **kwargs):
-        """Return None when creating OggOpus object."""
-        return None
+    mock_show = Mock()
+    # The last one is for the "Pass" selection. Earlier ones are for
+    # selecting tags in the tag selection menu.
+    mock_show.side_effect = [0, 1, 0, 0, 0]
 
-    def mock_item(*args, **kwargs):
-        """Mock tags and a YouTube description that we'll parse."""
-        return [
-            ("title", ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"]),
-            ("artist", ["artist 1 and artist 2"]),
-            (
-                "synopsis",
-                [
-                    "Provided to YouTube by Rich Men's Group Digital Ltd."
-                    "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
-                    "\n\nProper Goodbyes (feat. Ben Ivor)"
-                    "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
-                    "\n\nReleased on: 2029-08-22"
-                ],
-            ),
-        ]
-
-    monkeypatch.setattr(oggopus.OggOpus, "__init__", mockreturn)
-    monkeypatch.setattr(oggopus.OggOpus, "items", mock_item)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *args, **kwargs: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
 
     exit_code = app.run(["--directory", music_directory, "--album", "manualalbum"])
 
     actual_output, _ = capsys.readouterr()
-    expected_album_output = f"Album: {Fore.BLACK}Not found{Fore.RESET}"
+    expected_album_output = f"Album: {Fore.GREEN}manualalbum{Fore.RESET}"
     not_expected_album_output = f"Album: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
     expected_discsubtitle_output = f"Disc subtitle: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
 
