@@ -2,6 +2,7 @@
 import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import Mock
 
 import pytest
 from colorama import Fore
@@ -10,19 +11,19 @@ from mutagen import oggopus
 from retag_opus import app, utils
 
 metadata = [
-        ("title", ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"]),
-        ("artist", ["artist 1 and artist 2"]),
-        (
-            "synopsis",
-            [
-                "Provided to YouTube by Rich Men's Group Digital Ltd."
-                "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
-                "\n\nProper Goodbyes (feat. Ben Ivor)"
-                "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
-                "\n\nReleased on: 2029-08-22"
-            ],
-        ),
-    ]
+    ("title", ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"]),
+    ("artist", ["artist 1 and artist 2"]),
+    (
+        "synopsis",
+        [
+            "Provided to YouTube by Rich Men's Group Digital Ltd."
+            "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
+            "\n\nProper Goodbyes (feat. Ben Ivor)"
+            "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
+            "\n\nReleased on: 2029-08-22"
+        ],
+    ),
+]
 
 
 def test_print_version(capsys):
@@ -129,21 +130,21 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
     """
 
     metadata_no_title = [
-            (
-                "artist",
-                ["artist 1"],
-            ),
-            (
-                "synopsis",
-                [
-                    "Provided to YouTube by Rich Men's Group Digital Ltd."
-                    "\n\nProper Goodbyes (feat. Ben Ivor) · The Global · Ben Ivor"
-                    "\n\nProper Goodbyes (feat. Ben Ivor)"
-                    "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
-                    "\n\nReleased on: 2029-08-22"
-                ],
-            ),
-        ]
+        (
+            "artist",
+            ["artist 1"],
+        ),
+        (
+            "synopsis",
+            [
+                "Provided to YouTube by Rich Men's Group Digital Ltd."
+                "\n\nProper Goodbyes (feat. Ben Ivor) · The Global · Ben Ivor"
+                "\n\nProper Goodbyes (feat. Ben Ivor)"
+                "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
+                "\n\nReleased on: 2029-08-22"
+            ],
+        ),
+    ]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata_no_title)
@@ -288,3 +289,111 @@ def test_setting_manual_album(capsys, music_directory, monkeypatch):
     assert expected_album_output in actual_output
     assert not_expected_album_output not in actual_output
     assert expected_discsubtitle_output in actual_output
+
+
+def test_pass(capsys, music_directory, monkeypatch):
+    """User selecting "Pass" for a song should undo changes."""
+
+    mock_show = Mock()
+    mock_save = Mock()
+    # The last one is for the "Pass" selection. Earlier ones are for
+    # selecting tags in the tag selection menu.
+    mock_show.side_effect = [0, 0, 0, 0, 0]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(oggopus.OggOpus, "save", mock_save)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    actual_output = capsys.readouterr().out.split("\n")
+    expected_last_output_line = f"{Fore.YELLOW}Pass. Skipping song: test"
+
+    assert exit_code == 0
+    assert expected_last_output_line == actual_output[-2]
+    mock_save.assert_not_called()
+
+
+def test_quit_through_escape(capsys, music_directory, monkeypatch):
+    """Pressing Escape in the selection menu should quit.
+
+    Escape will return 'None' from the selection menu, so we simulate
+    pressing escape by adding None as a side effect for the first menu
+    after all tags have been selected.
+    """
+
+    mock_show = Mock()
+    mock_save = Mock()
+    # The last one is for the "Pass" selection. Earlier ones are for
+    # selecting tags in the tag selection menu.
+    mock_show.side_effect = [0, 0, 0, 0, None]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(oggopus.OggOpus, "save", mock_save)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    actual_output = capsys.readouterr().out.split("\n")
+    expected_last_output_line = "RetagOpus exited successfully: Skipping this and all later songs"
+
+    assert exit_code == 0
+    assert expected_last_output_line == actual_output[-2]
+    mock_save.assert_not_called()
+
+
+def test_resetting_tags(capsys, music_directory, monkeypatch):
+    """User selecting "Reset" for a song should reset tags.
+
+    When the user uses the "Reset" option, tags should be reset to how
+    they were from the start and the tag selection process should start
+    over.
+
+    In this test, we select some tags so that they are all resolved,
+    then check that the get reset before quitting.
+    """
+
+    mock_show = Mock()
+    mock_save = Mock()
+    # The last one is for the "Pass" selection. Earlier ones are for
+    # selecting tags in the tag selection menu.
+    mock_show.side_effect = [0, 0, 0, 0, 2, None]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(oggopus.OggOpus, "save", mock_save)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    actual_output = capsys.readouterr().out
+    expected_regex = re.compile(
+        # Original status print
+        re.escape(
+            rf"Artist(s): {Fore.YELLOW}artist 1 | artist 2{Fore.RESET} | "
+            rf"{Fore.GREEN}The Global | Ben Ivor{Fore.RESET} | "
+            rf"{Fore.CYAN}artist 1 and artist 2{Fore.RESET} | "
+            rf"{Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
+        )
+        + r".*"
+        # # One of the resolved status prints
+        + re.escape(rf"Artist(s): {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}") + ".*"
+        # # Reset status print (same as first)
+        + re.escape(
+            rf"Artist(s): {Fore.YELLOW}artist 1 | artist 2{Fore.RESET} | "
+            rf"{Fore.GREEN}The Global | Ben Ivor{Fore.RESET} | "
+            rf"{Fore.CYAN}artist 1 and artist 2{Fore.RESET} | "
+            rf"{Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
+        )
+        + ".*",
+        re.DOTALL,
+    )
+
+    assert exit_code == 0
+    assert expected_regex.search(actual_output)
+    mock_save.assert_not_called()
