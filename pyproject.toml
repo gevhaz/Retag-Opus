@@ -65,6 +65,9 @@ mock = "^4.0.3"
 types-mock = "^4.0.15"
 pytest = "^7.2.2"
 
+[tool.poetry.group.dev-dependencies.dependencies]
+pydub = "^0.25.1"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
