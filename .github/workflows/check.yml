@@ -55,6 +55,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install ffmpeg
+
       - name: Install Poetry
         run: pipx install poetry
 
