@@ -1,4 +1,5 @@
 """Tests for app.py and cli.py."""
+from pydub import AudioSegment
 import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -24,6 +25,15 @@ metadata = [
         ],
     ),
 ]
+
+
+@pytest.fixture
+def music_directory():
+    """Yield path to temporary directory with fake opus file."""
+    with TemporaryDirectory() as temp_dir:
+        opus_file = Path(temp_dir) / "test.opus"
+        opus_file.touch()
+        yield temp_dir
 
 
 def test_print_version(capsys):
@@ -65,15 +75,6 @@ def test_directory_not_found(capsys):
     out, _ = capsys.readouterr()
     assert exit_code == 1
     assert re.match(r"^\x1b\[31m/this/does/not/exist/ is not a directory!\n", out)
-
-
-@pytest.fixture
-def music_directory():
-    """Yield path to temporary directory with fake opus file."""
-    with TemporaryDirectory() as temp_dir:
-        opus_file = Path(temp_dir) / "test.opus"
-        opus_file.touch()
-        yield temp_dir
 
 
 def test_file_without_metadata(capsys, music_directory, monkeypatch):
@@ -321,7 +322,7 @@ def test_quit_through_escape(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, 0, None]
+    mock_show.side_effect = [0, 0, 0, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -353,7 +354,7 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, 0, 2, None]
+    mock_show.side_effect = [0, 0, 0, 2, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -389,3 +390,65 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     assert exit_code == 0
     assert expected_regex.search(actual_output)
     mock_save.assert_not_called()
+
+
+def test_saving(music_directory, monkeypatch):
+    """User selecting "Save" for a song should save resolved tags.
+
+    When the user uses the "Save" option, resolved tags should be saved
+    to the file being processed.
+    """
+    # Setup
+    original_metadata = {
+        "title": [u"Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"],
+        "artist": [u"artist 1 and artist 2"],
+        "synopsis": [
+            u"Provided to YouTube by Rich Men's Group Digital Ltd."
+            u"\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
+            u"\n\nProper Goodbyes (feat. Ben Ivor)"
+            u"\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
+            u"\n\nReleased on: 2029-08-22"
+        ],
+    }
+
+    expected_metadata = original_metadata.copy()
+    # Manually selected
+    expected_metadata["title"] = ["Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"]  # Chose "youtube"
+    expected_metadata["artist"] = ["The Global", "Ben Ivor"]  # Chose "youtube"
+    expected_metadata["albumartist"] = ["The Global"]  # Chose the second alternative
+    # Automatically resolved
+    expected_metadata["comment"] = ["youtube-dl"]
+    expected_metadata["date"] = ["2029-08-22"]
+    expected_metadata["copyright"] = ["2022 The Global under exclusive license to 5BE Ltd"]
+    expected_metadata["version"] = ["2039 Remaster"]
+    expected_metadata["album"] = ["Proper Goodbyes (feat. Ben Ivor)"]
+    expected_metadata["organization"] = ["Rich Men's Group Digital Ltd."]
+    expected_metadata["encoder"] = ["Lavc60.3.100 libopus"]
+
+    mock_show = Mock()
+    # First: Choose youtube for 'artist'
+    # Second: Choose youtube for 'title'
+    # Third: Select album artist "The Global"
+    # Fourth: Save file
+    mock_show.side_effect = [0, 0, 1, 1]
+
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    # Create an opus file for testing saving
+    silence = AudioSegment.silent(duration=1000)
+    test_opus_file_path = Path(music_directory) / "test.opus"
+    silence.export(test_opus_file_path, format="opus")
+    # Tags are not handled well by pydub so we fix it afterward:
+    test_opus_file: oggopus.OggOpus = oggopus.OggOpus(test_opus_file_path)
+    for tag_name, tag_value in original_metadata.items():
+        test_opus_file[tag_name] = tag_value
+    test_opus_file.save()
+
+    # Execute
+    exit_code = app.run(["--directory", music_directory])
+
+    # Assert
+    assert exit_code == 0
+    actual_metadata: oggopus.OggOpus = oggopus.OggOpus(test_opus_file_path)
+    assert actual_metadata == expected_metadata
