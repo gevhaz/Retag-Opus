@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """An app to transfer YouTube data about a song to the song metadata.
 
 This in ann app that parses a "description" tag in a song, corresponding
@@ -14,7 +13,7 @@ from colorama import Fore, init
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import colors, constants
+from retag_opus import colors
 from retag_opus.cli import Cli
 from retag_opus.description_parser import DescriptionParser
 from retag_opus.exceptions import UserExitException
@@ -40,11 +39,6 @@ def run(argv: Sequence[str] | None = None) -> int:
         print(Fore.YELLOW + f"There appears to be no .opus files in the provided directory {args.dir}")
         return 0
 
-    if args.manual_album is not None:
-        constants.all_tags["discsubtitle"] = constants.all_tags["album"].copy()
-        constants.all_tags["discsubtitle"]["print"] = "Disc subtitle"
-        constants.all_tags["album"]["pattern"] = []
-
     for idx, file_path in enumerate(all_files):
         redo = True
         file_name = Utils().file_path_to_song_data(file_path)
@@ -62,7 +56,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                 old_tags[key] = val
             for key in old_tags.keys():
                 tag_source[key] = colors.md_col
-            tags = MusicTags()
+            tags = MusicTags(manual_album_set=args.manual_album is not None)
 
             tags.original = old_tags
             tags.discard_upload_date()
@@ -77,6 +71,10 @@ def run(argv: Sequence[str] | None = None) -> int:
             old_tags_parser.split_select_original_tags()
             tags.fromtags = old_tags_parser.tags
 
+            # 1.1 Manually set album
+            if args.manual_album is not None:
+                tags.resolved["album"] = [args.manual_album]
+
             # 2. Get description
             description_lines: list[str] | None = old_tags.get("synopsis")
             if description_lines is None:
@@ -84,7 +82,7 @@ def run(argv: Sequence[str] | None = None) -> int:
 
             # 3. If description exists, send it to be parsed
             if description_lines:
-                desc_parser = DescriptionParser()
+                desc_parser = DescriptionParser(manual_album_set=args.manual_album is not None)
                 description = "\n".join(description_lines)
                 desc_parser.parse(description)
                 tags.youtube = desc_parser.tags
@@ -107,10 +105,6 @@ def run(argv: Sequence[str] | None = None) -> int:
 
             # 4.5 Get rid of shady tags
             tags.prune_resolved_tags()
-
-            # 4.5.1 Manually set album
-            if args.manual_album is not None:
-                tags.resolved["album"] = [args.manual_album]
 
             # 5. Show user final result and ask if it should be saved or
             # retried, or song skipped

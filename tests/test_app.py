@@ -1,5 +1,4 @@
 """Tests for app.py and cli.py."""
-from pydub import AudioSegment
 import re
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -8,6 +7,7 @@ from unittest.mock import Mock
 import pytest
 from colorama import Fore
 from mutagen import oggopus
+from pydub import AudioSegment
 
 from retag_opus import app, utils
 
@@ -267,7 +267,7 @@ def test_setting_manual_album(capsys, music_directory, monkeypatch):
     mock_show = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 1, 0, 0, 0]
+    mock_show.side_effect = [0, 1, 0, 1, 0]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -322,7 +322,7 @@ def test_quit_through_escape(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, None]
+    mock_show.side_effect = [0, 0, 0, 0, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -354,7 +354,7 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, 2, None]
+    mock_show.side_effect = [0, 0, 0, 0, 2, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -392,7 +392,7 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     mock_save.assert_not_called()
 
 
-def test_saving(music_directory, monkeypatch):
+def test_saving(music_directory, monkeypatch, capsys):
     """User selecting "Save" for a song should save resolved tags.
 
     When the user uses the "Save" option, resolved tags should be saved
@@ -400,14 +400,14 @@ def test_saving(music_directory, monkeypatch):
     """
     # Setup
     original_metadata = {
-        "title": [u"Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"],
-        "artist": [u"artist 1 and artist 2"],
+        "title": ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"],
+        "artist": ["artist 1 and artist 2"],
         "synopsis": [
-            u"Provided to YouTube by Rich Men's Group Digital Ltd."
-            u"\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
-            u"\n\nProper Goodbyes (feat. Ben Ivor)"
-            u"\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
-            u"\n\nReleased on: 2029-08-22"
+            "Provided to YouTube by Rich Men's Group Digital Ltd."
+            "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
+            "\n\nProper Goodbyes (feat. Ben Ivor)"
+            "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
+            "\n\nReleased on: 2029-08-22"
         ],
     }
 
@@ -430,7 +430,7 @@ def test_saving(music_directory, monkeypatch):
     # Second: Choose youtube for 'title'
     # Third: Select album artist "The Global"
     # Fourth: Save file
-    mock_show.side_effect = [0, 0, 1, 1]
+    mock_show.side_effect = [0, 0, 0, 1, 1]
 
     monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
     monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
@@ -449,6 +449,25 @@ def test_saving(music_directory, monkeypatch):
     exit_code = app.run(["--directory", music_directory])
 
     # Assert
-    assert exit_code == 0
     actual_metadata: oggopus.OggOpus = oggopus.OggOpus(test_opus_file_path)
-    assert actual_metadata == expected_metadata
+
+    # Check exit code
+    assert exit_code == 0
+
+    # Check log
+    assert "Metadata saved for file: test" in capsys.readouterr().out
+
+    # Check tag content
+    # assert actual_metadata == expected_metadata
+    # Check tag by tag instead so that the diff is more readable
+    for tag_name, tag_value in expected_metadata.items():
+        if tag_name == "encoder":
+            continue
+        assert actual_metadata[tag_name] == tag_value
+
+    # A bit double, but have to cover the case when tags other than
+    # the ones in expected_metadata have been added.
+    for tag_name, tag_value in actual_metadata.items():
+        if tag_name == "encoder":
+            continue
+        assert expected_metadata[tag_name] == tag_value
