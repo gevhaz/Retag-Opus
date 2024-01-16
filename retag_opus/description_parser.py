@@ -1,5 +1,6 @@
 """Module for parsing a YouTube descripton into metadata tags."""
 import re
+from copy import deepcopy
 
 from retag_opus import constants
 from retag_opus.utils import Utils
@@ -12,9 +13,16 @@ Tags = dict[str, list[str]]
 class DescriptionParser:
     """Parse tags from YouTube description."""
 
-    def __init__(self) -> None:
+    def __init__(self, manual_album_set: bool = False) -> None:
         """Create tags dictionary that will hold the parsed tags."""
         self.tags: Tags = {}
+        self.base_patterns = deepcopy(constants.all_tags)
+        self.performer_patterns = deepcopy(constants.performer_tags)
+        self.manual_album_set = manual_album_set
+        if manual_album_set:
+            self.base_patterns["discsubtitle"] = self.base_patterns["album"].copy()
+            self.base_patterns["discsubtitle"]["print"] = "Disc subtitle"
+            self.base_patterns["album"]["pattern"] = []
 
     def parse_artist_and_title(self, source_line: str) -> tuple[list[str], str]:
         """Parse artist and title from standard ContentID line.
@@ -81,16 +89,16 @@ class DescriptionParser:
                 self.tags["title"] = [youtube_title]
 
             if lines_since_title_artist == 1:
-                if "discsubtitle" in constants.all_tags:
+                if self.manual_album_set:
                     self.tags["discsubtitle"] = [description_line.strip()]
                 else:
                     self.tags["album"] = [description_line.strip()]
 
-            for tag_id, tag_data in constants.all_tags.items():
+            for tag_id, tag_data in self.base_patterns.items():
                 for pattern in tag_data["pattern"]:
                     self.standard_pattern(tag_id, pattern, description_line)
 
-            for tag_id, tag_data in constants.performer_tags.items():
+            for tag_id, tag_data in self.performer_patterns.items():
                 for pattern in tag_data["pattern"]:
                     self.standard_pattern(tag_id, pattern, description_line)
 

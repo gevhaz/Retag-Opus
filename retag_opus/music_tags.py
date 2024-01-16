@@ -1,5 +1,6 @@
 """Module for storing tags from different sources and printing them."""
 import re
+from copy import deepcopy
 
 from colorama import Fore
 from simple_term_menu import TerminalMenu
@@ -18,8 +19,14 @@ class MusicTags:
     one provided by the OggOpus object.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, manual_album_set: bool = False) -> None:
         """Create empty attributes for each source."""
+        self.base_patterns = deepcopy(constants.all_tags)
+        self.performer_patterns = deepcopy(constants.performer_tags)
+        if manual_album_set:
+            self.base_patterns["discsubtitle"] = self.base_patterns["album"].copy()
+            self.base_patterns["discsubtitle"]["print"] = "Disc subtitle"
+            self.base_patterns["album"]["pattern"] = []
         self.original: Tags = {}
         self.youtube: Tags = {}
         self.fromtags: Tags = {}
@@ -44,19 +51,18 @@ class MusicTags:
         key_col = key_col if data.get(key) else Fore.BLACK
         print("  " + key_type + ": " + key_col + value + Fore.RESET)
 
-    @staticmethod
-    def print_metadata(metadata: Tags, col: str) -> None:
+    def print_metadata(self, metadata: Tags, col: str) -> None:
         """Print metadata of given set of tags in specifed color.
 
         :param metadata: The set of tags to print.
         :param col: The color to print the tags in.
         """
-        if any(t in constants.performer_tags.keys() for t in metadata.keys()):
+        if any(t in self.performer_patterns.keys() for t in metadata.keys()):
             print("  Performers:")
-            for tag_id, tag_data in constants.performer_tags.items():
+            for tag_id, tag_data in self.performer_patterns.items():
                 if tag_id in metadata and metadata[tag_id] is not None:
                     MusicTags.print_metadata_key(tag_data["print"], tag_id, col, metadata)
-        for tag_id, tag_data in constants.all_tags.items():
+        for tag_id, tag_data in self.base_patterns.items():
             MusicTags.print_metadata_key(tag_data["print"], tag_id, col, metadata)
         print("")
 
@@ -96,14 +102,14 @@ class MusicTags:
         """
         performer_block = []
         there_are_tags = False
-        for tag_id, tag_data in constants.performer_tags.items():
+        for tag_id, tag_data in self.performer_patterns.items():
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
                 there_are_tags = True
                 performer_block.append(tag_data["print"] + ": " + " | ".join(tag_all_values))
 
         main_block = []
-        for tag_id, tag_data in constants.all_tags.items():
+        for tag_id, tag_data in self.base_patterns.items():
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
                 there_are_tags = True
@@ -162,7 +168,7 @@ class MusicTags:
         """
         if "performer:" in " ".join(self.resolved.keys()):
             print("  Performers:")
-            for tag_id, tag_data in constants.performer_tags.items():
+            for tag_id, tag_data in self.performer_patterns.items():
                 resolved_tag = self.resolved.get(tag_id)
                 all_sources_tag = self.get_tag_data(tag_id)
                 # If the user chose to remove a tag that existed before
@@ -176,7 +182,7 @@ class MusicTags:
                     print("  " + tag_data["print"] + ": " + " | ".join(all_sources_tag))
                 else:
                     self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
-        for tag_id, tag_data in constants.all_tags.items():
+        for tag_id, tag_data in self.base_patterns.items():
             resolved_tag = self.resolved.get(tag_id)
             all_sources_tag = self.get_tag_data(tag_id)
             if resolved_tag == ["[Removed]"]:
@@ -255,7 +261,7 @@ class MusicTags:
         """
         tags_in_resolved = []
         for tag in self.resolved.keys():
-            if tag in constants.all_tags.keys() or tag in constants.performer_tags.keys():
+            if tag in self.base_patterns.keys() or tag in self.performer_patterns.keys():
                 tags_in_resolved.append(tag)
 
         tags_in_resolved.append("Quit")
