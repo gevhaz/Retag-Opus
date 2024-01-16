@@ -8,6 +8,11 @@ on:
     branches: [master, dev]
 
 jobs:
+  spellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: gevhaz/word-warden@v1.0.0
+
   lint:
 
     runs-on: ubuntu-latest
