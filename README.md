@@ -2,7 +2,7 @@
 
 Say you have a music file in opus format, with a tag called
 `description` that holds data about the music in the format used by
-Youtube's ContentID. This script will help you parse that tag and put
+YouTube's ContentID. This script will help you parse that tag and put
 the relevant data into the tags where it actually belongs, such as
 `title`, `artist`, and `album`.
 
@@ -16,13 +16,13 @@ be installed.
 
 Run the script like so:
 
-```
-python3 retag --directory /path/to/directory/with/your/opus/files.opus
+```console
+$ python3 retag --directory /path/to/directory/with/your/opus/files.opus
 ```
 
 There is also a help (`-h`) flag:
 
-```
+```console
 $ retag -h
 usage: main.py [-h] [-d DIR] [-v] [-V]
 
@@ -37,25 +37,25 @@ options:
 ```
 
 Retag will go through the opus file in the root of the directory you
-provided and try to parse tag information from the youtube description
+provided and try to parse tag information from the YouTube description
 if it is in the tags and from the original tags (e.g. adding another
 artist if the title indicates a featured artist). It might look like
 this:
 
-![retag terminal example](screenshot_1.png)
+![Retag Opus terminal example](screenshot_1.png)
 
-Purple text indicates that the tag comes from the youtube description.
+Purple text indicates that the tag comes from the YouTube description.
 Blue indicates that the tag existed in the metadata since before. Yellow
 indicates that the tag comes from interpreting one of the original tags,
 and green indicates that the tag has been interpreted from one of the
-new tags taken from the youtube description.
+new tags taken from the YouTube description.
 
 As you go on adjusting tags, they turn green for indicating that you're
 done adjusting them. In the end, some tags may stay blue, indicating
 that you have selected the original tag or that no new data is
 available. Here is an example of what it can look like:
 
-![retag final view example](screenshot_2.png)
+![Retag Opus final view example](screenshot_2.png)
 
 As you can see, you can remove tags, which will make them print
 "[Removed]" in red text. In the actual song metadata, they will just be
