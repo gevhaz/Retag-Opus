@@ -49,10 +49,10 @@ def run(argv: Sequence[str] | None = None) -> int:
             print(Fore.BLUE + f"----- Song: {file_name} -----" + Fore.RESET)
 
             # 1. Read the data and make basic improvements
-            old_metadata: OggOpus = OggOpus(file_path)
+            old_metadata: OggOpus = OggOpus(file_path)  # type: ignore
             old_tags: Tags = {}
             tag_source = {}
-            for key, val in old_metadata.items():
+            for key, val in old_metadata.items():  # type: ignore
                 old_tags[key] = val
             for key in old_tags.keys():
                 tag_source[key] = colors.md_col

@@ -16,7 +16,7 @@ class Cli:
         """Create parser and parse CLI arguments, and return them."""
         parser = argparse.ArgumentParser()
 
-        shtab.add_argument_to(parser, ["-s", "--print-completion"])  # type: ignore
+        shtab.add_argument_to(parser, ["-s", "--print-completion"])
 
         parser.add_argument(
             "-a",
