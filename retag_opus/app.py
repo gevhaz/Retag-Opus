@@ -63,8 +63,7 @@ def run(argv: Sequence[str] | None = None) -> int:
             if args.manual_album is not None:
                 tags.switch_album_to_disc_subtitle(args.manual_album)
 
-            prepare_resolved = old_tags.copy()
-            tags.resolved = prepare_resolved
+            tags.resolved = old_tags.copy()
 
             old_tags_parser = TagsParser(tags.original)
             old_tags_parser.parse_tags()
