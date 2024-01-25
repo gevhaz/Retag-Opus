@@ -265,8 +265,10 @@ class MusicTags:
         tags_in_resolved = []
         for tag in self.resolved.keys():
             if tag in self.base_patterns.keys() or tag in self.performer_patterns.keys():
-                tags_in_resolved.append(tag)
+                if self.resolved[tag] != REMOVED_TAG:
+                    tags_in_resolved.append(tag)
 
+        tags_in_resolved = sorted(tags_in_resolved)
         tags_in_resolved.append("Quit")
         removal_menu = TerminalMenu(tags_in_resolved, title="Which field do you want to delete items from?")
         tag_index = removal_menu.show()
@@ -295,7 +297,7 @@ class MusicTags:
             for item in items_to_remove:
                 self.resolved[selected_tag].remove(items_in_tag[item])
                 if len(self.resolved[selected_tag]) == 0:
-                    self.resolved.pop(selected_tag)
+                    self.resolved[selected_tag] = REMOVED_TAG
 
     def check_any_new_data_exists(self) -> bool:
         """Check whether there are new tags in the sources.

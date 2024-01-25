@@ -950,7 +950,7 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.resolved = {"artist": ["artist 1", "artist 2", "artist 3"]}
         tags.delete_tag_item()
-        self.assertNotIn("artist", tags.resolved)
+        self.assertEqual(tags.resolved["artist"], ["[Removed]"])
 
     @patch("retag_opus.utils.TerminalMenu.__init__")
     @patch("retag_opus.utils.TerminalMenu.show")
@@ -968,6 +968,34 @@ class TestMusicTags(unittest.TestCase):
         tags.resolved = {"artist": ["artist 1", "artist 2"]}
         tags.delete_tag_item()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertEqual(f"{Fore.YELLOW}Returning without removing anything{Fore.RESET}\n", captured.out)
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_delete_tag_item_hide_already_removed(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test that a deleted tag isn't suggested for deletion.
+
+        If a tag is already marked for deletion, there is no point in
+        showing it in the list of tags offered for deletion to the user
+        when they enter the tag deletion menu. So we test that these
+        tags are not shown.
+
+        It's hard to test directly, so the test is actually to verify
+        that the menu has the right number of elements by verifying that
+        the function returns without deleting anything if we moch the
+        first return to be at the position where we expect the "Quit"
+        option to be.
+        """
+        # 0 is artist tag, 1 is quit. there is no title
+        mock_show.side_effect = [1]  # Where a choice is returned from the menu
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+
+        tags = MusicTags()
+        tags.resolved = {"artist": ["artist 1", "artist 2"], "title": ["[Removed]"]}
+        tags.delete_tag_item()
+        self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
+        self.assertEqual(["[Removed]"], tags.resolved.get("title"))
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(f"{Fore.YELLOW}Returning without removing anything{Fore.RESET}\n", captured.out)
 
