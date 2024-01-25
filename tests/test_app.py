@@ -471,3 +471,91 @@ def test_saving(music_directory, monkeypatch, capsys):
         if tag_name == "encoder":
             continue
         assert expected_metadata[tag_name] == tag_value
+
+
+def test_deleting_tag(music_directory, monkeypatch, capsys):
+    """User selecting "Save" for a song should save resolved tags.
+
+    When the user uses the "Save" option, resolved tags should be saved
+    to the file being processed.
+    """
+    # Setup
+    original_metadata = {
+        "title": ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"],
+        "artist": ["artist 1 and artist 2"],
+        "synopsis": [
+            "Provided to YouTube by Rich Men's Group Digital Ltd."
+            "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
+            "\n\nProper Goodbyes (feat. Ben Ivor)"
+            "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
+            "\n\nReleased on: 2029-08-22"
+        ],
+    }
+
+    expected_metadata = original_metadata.copy()
+    # Manually selected
+    expected_metadata["title"] = ["Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"]  # Chose "youtube"
+    expected_metadata["artist"] = ["The Global", "Ben Ivor"]  # Chose "youtube"
+    expected_metadata["albumartist"] = ["The Global"]  # Chose the second alternative
+    # Automatically resolved
+    expected_metadata["comment"] = ["youtube-dl"]
+    expected_metadata["date"] = ["2029-08-22"]
+    expected_metadata["copyright"] = ["2022 The Global under exclusive license to 5BE Ltd"]
+    expected_metadata["version"] = ["2039 Remaster"]
+    expected_metadata["organization"] = ["Rich Men's Group Digital Ltd."]
+    expected_metadata["encoder"] = ["Lavc60.3.100 libopus"]
+
+    mock_show = Mock()
+    # First: Choose youtube for 'artist'
+    # Second: Choose youtube for 'title'
+    # Third: Select album artist "The Global"
+    # Fourth: Select album artist from list
+    # Fifth: delete tag
+    # Sixth: Select album
+    # Seventh: Delete the only tag
+    # Eigth: Save file
+    mock_show.side_effect = [0, 0, 0, 1, 4, 0, 0, 1]
+
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    # Create an opus file for testing saving
+    silence = AudioSegment.silent(duration=1000)
+    test_opus_file_path = Path(music_directory) / "test.opus"
+    silence.export(test_opus_file_path, format="opus")
+    # Tags are not handled well by pydub so we fix it afterward:
+    test_opus_file: oggopus.OggOpus = oggopus.OggOpus(test_opus_file_path)
+    for tag_name, tag_value in original_metadata.items():
+        test_opus_file[tag_name] = tag_value
+    test_opus_file.save()
+
+    # Execute
+    exit_code = app.run(["--directory", music_directory])
+
+    # Assert
+    actual_metadata: oggopus.OggOpus = oggopus.OggOpus(test_opus_file_path)
+
+    # Check exit code
+    assert exit_code == 0
+
+    # Check log
+    assert "Metadata saved for file: test" in capsys.readouterr().out
+
+    # Check tag content
+    # assert actual_metadata == expected_metadata
+    # Check tag by tag instead so that the diff is more readable
+    for tag_name, tag_value in expected_metadata.items():
+        if tag_name == "encoder":
+            continue
+        assert actual_metadata[tag_name] == tag_value
+
+    # A bit double, but have to cover the case when tags other than
+    # the ones in expected_metadata have been added.
+    for tag_name, tag_value in actual_metadata.items():
+        if tag_name == "encoder":
+            continue
+        assert expected_metadata[tag_name] == tag_value
+
+    # This is the core of the test:
+    assert "album" not in actual_metadata
+    assert "albumartist" in actual_metadata

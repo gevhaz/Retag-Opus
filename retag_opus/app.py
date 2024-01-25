@@ -6,6 +6,7 @@ Existing tags are also used to produce new ones, e.g. moving strings
 like "2020 Remix" from the title tag to the version tag.
 """
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Sequence
 
@@ -63,7 +64,7 @@ def run(argv: Sequence[str] | None = None) -> int:
             if args.manual_album is not None:
                 tags.switch_album_to_disc_subtitle(args.manual_album)
 
-            tags.resolved = old_tags.copy()
+            tags.resolved = deepcopy(old_tags)
 
             old_tags_parser = TagsParser(tags.original)
             old_tags_parser.parse_tags()
