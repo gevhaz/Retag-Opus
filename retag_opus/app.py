@@ -17,7 +17,7 @@ from retag_opus import colors
 from retag_opus.cli import Cli
 from retag_opus.description_parser import DescriptionParser
 from retag_opus.exceptions import UserExitException
-from retag_opus.music_tags import MusicTags
+from retag_opus.music_tags import REMOVED_TAG, MusicTags
 from retag_opus.tags_parser import TagsParser
 from retag_opus.utils import Utils
 
@@ -138,7 +138,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                         return 0
                     case "[s] save":
                         for tag, data in tags.resolved.items():
-                            if data == ["[Removed]"]:
+                            if data == REMOVED_TAG:
                                 old_tags.pop(tag, None)
                             else:
                                 old_tags[tag] = data

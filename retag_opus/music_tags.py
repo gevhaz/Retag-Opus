@@ -1,6 +1,7 @@
 """Module for storing tags from different sources and printing them."""
 import re
 from copy import deepcopy
+from typing import Final
 
 from colorama import Fore
 from simple_term_menu import TerminalMenu
@@ -10,6 +11,8 @@ from retag_opus.exceptions import UserExitException
 from retag_opus.utils import Utils
 
 Tags = dict[str, list[str]]
+
+REMOVED_TAG: Final[list[str]] = ["[Removed]"]
 
 
 class MusicTags:
@@ -172,7 +175,7 @@ class MusicTags:
                 resolved_tag = self.resolved.get(tag_id)
                 all_sources_tag = self.get_tag_data(tag_id)
                 # If the user chose to remove a tag that existed before
-                if resolved_tag == ["[Removed]"]:
+                if resolved_tag == REMOVED_TAG:
                     self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
                 # If the resolved tag differs from the original tag
                 elif resolved_tag != self.original.get(tag_id) and self.resolved.get(tag_id) is not None:
@@ -185,7 +188,7 @@ class MusicTags:
         for tag_id, tag_data in self.base_patterns.items():
             resolved_tag = self.resolved.get(tag_id)
             all_sources_tag = self.get_tag_data(tag_id)
-            if resolved_tag == ["[Removed]"]:
+            if resolved_tag == REMOVED_TAG:
                 self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
             elif resolved_tag != self.original.get(tag_id) and self.resolved.get(tag_id) is not None:
                 self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
@@ -215,11 +218,11 @@ class MusicTags:
 
     def prune_resolved_tags(self) -> None:
         """Remove tags that are not useful."""
-        self.resolved["language"] = ["[Removed]"]
-        self.resolved["compatible_brands"] = ["[Removed]"]
-        self.resolved["minor_version"] = ["[Removed]"]
-        self.resolved["major_brand"] = ["[Removed]"]
-        self.resolved["vendor_id"] = ["[Removed]"]
+        self.resolved["language"] = REMOVED_TAG
+        self.resolved["compatible_brands"] = REMOVED_TAG
+        self.resolved["minor_version"] = REMOVED_TAG
+        self.resolved["major_brand"] = REMOVED_TAG
+        self.resolved["vendor_id"] = REMOVED_TAG
 
     def add_source_tag(self) -> None:
         """Add a comment tag with the value 'youtube-dl'."""
@@ -432,7 +435,7 @@ class MusicTags:
 
                 return False
             case "[r] Remove field":
-                self.resolved[tag_name] = ["[Removed]"]
+                self.resolved[tag_name] = REMOVED_TAG
                 return False
             case _:
                 print("Going back to previous menu")
