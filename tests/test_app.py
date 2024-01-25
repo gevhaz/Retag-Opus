@@ -158,6 +158,9 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
         f'Using parsed data: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
         f"\n-----------------------------------------------"
+        "\n  Other tags:"
+        f"\n  - synopsis: {Fore.CYAN}[Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]{Fore.RESET}"
+        f"\n  - comment: {Fore.GREEN}youtube-dl{Fore.RESET}"
         f"\n  Title: {Fore.GREEN}Proper Goodbyes{Fore.RESET} | "
         f"{Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
         f"\n  Album: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
@@ -218,6 +221,9 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
         f'Using parsed data: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
         f"\n-----------------------------------------------"
+        "\n  Other tags:"
+        f"\n  - synopsis: {Fore.CYAN}[Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]{Fore.RESET}"
+        f"\n  - comment: {Fore.GREEN}youtube-dl{Fore.RESET}"
         "\n  Title: "
         f"{Fore.YELLOW}Proper Goodbyes{Fore.RESET}"
         f" | {Fore.GREEN}Proper Goodbyes{Fore.RESET}"

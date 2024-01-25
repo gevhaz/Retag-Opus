@@ -169,16 +169,34 @@ class MusicTags:
 
         :param print_all: Print tags even if they haven't been changed.
         """
+        other_tags: list[str] = []
+        for tag_id in self.resolved.keys():
+            if tag_id not in self.base_patterns and tag_id not in self.performer_patterns:
+                other_tags.append(tag_id)
+        if other_tags:
+            print("  Other tags:")
+            for tag in other_tags:
+                resolved_tag = self.resolved.get(tag, [])
+                joined_tag_items = " | ".join(resolved_tag).replace("\n", " ")
+                if resolved_tag == REMOVED_TAG:
+                    self.print_metadata_key(f"- {tag}", tag, Fore.RED, self.resolved)
+                elif resolved_tag != self.original.get(tag):
+                    self.print_metadata_key(f"- {tag}", tag, Fore.GREEN, self.resolved)
+                elif len(joined_tag_items) > 200:
+                    print(f"  - {tag}: {colors.md_col}[{joined_tag_items[:65]}...]{Fore.RESET}")
+                else:
+                    self.print_metadata_key(f"- {tag}", tag, colors.md_col, self.resolved)
+
         if "performer:" in " ".join(self.resolved.keys()):
             print("  Performers:")
             for tag_id, tag_data in self.performer_patterns.items():
-                resolved_tag = self.resolved.get(tag_id)
+                resolved_tag = self.resolved.get(tag_id, [])
                 all_sources_tag = self.get_tag_data(tag_id)
                 # If the user chose to remove a tag that existed before
                 if resolved_tag == REMOVED_TAG:
                     self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
                 # If the resolved tag differs from the original tag
-                elif resolved_tag != self.original.get(tag_id) and self.resolved.get(tag_id) is not None:
+                elif resolved_tag != self.original.get(tag_id, []) and self.resolved.get(tag_id) is not None:
                     self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
                 # original and resolved are equal, but other tags exist
                 elif len(all_sources_tag) > 0 and print_all:
@@ -186,16 +204,17 @@ class MusicTags:
                 else:
                     self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
         for tag_id, tag_data in self.base_patterns.items():
-            resolved_tag = self.resolved.get(tag_id)
+            resolved_tag = self.resolved.get(tag_id, [])
             all_sources_tag = self.get_tag_data(tag_id)
             if resolved_tag == REMOVED_TAG:
                 self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
-            elif resolved_tag != self.original.get(tag_id) and self.resolved.get(tag_id) is not None:
+            elif resolved_tag != self.original.get(tag_id, []) and self.resolved.get(tag_id) is not None:
                 self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
             elif len(all_sources_tag) > 0 and print_all:
                 print("  " + tag_data["print"] + ": " + " | ".join(all_sources_tag))
             else:
                 self.print_metadata_key(tag_data["print"], tag_id, colors.md_col, self.resolved)
+
         print("")
 
     def switch_album_to_disc_subtitle(self, manual_album_name: str) -> None:
