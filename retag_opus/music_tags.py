@@ -235,13 +235,16 @@ class MusicTags:
         if self.original.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original["date"][0]):
             self.original.pop("date", None)
 
-    def prune_resolved_tags(self) -> None:
-        """Remove tags that are not useful."""
-        self.resolved["language"] = REMOVED_TAG
-        self.resolved["compatible_brands"] = REMOVED_TAG
-        self.resolved["minor_version"] = REMOVED_TAG
-        self.resolved["major_brand"] = REMOVED_TAG
-        self.resolved["vendor_id"] = REMOVED_TAG
+    def prune_resolved_tags(self, tags_to_delete: list[str], strings_to_delete_tags_based_on: list[str]) -> None:
+        """Remove tags that the user wants removed by default."""
+        for tag in tags_to_delete:
+            if tag in self.original:
+                self.resolved[tag] = REMOVED_TAG
+
+        for tag_id, tag_data in self.original.items():
+            for bad_word in strings_to_delete_tags_based_on:
+                if any(re.fullmatch(bad_word, item) for item in tag_data):
+                    self.resolved[tag_id] = REMOVED_TAG
 
     def add_source_tag(self) -> None:
         """Add a comment tag with the value 'youtube-dl'."""
