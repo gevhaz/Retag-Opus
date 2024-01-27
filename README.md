@@ -61,6 +61,32 @@ As you can see, you can remove tags, which will make them print
 "[Removed]" in red text. In the actual song metadata, they will just be
 removed.
 
+## Configuration
+
+You can configure tags that should be deleted. There are two ways you can
+configure these. You can either say an exact tag name that should be deleted –
+that is, the name of the tag itself, not its value. You can also specify a regex
+that, if fully matching any value in a tag, will result in that tag being
+deleted.
+
+You specify this information in the Retag-Opus configuration file which is
+`retag.toml` in your `XDG_CONFIG_HOME` directory, so usually
+`~/.config/retag.toml`. Here is an example:
+
+```toml
+tags_to_delete = [
+  "language",
+]
+strings_to_delete_tags_based_on = [
+  "delete_exactly_this",
+  ".*delete_any_partial_match.*",
+]
+```
+
+This will delete the `language` tag, any tag containing the exact value
+`delete_exactly_this` but not `delete_exactly_this_other_thing`, and also any
+tag that matches the last regex, such as `test_delete_any_partial_match_test`.
+
 # Project status
 
 The project is still under development. The most common tags can be

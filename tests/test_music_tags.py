@@ -755,7 +755,22 @@ class TestMusicTags(unittest.TestCase):
 
     def test_prune_resolved_tags(self) -> None:
         """Test that useless tags are removed."""
+        tags_to_delete = [
+            "language",
+            "compatible_brands",
+            "minor_version",
+            "major_brand",
+            "vendor_id",
+        ]
         tags = MusicTags()
+        tags.original = {
+            "language": ["eng"],
+            "compatible_brands": ["a brand"],
+            "minor_version": ["The minor version"],
+            "major_brand": ["brand"],
+            "vendor_id": ["id of the vendor"],
+            "date": ["2022-02-02"],
+        }
         tags.resolved = {
             "language": ["eng"],
             "compatible_brands": ["a brand"],
@@ -764,7 +779,7 @@ class TestMusicTags(unittest.TestCase):
             "vendor_id": ["id of the vendor"],
             "date": ["2022-02-02"],
         }
-        tags.prune_resolved_tags()
+        tags.prune_resolved_tags(tags_to_delete=tags_to_delete, strings_to_delete_tags_based_on=[])
         self.assertEqual(6, len(tags.resolved))
         self.assertEqual(["2022-02-02"], tags.resolved.get("date"))
         self.assertEqual(["[Removed]"], tags.resolved.get("language"))
@@ -1844,3 +1859,134 @@ class TestMusicTags(unittest.TestCase):
 
         with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
             tags.resolve_metadata()
+
+    def test_deleting_specified_tags(self) -> None:
+        """Test deleting named tags."""
+        delete_these = ["producer"]
+        tags = MusicTags()
+        tags.original = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+        tags.resolved = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+        tags.prune_resolved_tags(tags_to_delete=delete_these, strings_to_delete_tags_based_on=[])
+        assert tags.resolved == {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["[Removed]"],
+        }
+
+    def test_deleting_tags_matching_specified_strings(self) -> None:
+        """Test deleting tags matching specified strings."""
+        delete_these = ["producer 1"]
+        tags = MusicTags()
+        tags.original = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+        tags.resolved = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+        tags.prune_resolved_tags(tags_to_delete=[], strings_to_delete_tags_based_on=delete_these)
+        assert tags.resolved == {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["[Removed]"],
+        }
+
+    def test_deleting_tags_matching_specified_strings_regex(self) -> None:
+        """Test deleting tags matching specified strings."""
+        full_match_1 = "pro.*"
+        full_match_2 = ".*cer 1"
+        tags = MusicTags()
+        tags.original = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+        tags.resolved = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+        tags.prune_resolved_tags(tags_to_delete=[], strings_to_delete_tags_based_on=[full_match_1])
+        assert tags.resolved["producer"] == ["[Removed]"]
+        tags.resolved["producer"] = ["producer 1"]
+        tags.prune_resolved_tags(tags_to_delete=[], strings_to_delete_tags_based_on=[full_match_2])
+        assert tags.resolved["producer"] == ["[Removed]"]
+
+    def test_not_deleting_tags_half_matching_specified_strings(self) -> None:
+        """Test deleting tags matching specified strings."""
+        half_match_1 = "prod"
+        half_match_2 = "ucer 1"
+        tags = MusicTags()
+        tags.original = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+        tags.resolved = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+
+        tags.prune_resolved_tags(tags_to_delete=[], strings_to_delete_tags_based_on=[half_match_1])
+        assert tags.resolved["producer"] == ["producer 1"]
+
+        tags.prune_resolved_tags(tags_to_delete=[], strings_to_delete_tags_based_on=[half_match_2])
+        assert tags.resolved["producer"] == ["producer 1"]
+
+    def test_not_deleting_tags_not_in_original(self) -> None:
+        """Test deleting tags matching specified strings."""
+        no_delete_this_tag = "producer"
+        no_delete_this_string = "title 2"
+        tags = MusicTags()
+        tags.original = {
+            "artist": ["artist 1"],
+        }
+        tags.resolved = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+
+        tags.prune_resolved_tags(
+            tags_to_delete=[no_delete_this_tag],
+            strings_to_delete_tags_based_on=[no_delete_this_string],
+        )
+        assert tags.resolved == {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+
+    def test_deleting_tags_despite_not_in_resolved(self) -> None:
+        """Test deleting tags that are not among the resolved."""
+        delete_this_string = "producer 1"
+        delete_this_tag = "title"
+        tags = MusicTags()
+        tags.original = {
+            "artist": ["artist 1"],
+            "title": ["title 2"],
+            "producer": ["producer 1"],
+        }
+        tags.resolved = {
+            "artist": ["artist 1"],
+        }
+
+        tags.prune_resolved_tags(tags_to_delete=[delete_this_tag], strings_to_delete_tags_based_on=[delete_this_string])
+
+        assert tags.resolved == {
+            "artist": ["artist 1"],
+            "title": ["[Removed]"],
+            "producer": ["[Removed]"],
+        }

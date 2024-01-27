@@ -6,6 +6,8 @@ Existing tags are also used to produce new ones, e.g. moving strings
 like "2020 Remix" from the title tag to the version tag.
 """
 
+import os
+import tomllib
 from copy import deepcopy
 from pathlib import Path
 from typing import Sequence
@@ -26,11 +28,19 @@ init(autoreset=True)
 
 Tags = dict[str, list[str]]
 
+CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_DIR", Path.home() / ".config"))
+CONFIG_PATH = CONFIG_DIR / "retag.toml"
+
 
 def run(argv: Sequence[str] | None = None) -> int:
     """Run all the functionality of the app."""
     args = Cli.parse_arguments(argv)
     music_dir = Path(args.dir).resolve()
+    try:
+        with open(CONFIG_PATH, "rb") as f:
+            config = tomllib.load(f)
+    except FileNotFoundError:
+        config = {}
     if not music_dir.is_dir():
         print(Fore.RED + f"{args.dir} is not a directory!")
         return 1
@@ -104,7 +114,9 @@ def run(argv: Sequence[str] | None = None) -> int:
                 return 0
 
             # 4.5 Get rid of shady tags
-            tags.prune_resolved_tags()
+            tags_to_delete = config.get("tags_to_delete", [])
+            strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
+            tags.prune_resolved_tags(tags_to_delete, strings_to_delete_tags_based_on)
 
             # 5. Show user final result and ask if it should be saved or
             # retried, or song skipped
