@@ -160,7 +160,6 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         f"\n-----------------------------------------------"
         "\n  Other tags:"
         f"\n  - synopsis: {Fore.CYAN}[Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]{Fore.RESET}"
-        f"\n  - comment: {Fore.GREEN}youtube-dl{Fore.RESET}"
         f"\n  Title: {Fore.GREEN}Proper Goodbyes{Fore.RESET} | "
         f"{Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
         f"\n  Album: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
@@ -223,7 +222,6 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         f"\n-----------------------------------------------"
         "\n  Other tags:"
         f"\n  - synopsis: {Fore.CYAN}[Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]{Fore.RESET}"
-        f"\n  - comment: {Fore.GREEN}youtube-dl{Fore.RESET}"
         "\n  Title: "
         f"{Fore.YELLOW}Proper Goodbyes{Fore.RESET}"
         f" | {Fore.GREEN}Proper Goodbyes{Fore.RESET}"
@@ -408,6 +406,7 @@ def test_saving(music_directory, monkeypatch, capsys):
     original_metadata = {
         "title": ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"],
         "artist": ["artist 1 and artist 2"],
+        "purl": ["www.youtube.com"],
         "synopsis": [
             "Provided to YouTube by Rich Men's Group Digital Ltd."
             "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
@@ -489,6 +488,7 @@ def test_deleting_tag(music_directory, monkeypatch, capsys):
     original_metadata = {
         "title": ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"],
         "artist": ["artist 1 and artist 2"],
+        "purl": ["www.youtube.com"],
         "synopsis": [
             "Provided to YouTube by Rich Men's Group Digital Ltd."
             "\n\nProper Goodbyes (feat. Ben Ivor) (2036 Remaster) · The Global · Ben Ivor"
