@@ -412,7 +412,7 @@ class TestMusicTags(unittest.TestCase):
     def test_print_resolved(self) -> None:
         """Test that resolved tags can be printed."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"], "title": ["title 1"]}
+        tags.original = {"artist": ["artist 1"], "title": ["title 1"], "producer": ["someone"]}
         tags.resolved = {"artist": ["artist 1"], "title": ["title 2"], "producer": ["[Removed]"]}
         tags.print_resolved(print_all=False)
         captured = self.capsys.readouterr()  # type: ignore
@@ -431,7 +431,7 @@ class TestMusicTags(unittest.TestCase):
             f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  Producer (Removed): {Fore.RED}someone{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
@@ -443,6 +443,7 @@ class TestMusicTags(unittest.TestCase):
         tags.original = {
             "performer:vocals": ["artist 1"],
             "performer:violin": ["artist 1"],
+            "performer:keyboard": ["some guy"],
         }
         tags.resolved = {
             "performer:vocals": ["artist 1"],
@@ -457,7 +458,7 @@ class TestMusicTags(unittest.TestCase):
             f"  - Background Vocals: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Drums: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Percussion: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Keyboard: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  - Keyboard (Removed): {Fore.RED}some guy{Fore.RESET}\n"
             f"  - Piano: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Synthesizer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
@@ -503,6 +504,7 @@ class TestMusicTags(unittest.TestCase):
             "performer:vocals": ["artist 1"],
             "performer:violin": ["artist 1"],
             "performer:guitar": ["artist 3"],
+            "performer:keyboard": ["the keyboard master"],
         }
         tags.youtube = {
             "performer:guitar": ["artist 4"],
@@ -520,7 +522,7 @@ class TestMusicTags(unittest.TestCase):
             f"  - Background Vocals: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Drums: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Percussion: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Keyboard: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  - Keyboard (Removed): {Fore.RED}the keyboard master{Fore.RESET}\n"
             f"  - Piano: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Synthesizer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Guitar: {Fore.CYAN}artist 3{Fore.RESET} | {Fore.MAGENTA}artist 4{Fore.RESET}\n"
@@ -565,9 +567,11 @@ class TestMusicTags(unittest.TestCase):
             "performer:vocals": ["artist 1"],
             "performer:violin": ["artist 1"],
             "performer:guitar": ["artist 3"],
+            "performer:keyboard": ["artist 5"],
         }
         tags.youtube = {
             "performer:guitar": ["artist 4"],
+            "performer:keyboard": ["artist 6"],
         }
         tags.resolved = {
             "performer:vocals": ["artist 1"],
@@ -582,7 +586,7 @@ class TestMusicTags(unittest.TestCase):
             f"  - Background Vocals: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Drums: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Percussion: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Keyboard: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  - Keyboard (Removed): {Fore.RED}artist 5{Fore.RESET}\n"
             f"  - Piano: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Synthesizer: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  - Guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
@@ -654,7 +658,7 @@ class TestMusicTags(unittest.TestCase):
             f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Arranger: {Fore.CYAN}artist 1{Fore.RESET} | {Fore.MAGENTA}artist 2{Fore.RESET}\n"
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  Producer (Removed): {Fore.RED}person 1{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
@@ -698,7 +702,7 @@ class TestMusicTags(unittest.TestCase):
             f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.RED}[Removed]{Fore.RESET}\n"
+            f"  Producer (Removed): {Fore.RED}person 1{Fore.RESET}\n"
             f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
             f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
         )
