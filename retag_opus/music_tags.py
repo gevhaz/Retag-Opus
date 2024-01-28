@@ -535,7 +535,7 @@ class MusicTags:
                         print("Parsed from original tags: " + Fore.YELLOW + " | ".join(from_tags_value) + Fore.RESET)
                         candidates.append("Parsed from original tags")
 
-                    print("Exisiting metadata:  " + colors.md_col + " | ".join(old_value) + Fore.RESET)
+                    print("Existing metadata:  " + colors.md_col + " | ".join(old_value) + Fore.RESET)
                     candidates.append("Existing metadata")
 
                     if len(from_desc_value) > 0:

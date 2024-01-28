@@ -1536,7 +1536,7 @@ class TestMusicTags(unittest.TestCase):
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
                 f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
-                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
                 f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
             ),
             captured.out,
@@ -1587,7 +1587,7 @@ class TestMusicTags(unittest.TestCase):
                 f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
                 f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
-                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
             ),
             captured.out,
         )
@@ -1622,7 +1622,7 @@ class TestMusicTags(unittest.TestCase):
                 f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
                 f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
-                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
                 f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
             ),
             captured.out,
@@ -1683,7 +1683,7 @@ class TestMusicTags(unittest.TestCase):
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
                 f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
-                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
                 f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
             ),
             captured.out,
@@ -1721,7 +1721,7 @@ class TestMusicTags(unittest.TestCase):
                 f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
                 f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
                 f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
-                f"Exisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
                 f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
             ),
             captured.out,
