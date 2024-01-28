@@ -1,11 +1,45 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.0] - 2024-01-28
 
 ### Added
 
 - Information about whether the song is an "Album version" or not is now parsed
   from the title of analyzed songs.
+- Add a section to the printed tags for tags that are not tracked by Retag
+  Opus. This gives the user the opportunity to manually modify or delete any tag
+  in the audio file.
+- Show values from original metadata of tags that will be deleted.
+- Add configuration file.
+- Add ability to configure tags that should always be deleted, or tag content,
+  the presence of which, should lead to the deletion of that tag.
+
+### Changed
+
+- Show metadata that was extracted from the original metadata above metadata
+  extracted from YouTube and above the original metadata. This metadata tends to
+  be the most accurate if it exists.
+- Make metadata that was extracted from the original metadata accepted by
+  default if the tag where it will be added to is empty.
+- Make regular expressions for extracting data from original metadata case
+  insensitive.
+
+### Fixed
+
+- Add comment tag about source of song only if the source has been verified.
+- Make sure tags that have been marked for deletion are actually deleted in the
+  audio file.
+- Do not add source metadata comment tag if it already exists.
+- When setting a manual album – so that any old or extracted album goes in the
+  `discsubtitle` tag instead – make sure that both are printed with the right
+  tag name in the tags printed during operation of the program.
+- Improve ability to extract artist and title from file name. This is only used
+  to show which song is being re-tagged, not to actually add tags to the file.
+- Fix and improve extraction of "featuring" artist.
+- Strip white space from beginning and end of tags when they are split.
+- Strip white space without treating it as a new tag for the users to approve.
+- Fix extraction of "remastered" versions.
+- Remove duplicate values in tags if there are any.
 
 ## [0.3.0] - 2022-05-30
 

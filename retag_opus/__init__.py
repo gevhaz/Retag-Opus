@@ -5,4 +5,4 @@ version is set.
 """
 from typing import Final
 
-__version__: Final[str] = "0.3.0"
+__version__: Final[str] = "0.4.0"

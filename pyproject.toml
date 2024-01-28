@@ -29,7 +29,7 @@ disable_error_code = ["import-untyped"]
 
 [tool.poetry]
 name = "retag_opus"
-version = "0.3.0"
+version = "0.4.0"
 description = "An app to tag music files downloaded from Youtube with all the information available in the Youtube description."
 authors = ["Simon Bengtsson <gevhaz@tutanota.com>"]
 license = "GPL-3.0-or-later"
