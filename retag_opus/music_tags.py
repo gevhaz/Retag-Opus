@@ -250,7 +250,8 @@ class MusicTags:
 
     def add_source_tag(self) -> None:
         """Add a comment tag with the value 'youtube-dl'."""
-        self.resolved["comment"] = self.original.get("comment", []) + ["youtube-dl"]
+        if any("youtube" in item for item in self.original.get("purl", [])):
+            self.resolved["comment"] = self.original.get("comment", []) + ["youtube-dl"]
 
     def get_field(self, field: str, only_new: bool = False) -> list[str]:
         """Get values for field from all sources.

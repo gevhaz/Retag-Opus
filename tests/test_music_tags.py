@@ -795,6 +795,7 @@ class TestMusicTags(unittest.TestCase):
     def test_add_source_tag(self) -> None:
         """Test that the "youtube-dl" source tag is added."""
         tags = MusicTags()
+        tags.original = {"purl": ["youtube.com"]}
         tags.resolved = {"date": ["2022-02-02"]}
         tags.add_source_tag()
         self.assertEqual(2, len(tags.resolved))
@@ -803,7 +804,7 @@ class TestMusicTags(unittest.TestCase):
     def test_preserve_original_comment_when_adding_source(self) -> None:
         """Test that source tag doesn't overwrite."""
         tags = MusicTags()
-        tags.original = {"comment": ["test"]}
+        tags.original = {"comment": ["test"], "purl": ["youtube.com"]}
         tags.resolved = {"date": ["2022-02-02"]}
         tags.add_source_tag()
         self.assertEqual(2, len(tags.resolved))
