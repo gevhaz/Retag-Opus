@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1] - 2024-01-28
+
+### Internal
+
+- Update deploy workflow to use Trusted Publisher technology. This doesn't
+  affect users.
+
 ## [0.4.0] - 2024-01-28
 
 ### Added
