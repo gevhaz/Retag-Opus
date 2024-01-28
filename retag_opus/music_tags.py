@@ -36,8 +36,8 @@ class MusicTags:
         self.fromdesc: Tags = {}
         self.resolved: Tags = {}
 
-    @staticmethod
     def print_metadata_key(
+        self,
         key_type: str,
         key: str,
         key_col: str,
@@ -51,6 +51,8 @@ class MusicTags:
         :param data: The tags from which to get the given key.
         """
         value = constants.SEP.join(data.get(key, ["Not found"])).replace(" ", constants.SPACE)
+        if self.resolved.get(key) == ["[Removed]"]:
+            key_type = f"{key_type} (Removed)"
         key_col = key_col if data.get(key) else Fore.BLACK
         print("  " + key_type + ": " + key_col + value + Fore.RESET)
 
@@ -64,9 +66,9 @@ class MusicTags:
             print("  Performers:")
             for tag_id, tag_data in self.performer_patterns.items():
                 if tag_id in metadata and metadata[tag_id] is not None:
-                    MusicTags.print_metadata_key(tag_data["print"], tag_id, col, metadata)
+                    self.print_metadata_key(tag_data["print"], tag_id, col, metadata)
         for tag_id, tag_data in self.base_patterns.items():
-            MusicTags.print_metadata_key(tag_data["print"], tag_id, col, metadata)
+            self.print_metadata_key(tag_data["print"], tag_id, col, metadata)
         print("")
 
     def get_tag_data(self, tag_id: str) -> list[str]:
@@ -179,7 +181,7 @@ class MusicTags:
                 resolved_tag = self.resolved.get(tag, [])
                 joined_tag_items = " | ".join(resolved_tag).replace("\n", " ")
                 if resolved_tag == REMOVED_TAG:
-                    self.print_metadata_key(f"- {tag}", tag, Fore.RED, self.resolved)
+                    self.print_metadata_key(f"- {tag}", tag, Fore.RED, self.original)
                 elif resolved_tag != self.original.get(tag):
                     self.print_metadata_key(f"- {tag}", tag, Fore.GREEN, self.resolved)
                 elif len(joined_tag_items) > 200:
@@ -194,7 +196,7 @@ class MusicTags:
                 all_sources_tag = self.get_tag_data(tag_id)
                 # If the user chose to remove a tag that existed before
                 if resolved_tag == REMOVED_TAG:
-                    self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
+                    self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.original)
                 # If the resolved tag differs from the original tag
                 elif resolved_tag != self.original.get(tag_id, []) and self.resolved.get(tag_id) is not None:
                     self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
@@ -207,7 +209,7 @@ class MusicTags:
             resolved_tag = self.resolved.get(tag_id, [])
             all_sources_tag = self.get_tag_data(tag_id)
             if resolved_tag == REMOVED_TAG:
-                self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.resolved)
+                self.print_metadata_key(tag_data["print"], tag_id, Fore.RED, self.original)
             elif resolved_tag != self.original.get(tag_id, []) and self.resolved.get(tag_id) is not None:
                 self.print_metadata_key(tag_data["print"], tag_id, Fore.GREEN, self.resolved)
             elif len(all_sources_tag) > 0 and print_all:
