@@ -102,6 +102,11 @@ def run(argv: Sequence[str] | None = None) -> int:
                 new_tags_parser.parse_tags()
                 tags.fromdesc = new_tags_parser.tags
 
+            # 4.5 Get rid of shady tags
+            tags_to_delete = config.get("tags_to_delete", [])
+            strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
+            tags.prune_resolved_tags(tags_to_delete, strings_to_delete_tags_based_on)
+
             if not tags.check_any_new_data_exists() and not args.manual_album:
                 print(Fore.YELLOW + "No new data exists. Skipping song." + Fore.RESET)
                 break
@@ -112,11 +117,6 @@ def run(argv: Sequence[str] | None = None) -> int:
             except UserExitException as e:
                 print(f"RetagOpus exited successfully: {e}")
                 return 0
-
-            # 4.5 Get rid of shady tags
-            tags_to_delete = config.get("tags_to_delete", [])
-            strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
-            tags.prune_resolved_tags(tags_to_delete, strings_to_delete_tags_based_on)
 
             # 5. Show user final result and ask if it should be saved or
             # retried, or song skipped
@@ -152,11 +152,9 @@ def run(argv: Sequence[str] | None = None) -> int:
                     case "[s] save":
                         for tag, data in tags.resolved.items():
                             if data == REMOVED_TAG:
-                                old_tags.pop(tag, None)
+                                old_metadata.pop(tag, None)  # type: ignore
                             else:
-                                old_tags[tag] = data
-                        for key, val in old_tags.items():
-                            old_metadata[key] = val
+                                old_metadata[tag] = data
                         old_metadata.save()
                         print(Fore.GREEN + f"Metadata saved for file: {file_name}")
                     case "[r] reset":
