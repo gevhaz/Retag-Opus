@@ -183,7 +183,7 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         f"\n  Lyricist: {Fore.BLACK}Not found{Fore.RESET}"
         f"\n\n{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}"
         f"\nYouTube description: {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
-        f"\nExisiting metadata:  {Fore.CYAN}artist 1{Fore.RESET}"
+        f"\nExisting metadata:  {Fore.CYAN}artist 1{Fore.RESET}"
         f"\nParsed from YouTube tags: {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}"
         f"\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
@@ -251,7 +251,7 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         f"\n\n{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}"
         f"\nYouTube description: {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
         f"\nParsed from original tags: {Fore.YELLOW}artist 1 | artist 2{Fore.RESET}"
-        f"\nExisiting metadata:  {Fore.CYAN}artist 1 and artist 2{Fore.RESET}"
+        f"\nExisting metadata:  {Fore.CYAN}artist 1 and artist 2{Fore.RESET}"
         f"\nParsed from YouTube tags: {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}"
         f"\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
