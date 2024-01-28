@@ -33,6 +33,7 @@ version = "0.4.0"
 description = "An app to tag music files downloaded from Youtube with all the information available in the Youtube description."
 authors = ["Simon Bengtsson <gevhaz@tutanota.com>"]
 license = "GPL-3.0-or-later"
+readme = "README.md"
 
 [tool.poetry.scripts]
 retag = "retag_opus.app:run"
