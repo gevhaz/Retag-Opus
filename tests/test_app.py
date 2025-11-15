@@ -669,6 +669,9 @@ def test_modify_tag_action(music_directory, monkeypatch, capsys):
     # Verify the action was taken
     assert exit_code == 0
     assert "Current metadata to save:" in output
+    # Verify the custom tag was added and appears in the output
+    assert "custom_key" in output
+    assert "custom_value" in output
     # The modify function prompts for key and value
     mock_input.assert_called()
 
