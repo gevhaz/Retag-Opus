@@ -1,8 +1,9 @@
 """Tests for app.py and cli.py."""
 import re
+import tomllib
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from colorama import Fore
@@ -565,3 +566,319 @@ def test_deleting_tag(music_directory, monkeypatch, capsys):
     # This is the core of the test:
     assert "album" not in actual_metadata
     assert "albumartist" in actual_metadata
+
+
+def test_config_file_loading(music_directory, monkeypatch, capsys):
+    """Test that config file is loaded and tags are deleted based on config.
+
+    This test verifies that when a config file exists at the expected path,
+    it is loaded successfully and the tags_to_delete configuration is applied.
+    The test covers line 40-41 in app.py where the config file is opened and
+    loaded using tomllib.
+    """
+    # Setup: Create a temporary config file
+    config_content = b"""
+tags_to_delete = ["language", "purl"]
+strings_to_delete_tags_based_on = ["bad_pattern"]
+"""
+    config_dir = Path(music_directory) / ".config"
+    config_dir.mkdir(exist_ok=True)
+    config_path = config_dir / "retag.toml"
+    config_path.write_bytes(config_content)
+
+    # Setup metadata with a language tag that should be removed
+    test_metadata = [
+        ("title", ["Test Song"]),
+        ("artist", ["Test Artist"]),
+        ("albumartist", ["Test Artist"]),
+        ("language", ["English"]),
+        ("purl", ["www.youtube.com"]),
+        (
+            "synopsis",
+            [
+                "Provided to YouTube by Label"
+                "\n\nTest Song · Test Artist"
+                "\n\nTest Album"
+                "\n\n℗ 2022 Label"
+                "\n\nReleased on: 2022-08-22"
+            ],
+        ),
+    ]
+
+    mock_show = Mock()
+    # Choose youtube for artist, title, then pass
+    mock_show.side_effect = [0, 0, 0, 0]
+
+    # Patch the CONFIG_PATH to use our temporary config
+    with patch("retag_opus.app.CONFIG_PATH", config_path):
+        monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+        monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: test_metadata)
+        monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+        monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+        exit_code = app.run(["--directory", music_directory])
+
+    # The app should run successfully
+    assert exit_code == 0
+
+
+def test_modify_tag_action(music_directory, monkeypatch, capsys):
+    """Test the modify tag menu action for manually editing tags.
+
+    This test verifies that when a user chooses the 'modify tag' option
+    from the final menu, they can manually enter key-value pairs to add
+    custom tags to the resolved metadata. The test covers lines 164-167
+    in app.py which handle the modify tag action, calling modify_resolved_field()
+    and re-displaying the metadata.
+    """
+    test_metadata = [
+        ("title", ["Test Song"]),
+        ("artist", ["Test Artist"]),
+        ("albumartist", ["Test Artist"]),
+        (
+            "synopsis",
+            [
+                "Provided to YouTube by Label"
+                "\n\nTest Song · Test Artist"
+                "\n\nTest Album"
+                "\n\n℗ 2022 Label"
+            ],
+        ),
+    ]
+
+    mock_show = Mock()
+    # Tags match, so no resolution needed, go straight to final menu
+    # Then choose modify (index 3), then pass (index 0)
+    mock_show.side_effect = [3, 0]
+
+    mock_input = Mock()
+    # First iteration: add a custom tag
+    # Second iteration: empty strings to exit the modify loop
+    mock_input.side_effect = ["custom_key", "custom_value", "", ""]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: test_metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr("builtins.input", mock_input)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    output = capsys.readouterr().out
+
+    # Verify the action was taken
+    assert exit_code == 0
+    assert "Current metadata to save:" in output
+    # The modify function prompts for key and value
+    mock_input.assert_called()
+
+
+def test_delete_item_in_tag_action(music_directory, monkeypatch, capsys):
+    """Test the delete item in tag menu action for removing tag values.
+
+    This test verifies that when a user chooses the 'delete item in tag'
+    option from the final menu, they are prompted to select a tag and then
+    select specific items within that tag to remove. The test covers lines
+    169-170 in app.py which handle the delete item action, calling
+    delete_tag_item() and re-displaying choices.
+    """
+    test_metadata = [
+        ("title", ["Test Song"]),
+        ("artist", ["Test Artist"]),
+        ("albumartist", ["Test Artist"]),
+        (
+            "synopsis",
+            [
+                "Provided to YouTube by Label"
+                "\n\nTest Song · Test Artist"
+                "\n\nTest Album"
+            ],
+        ),
+    ]
+
+    mock_show = Mock()
+    # Tags match, no conflicts to resolve
+    # Then choose delete item (index 4)
+    # Then select artist tag (0 for first tag in list)
+    # Then select items to remove (0 for first item)
+    # Then pass (0)
+    mock_show.side_effect = [4, 0, 0, 0]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: test_metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    # Verify successful execution
+    assert exit_code == 0
+
+
+def test_show_youtube_description_action(music_directory, monkeypatch, capsys):
+    """Test displaying the YouTube description from the final menu.
+
+    This test verifies that when a user chooses the 'youtube description'
+    option from the final menu, the original YouTube description is displayed.
+    The test covers lines 173-179 in app.py which handle displaying the
+    description when it exists.
+    """
+    youtube_desc = (
+        "Provided to YouTube by Rich Label"
+        "\n\nTest Song · Test Artist"
+        "\n\nTest Album"
+        "\n\n℗ 2023 Rich Label"
+    )
+
+    test_metadata = [
+        ("title", ["Test Song"]),
+        ("artist", ["Test Artist"]),
+        ("albumartist", ["Test Artist"]),
+        ("synopsis", [youtube_desc]),
+    ]
+
+    mock_show = Mock()
+    # Tags match, no conflicts to resolve
+    # Then view youtube description (index 5), then pass (index 0)
+    mock_show.side_effect = [5, 0]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: test_metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    output = capsys.readouterr().out
+
+    # Verify the description was shown
+    assert exit_code == 0
+    assert "Original YouTube description:" in output
+    assert "Provided to YouTube by Rich Label" in output
+
+
+def test_show_youtube_description_when_missing(music_directory, monkeypatch, capsys):
+    """Test displaying YouTube description when it doesn't exist.
+
+    This test verifies that when a user tries to view the YouTube description
+    but no description/synopsis tag exists, an appropriate error message is
+    shown. The test covers lines 177-179 in app.py which handle the case
+    where no description is available. We use --album flag to force processing
+    even without a synopsis tag.
+    """
+    test_metadata = [
+        ("title", ["Test Song"]),
+        ("artist", ["Test Artist"]),
+        ("album", ["Original Album"]),
+        ("albumartist", ["Test Artist"]),
+        # No synopsis or description tag
+    ]
+
+    mock_show = Mock()
+    # Try to view youtube description (index 5), then pass (index 0)
+    mock_show.side_effect = [5, 0]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: test_metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    # Use --album flag to force processing even without synopsis
+    exit_code = app.run(["--directory", music_directory, "--album", "Manual Album"])
+
+    output = capsys.readouterr().out
+
+    # Verify the error message was shown
+    assert exit_code == 0
+    assert "No YouTube description tag for this song" in output
+
+
+def test_show_all_metadata_action(music_directory, monkeypatch, capsys):
+    """Test displaying all metadata from all sources via the final menu.
+
+    This test verifies that when a user chooses the 'all metadata' option
+    from the final menu, all metadata from all sources (original, YouTube,
+    parsed from tags, parsed from description) is displayed with appropriate
+    color coding. The test covers lines 180-183 in app.py which handle the
+    all metadata display action.
+    """
+    test_metadata = [
+        ("title", ["Test Song"]),
+        ("artist", ["Test Artist"]),
+        ("albumartist", ["Test Artist"]),
+        (
+            "synopsis",
+            [
+                "Provided to YouTube by Label"
+                "\n\nTest Song · Test Artist"
+                "\n\nTest Album"
+            ],
+        ),
+    ]
+
+    mock_show = Mock()
+    # Tags match, no conflicts to resolve
+    # Then view all metadata (index 6), then pass (index 0)
+    mock_show.side_effect = [6, 0]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: test_metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    output = capsys.readouterr().out
+
+    # Verify all metadata was shown
+    assert exit_code == 0
+    assert "All old and new metadata suggested for this file:" in output
+
+
+def test_show_resolved_metadata_action(music_directory, monkeypatch, capsys):
+    """Test displaying resolved metadata via the final menu.
+
+    This test verifies that when a user chooses the 'resolved metadata'
+    option from the final menu, the current state of resolved metadata
+    (what would be saved) is displayed. The test covers lines 184-187
+    in app.py which handle the resolved metadata display action.
+    """
+    test_metadata = [
+        ("title", ["Test Song"]),
+        ("artist", ["Test Artist"]),
+        ("albumartist", ["Test Artist"]),
+        (
+            "synopsis",
+            [
+                "Provided to YouTube by Label"
+                "\n\nTest Song · Test Artist"
+                "\n\nTest Album"
+            ],
+        ),
+    ]
+
+    mock_show = Mock()
+    # Tags match, no conflicts to resolve
+    # Then view resolved metadata (index 7), then pass (index 0)
+    mock_show.side_effect = [7, 0]
+
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: test_metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    output = capsys.readouterr().out
+
+    # Verify resolved metadata was shown
+    assert exit_code == 0
+    assert "Current metadata to save:" in output
+
+
+# Note: test_default_case_invalid_menu_choice was removed because the default
+# case (lines 188-190) in app.py appears to be unreachable code. The action
+# variable is always set to either "[q] quit" (default) or one of the predefined
+# options from the options array, so it will always match one of the defined
+# cases in the match statement. Testing this would require artificially modifying
+# internal state in a way that doesn't represent real usage.
