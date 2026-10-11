@@ -1,5 +1,6 @@
 """Tests for app.py and cli.py."""
 import re
+import subprocess
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock
@@ -7,7 +8,6 @@ from unittest.mock import Mock
 import pytest
 from colorama import Fore
 from mutagen import oggopus
-from pydub import AudioSegment
 
 from retag_opus import app, utils
 
@@ -34,6 +34,28 @@ def music_directory():
         opus_file = Path(temp_dir) / "test.opus"
         opus_file.touch()
         yield temp_dir
+
+
+def create_silent_opus_file(path: Path) -> None:
+    """Write one second of silence encoded as opus to path using ffmpeg."""
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "anullsrc=r=48000:cl=mono",
+            "-t",
+            "1",
+            "-c:a",
+            "libopus",
+            str(path),
+        ],
+        check=True,
+    )
 
 
 def test_print_version(capsys):
@@ -441,10 +463,8 @@ def test_saving(music_directory, monkeypatch, capsys):
     monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
 
     # Create an opus file for testing saving
-    silence = AudioSegment.silent(duration=1000)
     test_opus_file_path = Path(music_directory) / "test.opus"
-    silence.export(test_opus_file_path, format="opus")
-    # Tags are not handled well by pydub so we fix it afterward:
+    create_silent_opus_file(test_opus_file_path)
     test_opus_file: oggopus.OggOpus = oggopus.OggOpus(test_opus_file_path)
     for tag_name, tag_value in original_metadata.items():
         test_opus_file[tag_name] = tag_value
@@ -526,10 +546,8 @@ def test_deleting_tag(music_directory, monkeypatch, capsys):
     monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
 
     # Create an opus file for testing saving
-    silence = AudioSegment.silent(duration=1000)
     test_opus_file_path = Path(music_directory) / "test.opus"
-    silence.export(test_opus_file_path, format="opus")
-    # Tags are not handled well by pydub so we fix it afterward:
+    create_silent_opus_file(test_opus_file_path)
     test_opus_file: oggopus.OggOpus = oggopus.OggOpus(test_opus_file_path)
     for tag_name, tag_value in original_metadata.items():
         test_opus_file[tag_name] = tag_value
