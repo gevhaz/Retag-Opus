@@ -10,6 +10,8 @@
 
 - Tags deleted because of the configuration are no longer restored when the
   YouTube description or parsed tags have the same value.
+- Look for the configuration file in `XDG_CONFIG_HOME`, as documented, instead
+  of `XDG_CONFIG_DIR`.
 
 ### Internal
 

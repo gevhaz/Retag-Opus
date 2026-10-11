@@ -99,6 +99,22 @@ def test_directory_not_found(capsys):
     assert re.match(r"^\x1b\[31m/this/does/not/exist/ is not a directory!\n", out)
 
 
+def test_config_path_from_xdg_config_home(monkeypatch):
+    """The configuration file is looked for in XDG_CONFIG_HOME."""
+    monkeypatch.setenv("XDG_CONFIG_HOME", "/some/config/dir")
+    assert app.get_config_path() == Path("/some/config/dir/retag.toml")
+
+
+@pytest.mark.parametrize("xdg_config_home", [None, ""])
+def test_config_path_default(monkeypatch, xdg_config_home):
+    """The configuration file is looked for in ~/.config by default."""
+    if xdg_config_home is None:
+        monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    else:
+        monkeypatch.setenv("XDG_CONFIG_HOME", xdg_config_home)
+    assert app.get_config_path() == Path.home() / ".config" / "retag.toml"
+
+
 def test_file_without_metadata(capsys, music_directory, monkeypatch):
     """If a file without metadata is found, say that and exit."""
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
