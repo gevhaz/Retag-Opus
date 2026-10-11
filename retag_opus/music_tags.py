@@ -358,6 +358,21 @@ class MusicTags:
 
         return new_content_exists
 
+    def keep_pruned_tags_removed(self, pruned_tags: list[str]) -> None:
+        """Remove pruned tags again if they were restored.
+
+        Resolving may set a pruned tag back to its original value, e.g.
+        when the YouTube description has the same value. Keep such tags
+        removed, unless a different value was chosen.
+
+        :param pruned_tags: Tags that were marked for removal before
+            resolving.
+        """
+        for tag_name in pruned_tags:
+            resolved_value = self.resolved.get(tag_name, [])
+            if Utils.is_equal_when_stripped(resolved_value, self.original.get(tag_name, [])):
+                self.resolved[tag_name] = REMOVED_TAG
+
     def determine_album_artist(self) -> None:
         """Choose value to use for albumartist tag."""
         all_artists = Utils.remove_duplicates(self.get_field("albumartist", only_new=True) + self.get_field("artist"))
@@ -485,6 +500,7 @@ class MusicTags:
         all_tags_with_new_data += [tag_name for tag_name in self.fromdesc.keys()]
         all_tags_with_new_data += [tag_name for tag_name in self.fromtags.keys()]
         all_tags_with_new_data = Utils.remove_duplicates(all_tags_with_new_data)
+        pruned_tags = [tag_name for tag_name, value in self.resolved.items() if value == REMOVED_TAG]
 
         for tag_name in all_tags_with_new_data:
             if tag_name == "albumartist":
@@ -572,4 +588,6 @@ class MusicTags:
                         case _:
                             raise UserExitException("Skipping this and all later songs")
 
+        self.keep_pruned_tags_removed(pruned_tags)
         self.determine_album_artist()
+        self.keep_pruned_tags_removed(pruned_tags)
