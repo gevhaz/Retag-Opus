@@ -132,6 +132,15 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song", Utils.prune_title(unpruned_title_13))
         self.assertEqual("A song", Utils.prune_title(unpruned_title_14))
 
+    def test_split_manual_value(self) -> None:
+        """Test splitting manually entered values."""
+        self.assertEqual(["genre 1", "genre 2"], Utils.split_manual_value("genre", "genre 1, genre 2"))
+        self.assertEqual(["genre 1", "genre 2"], Utils.split_manual_value("genre", "genre 1;genre 2"))
+        self.assertEqual(["genre 1", "genre 2"], Utils.split_manual_value("genre", "genre 1 | genre 2 |"))
+        self.assertEqual(["Drum & Bass"], Utils.split_manual_value("genre", "Drum & Bass"))
+        self.assertEqual(["Tyler, The Creator"], Utils.split_manual_value("artist", "Tyler, The Creator"))
+        self.assertEqual(["artist 1", "artist 2"], Utils.split_manual_value("artist", "artist 1 | artist 2"))
+
     def test_split_tags(self) -> None:
         """Test that tags are split at given characters and pruned."""
         unsplit_tag_1 = "an artist and another artist"

@@ -39,6 +39,26 @@ class Utils:
         return split_pruned_tags
 
     @staticmethod
+    def split_manual_value(tag_name: str, value: str) -> list[str]:
+        """Split a manually entered value into the values of a tag.
+
+        The sequence ' | ' separates values in all tags, like when tags
+        are printed. Genres can also be separated by commas and
+        semicolons, since genres, unlike e.g. artists and titles, don't
+        contain them.
+
+        :param tag_name: The tag the value is entered for.
+        :param value: The value entered by the user.
+
+        :return: The values of the tag.
+        """
+        if tag_name == "genre":
+            values = re.split(r"\s*[,;|]\s*", value)
+        else:
+            values = value.split(" | ")
+        return [v.strip() for v in values if v.strip()]
+
+    @staticmethod
     def file_path_to_song_data(file_path: Path) -> str:
         """Convert file name to readable string.
 

@@ -275,11 +275,11 @@ class MusicTags:
         key = " "
         val = " "
         while key and val:
-            print("Enter key and value (newline cancels, sequence ' | ' splits tag):")
+            print("Enter key and value (newline cancels, sequence ' | ' splits tag, and for genre also ',' and ';'):")
             key = input("  Key: ")
             val = input("  Value: ")
             if key and val:
-                self.resolved[key] = val.split(" | ")
+                self.resolved[key] = Utils.split_manual_value(key, val)
 
     def delete_tag_item(self) -> None:
         """Present a menu for removing tags and remove selected ones.
@@ -445,7 +445,7 @@ class MusicTags:
             case "[m] Manually fill in tag":
                 manual_tag = input("Value: ")
                 if manual_tag:
-                    self.resolved[tag_name] = [manual_tag]
+                    self.resolved[tag_name] = Utils.split_manual_value(tag_name, manual_tag)
                 else:
                     print("No input, not changing tag")
                     return True

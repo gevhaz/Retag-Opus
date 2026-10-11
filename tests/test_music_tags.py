@@ -1023,8 +1023,8 @@ class TestMusicTags(unittest.TestCase):
     def test_modify_resolved_field(self, mock_input: MagicMock) -> None:
         """Test modifying a field.
 
-        If the user gives a comma-seperated list of artists, it should
-        be split.
+        If the user gives a list of artists separated by ' | ', it
+        should be split.
         """
         mock_input.side_effect = ["artist", "artist 3 | artist 4", "", ""]
         tags = MusicTags()
@@ -1289,6 +1289,12 @@ class TestMusicTags(unittest.TestCase):
 
         self.assertFalse(repeat)
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
+
+        mock_input.return_value = "genre 1, genre 2"
+        repeat = tags.manually_adjust_tag_when_resolving("genre")
+
+        self.assertFalse(repeat)
+        self.assertEqual(["genre 1", "genre 2"], tags.resolved.get("genre"))
 
         tags.resolved = {}
         mock_input.return_value = ""
