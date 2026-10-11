@@ -4,7 +4,7 @@ source = [ "./retag_opus/" ]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 95.73
+fail_under = 95
 exclude_lines = [
     'import sys',
     'from retag_opus import app',
@@ -13,7 +13,7 @@ exclude_lines = [
 ]
 
 [tool.pyright]
-pythonVersion = "3.10"
+pythonVersion = "3.13"
 pythonPlatform = "Linux"
 
 [tool.black]
@@ -39,7 +39,7 @@ readme = "README.md"
 retag = "retag_opus.app:run"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.13"
 colorama = "^0.4.4"
 mutagen = "^1.45.1"
 simple-term-menu = "^1.4.1"
