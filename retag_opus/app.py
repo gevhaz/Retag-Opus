@@ -35,6 +35,14 @@ def get_config_path() -> Path:
     return Path(config_dir) / "retag.toml"
 
 
+def get_description(tags: Tags) -> list[str] | None:
+    """Get the YouTube description from the tags, if there is one."""
+    description_lines = tags.get("synopsis")
+    if description_lines is None:
+        description_lines = tags.get("description")
+    return description_lines
+
+
 def run(argv: Sequence[str] | None = None) -> int:
     """Run all the functionality of the app."""
     args = Cli.parse_arguments(argv)
@@ -89,9 +97,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                 tags.resolved["album"] = [args.manual_album]
 
             # 2. Get description
-            description_lines: list[str] | None = old_tags.get("synopsis")
-            if description_lines is None:
-                description_lines = old_tags.get("description")
+            description_lines = get_description(old_tags)
 
             # 3. If description exists, send it to be parsed
             if description_lines:
