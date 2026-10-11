@@ -19,7 +19,7 @@ class Cli:
         shtab.add_argument_to(parser, ["-s", "--print-completion"])
 
         parser.add_argument(
-            "-b",
+            "-a",
             "--album",
             action="store",
             required=False,

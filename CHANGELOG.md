@@ -5,6 +5,7 @@
 ### Changed
 
 - Python 3.13 or newer is now required.
+- The short option for `--album` is now `-a` instead of `-b`.
 
 ### Removed
 

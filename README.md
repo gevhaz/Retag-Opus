@@ -30,6 +30,8 @@ options:
 -h, --help            show this help message and exit
 -s {bash,zsh,tcsh}, --print-completion {bash,zsh,tcsh}
                       print shell completion script
+-a MANUAL_ALBUM, --album MANUAL_ALBUM
+                      Manually sets the album tag to the given value and puts any parsed album in the discsubtitle tag
 -d DIR, --directory DIR
                       directory in which the files to be retagged are located
 -V, --version         show program's version number and exit
