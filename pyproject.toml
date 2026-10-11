@@ -49,16 +49,13 @@ shtab = "^1.5.4"
 black = "^22.3.0"
 isort = "^5.10.1"
 mypy = "^1.6.0"
-flake8 = "^4.0.1"
+flake8 = "^7.1"
 flake8-docstrings = "^1.6.0"
-coverage = "^6.4.4"
-pytest-cov = "^3.0.0"
+coverage = "^7.6"
+pytest-cov = "^6.0"
 mock = "^4.0.3"
 types-mock = "^4.0.15"
 pytest = "^7.2.2"
-
-[tool.poetry.group.dev-dependencies.dependencies]
-pydub = "^0.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

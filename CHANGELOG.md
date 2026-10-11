@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Internal
+
+- Run CI and deployment on Python 3.13.
+- Drop the pydub test dependency, which doesn't work on Python 3.13, and
+  generate the test audio file with ffmpeg directly instead.
+- Update flake8, coverage and pytest-cov to versions that work on Python 3.12+.
+
 ## [0.4.1] - 2024-01-28
 
 ### Internal
