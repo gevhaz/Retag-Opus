@@ -153,6 +153,24 @@ def test_file_with_no_new_metadata(capsys, music_directory, monkeypatch):
     assert actual_output == expected_output
 
 
+def test_file_without_description_has_existing_tags_parsed(capsys, music_directory, monkeypatch):
+    """Existing tags are parsed for a file without description."""
+    mock_show = Mock()
+    # Select the title parsed from the original tags, then "Pass"
+    mock_show.side_effect = [0, 0]
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: [("title", ["Song (Live)"])])
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    exit_code = app.run(["--directory", music_directory])
+
+    actual_output, _ = capsys.readouterr()
+    assert exit_code == 0
+    assert "Version: No value exists in metadata. Using parsed data: ['Live']." in actual_output
+    assert actual_output.endswith(f"{Fore.YELLOW}Pass. Skipping song: test\n")
+
+
 def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
     """File with description and original data should handle conflict.
 
