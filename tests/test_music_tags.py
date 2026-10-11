@@ -1,6 +1,7 @@
 """Tests for music_tags.py."""
 import sys
 import unittest
+from copy import deepcopy
 from unittest.mock import MagicMock
 
 import pytest
@@ -1889,6 +1890,51 @@ class TestMusicTags(unittest.TestCase):
 
         self.assertEqual(["artist 2"], tags.resolved.get("artist"))
         self.assertEqual(["artist 2"], tags.resolved.get("albumartist"))
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_album_tags(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+    ) -> None:
+        """Test that album level tags from an earlier song are not asked about.
+
+        Album level tags chosen for an earlier song on the same album should
+        be used even if they differ from the sources, and only the other
+        tags should be asked about.
+        """
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.side_effect = [0]  # Youtube artist
+
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"], "genre": ["genre 1"]}
+        tags.youtube = {"artist": ["artist 2", "artist 3"], "album": ["album 1"], "date": ["2020-01-01"]}
+        tags.fromtags = {"genre": ["genre 1", "Instrumental"]}
+        tags.resolved = deepcopy(tags.original)
+        tags.apply_album_level_tags(
+            {"albumartist": ["artist 3"], "genre": ["genre 2"], "album": ["Album 1"], "date": ["2019-01-01"]}
+        )
+
+        tags.resolve_metadata()
+
+        mock_show.assert_called_once()
+        self.assertEqual(["artist 2", "artist 3"], tags.resolved.get("artist"))
+        self.assertEqual(["artist 3"], tags.resolved.get("albumartist"))
+        self.assertEqual(["genre 2"], tags.resolved.get("genre"))
+        self.assertEqual(["Album 1"], tags.resolved.get("album"))
+        self.assertEqual(["2019-01-01"], tags.resolved.get("date"))
+
+    def test_get_album_level_tags(self) -> None:
+        """Test that only set and not removed album level tags are returned."""
+        tags = MusicTags()
+        tags.resolved = {
+            "title": ["title 1"],
+            "album": ["album 1"],
+            "albumartist": ["artist 1"],
+            "genre": ["[Removed]"],
+        }
+        self.assertEqual({"album": ["album 1"], "albumartist": ["artist 1"]}, tags.get_album_level_tags())
 
     @patch("retag_opus.music_tags.MusicTags.manually_adjust_tag_when_resolving")
     @patch("retag_opus.utils.TerminalMenu.__init__")
