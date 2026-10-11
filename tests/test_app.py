@@ -293,7 +293,7 @@ def test_setting_manual_album(capsys, music_directory, monkeypatch):
     mock_show = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 1, 0, 1, 0]
+    mock_show.side_effect = [0, 1, 1, 0]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -319,7 +319,7 @@ def test_pass(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, 0, 0]
+    mock_show.side_effect = [0, 0, 0, 0]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -348,7 +348,7 @@ def test_quit_through_escape(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, 0, None]
+    mock_show.side_effect = [0, 0, 0, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -380,7 +380,7 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, 0, 2, None]
+    mock_show.side_effect = [0, 0, 0, 2, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -442,7 +442,7 @@ def test_saving(music_directory, monkeypatch, capsys):
     # Manually selected
     expected_metadata["title"] = ["Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"]  # Chose "youtube"
     expected_metadata["artist"] = ["The Global", "Ben Ivor"]  # Chose "youtube"
-    expected_metadata["albumartist"] = ["The Global"]  # Chose the second alternative
+    expected_metadata["albumartist"] = ["The Global"]  # Chose the first alternative
     # Automatically resolved
     expected_metadata["comment"] = ["youtube-dl"]
     expected_metadata["date"] = ["2029-08-22"]
@@ -457,7 +457,7 @@ def test_saving(music_directory, monkeypatch, capsys):
     # Second: Choose youtube for 'title'
     # Third: Select album artist "The Global"
     # Fourth: Save file
-    mock_show.side_effect = [0, 0, 0, 1, 1]
+    mock_show.side_effect = [0, 0, 0, 1]
 
     monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
     monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
@@ -522,7 +522,7 @@ def test_deleting_tag(music_directory, monkeypatch, capsys):
     # Manually selected
     expected_metadata["title"] = ["Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"]  # Chose "youtube"
     expected_metadata["artist"] = ["The Global", "Ben Ivor"]  # Chose "youtube"
-    expected_metadata["albumartist"] = ["The Global"]  # Chose the second alternative
+    expected_metadata["albumartist"] = ["The Global"]  # Chose the first alternative
     # Automatically resolved
     expected_metadata["comment"] = ["youtube-dl"]
     expected_metadata["date"] = ["2029-08-22"]
@@ -535,12 +535,11 @@ def test_deleting_tag(music_directory, monkeypatch, capsys):
     # First: Choose youtube for 'artist'
     # Second: Choose youtube for 'title'
     # Third: Select album artist "The Global"
-    # Fourth: Select album artist from list
-    # Fifth: delete tag
-    # Sixth: Select album
-    # Seventh: Delete the only tag
-    # Eigth: Save file
-    mock_show.side_effect = [0, 0, 0, 1, 4, 0, 0, 1]
+    # Fourth: delete tag
+    # Fifth: Select album
+    # Sixth: Delete the only tag
+    # Seventh: Save file
+    mock_show.side_effect = [0, 0, 0, 4, 0, 0, 1]
 
     monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
     monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)

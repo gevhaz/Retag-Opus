@@ -360,7 +360,7 @@ class MusicTags:
 
     def determine_album_artist(self) -> None:
         """Choose value to use for albumartist tag."""
-        all_artists = self.get_field("artist")
+        all_artists = Utils.remove_duplicates(self.get_field("albumartist", only_new=True) + self.get_field("artist"))
         resolved_artist = self.resolved.get("artist")
         original_artist = self.original.get("artist")
 
@@ -487,13 +487,15 @@ class MusicTags:
         all_tags_with_new_data = Utils.remove_duplicates(all_tags_with_new_data)
 
         for tag_name in all_tags_with_new_data:
+            if tag_name == "albumartist":
+                continue  # Handled by determine_album_artist
             old_value = self.original.get(tag_name, [])
             yt_value = self.youtube.get(tag_name, [])
             from_desc_value = self.fromdesc.get(tag_name, [])
             from_tags_value = self.fromtags.get(tag_name, [])
             all_values = self.get_field(tag_name, only_new=True)
 
-            if not old_value and len(all_values) > 0 and tag_name != "albumartist":
+            if not old_value and len(all_values) > 0:
                 if len(yt_value) > 0:
                     self.resolved[tag_name] = yt_value
                 elif len(from_tags_value) > 0:
