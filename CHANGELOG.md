@@ -6,6 +6,11 @@
 
 - Python 3.13 or newer is now required.
 
+### Fixed
+
+- Tags deleted because of the configuration are no longer restored when the
+  YouTube description or parsed tags have the same value.
+
 ### Internal
 
 - Run CI and deployment on Python 3.13.

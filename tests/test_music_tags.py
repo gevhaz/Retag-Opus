@@ -1436,6 +1436,43 @@ class TestMusicTags(unittest.TestCase):
         tags.resolve_metadata()
         self.assertEqual({"artist": ["artist 1"], "albumartist": ["artist 1"]}, tags.resolved)
 
+    def test_resolve_metadata_keeps_pruned_tag_removed(self) -> None:
+        """Test that a pruned tag isn't restored by a matching source.
+
+        If the YouTube description has the same value as a tag that has
+        been pruned, resolving shouldn't set the tag back to that value.
+        """
+        tags = MusicTags()
+        tags.original = {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]}
+        tags.resolved = {"artist": ["[Removed]"], "albumartist": ["[Removed]"]}
+        tags.youtube = {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]}
+
+        tags.resolve_metadata()
+        self.assertEqual({"artist": ["[Removed]"], "albumartist": ["[Removed]"]}, tags.resolved)
+
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_replaces_pruned_tag_with_new_value(
+        self, mock_show: MagicMock, mock_init: MagicMock
+    ) -> None:
+        """Test that a pruned tag can be replaced by a different value.
+
+        Choosing the original value of a pruned tag, here for the album
+        artist, should still result in the tag being removed.
+        """
+        mock_init.return_value = None
+        # Choose "YouTube description" for artist, then "Junk Artist" as
+        # album artist
+        mock_show.side_effect = [0, 0]
+        tags = MusicTags()
+        tags.original = {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]}
+        tags.resolved = {"artist": ["[Removed]"], "albumartist": ["[Removed]"]}
+        tags.youtube = {"artist": ["Real Artist"]}
+
+        tags.resolve_metadata()
+        self.assertEqual(["Real Artist"], tags.resolved.get("artist"))
+        self.assertEqual(["[Removed]"], tags.resolved.get("albumartist"))
+
     def test_resolve_metadata_empty_tag(self) -> None:
         """Test that empty tags in original tags are skipped."""
         # Parsed from description
