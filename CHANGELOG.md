@@ -6,6 +6,11 @@
 
 - Python 3.13 or newer is now required.
 
+### Removed
+
+- The `-a`/`--all` option. It never did anything: existing tags are parsed for
+  all songs, whether or not they have a YouTube description.
+
 ### Fixed
 
 - Tags deleted because of the configuration are no longer restored when the

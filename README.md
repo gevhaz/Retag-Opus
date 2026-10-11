@@ -30,7 +30,6 @@ options:
 -h, --help            show this help message and exit
 -s {bash,zsh,tcsh}, --print-completion {bash,zsh,tcsh}
                       print shell completion script
--a, --all             Even if there is no YouTube description, suggest improving existing tags
 -d DIR, --directory DIR
                       directory in which the files to be retagged are located
 -V, --version         show program's version number and exit

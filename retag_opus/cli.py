@@ -19,15 +19,6 @@ class Cli:
         shtab.add_argument_to(parser, ["-s", "--print-completion"])
 
         parser.add_argument(
-            "-a",
-            "--all",
-            action="store_true",
-            default=False,
-            dest="fix_descriptionless",
-            help="Even if there is no YouTube description, suggest improving existing tags",
-        )
-
-        parser.add_argument(
             "-b",
             "--album",
             action="store",
