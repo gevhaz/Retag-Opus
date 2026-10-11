@@ -28,8 +28,11 @@ init(autoreset=True)
 
 Tags = dict[str, list[str]]
 
-CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_DIR", Path.home() / ".config"))
-CONFIG_PATH = CONFIG_DIR / "retag.toml"
+
+def get_config_path() -> Path:
+    """Return the path to the configuration file."""
+    config_dir = os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config"
+    return Path(config_dir) / "retag.toml"
 
 
 def run(argv: Sequence[str] | None = None) -> int:
@@ -37,7 +40,7 @@ def run(argv: Sequence[str] | None = None) -> int:
     args = Cli.parse_arguments(argv)
     music_dir = Path(args.dir).resolve()
     try:
-        with open(CONFIG_PATH, "rb") as f:
+        with open(get_config_path(), "rb") as f:
             config = tomllib.load(f)
     except FileNotFoundError:
         config = {}
