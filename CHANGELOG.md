@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- For songs from the same album, the album artist, date, genre and album only
+  have to be chosen once.
+
 ### Changed
 
 - Python 3.13 or newer is now required.

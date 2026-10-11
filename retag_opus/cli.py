@@ -38,6 +38,15 @@ class Cli:
         ).complete = shtab.DIRECTORY  # type: ignore
 
         parser.add_argument(
+            "-i",
+            "--individual",
+            action="store_true",
+            default=False,
+            dest="individual",
+            help="Choose album level tags separately for each song, even for songs that are from the same album",
+        )
+
+        parser.add_argument(
             "-V",
             "--version",
             action="version",

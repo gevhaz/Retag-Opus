@@ -14,6 +14,9 @@ Tags = dict[str, list[str]]
 
 REMOVED_TAG: Final[list[str]] = ["[Removed]"]
 
+# Tags that should have the same value for all songs on an album
+ALBUM_LEVEL_TAGS: Final[list[str]] = ["album", "albumartist", "date", "genre"]
+
 
 class MusicTags:
     """Store tags from different sources for a song.
@@ -35,6 +38,7 @@ class MusicTags:
         self.fromtags: Tags = {}
         self.fromdesc: Tags = {}
         self.resolved: Tags = {}
+        self.album_level_tags: Tags = {}
 
     def print_metadata_key(
         self,
@@ -373,6 +377,28 @@ class MusicTags:
             if Utils.is_equal_when_stripped(resolved_value, self.original.get(tag_name, [])):
                 self.resolved[tag_name] = REMOVED_TAG
 
+    def apply_album_level_tags(self, album_level_tags: Tags) -> None:
+        """Use album level tags chosen for an earlier song on the same album.
+
+        The given tags are put in resolved and won't be asked about when
+        resolving the metadata.
+
+        :param album_level_tags: Tags previously chosen for the album.
+        """
+        self.album_level_tags = deepcopy(album_level_tags)
+        self.resolved.update(deepcopy(album_level_tags))
+
+    def get_album_level_tags(self) -> Tags:
+        """Get the resolved tags that should be the same for the album.
+
+        :return: The resolved album level tags, except removed ones.
+        """
+        return {
+            tag: self.resolved[tag].copy()
+            for tag in ALBUM_LEVEL_TAGS
+            if self.resolved.get(tag) and self.resolved[tag] != REMOVED_TAG
+        }
+
     def determine_album_artist(self) -> None:
         """Choose value to use for albumartist tag."""
         all_artists = Utils.remove_duplicates(self.get_field("albumartist", only_new=True) + self.get_field("artist"))
@@ -502,9 +528,17 @@ class MusicTags:
         all_tags_with_new_data = Utils.remove_duplicates(all_tags_with_new_data)
         pruned_tags = [tag_name for tag_name, value in self.resolved.items() if value == REMOVED_TAG]
 
+        for tag_name in self.album_level_tags.keys():
+            print(
+                Fore.GREEN + f"{tag_name.title()}: Using value from earlier song on the same album: "
+                f"{self.album_level_tags[tag_name]}." + Fore.RESET
+            )
+
         for tag_name in all_tags_with_new_data:
             if tag_name == "albumartist":
                 continue  # Handled by determine_album_artist
+            if tag_name in self.album_level_tags:
+                continue
             old_value = self.original.get(tag_name, [])
             yt_value = self.youtube.get(tag_name, [])
             from_desc_value = self.fromdesc.get(tag_name, [])
@@ -589,5 +623,6 @@ class MusicTags:
                             raise UserExitException("Skipping this and all later songs")
 
         self.keep_pruned_tags_removed(pruned_tags)
-        self.determine_album_artist()
-        self.keep_pruned_tags_removed(pruned_tags)
+        if "albumartist" not in self.album_level_tags:
+            self.determine_album_artist()
+            self.keep_pruned_tags_removed(pruned_tags)

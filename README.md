@@ -34,6 +34,7 @@ options:
                       Manually sets the album tag to the given value and puts any parsed album in the discsubtitle tag
 -d DIR, --directory DIR
                       directory in which the files to be retagged are located
+-i, --individual      Choose album level tags separately for each song, even for songs that are from the same album
 -V, --version         show program's version number and exit
 ```
 
@@ -61,6 +62,15 @@ available. Here is an example of what it can look like:
 As you can see, you can remove tags, which will make them print
 "[Removed]" in red text. In the actual song metadata, they will just be
 removed.
+
+## Albums
+
+Songs whose YouTube descriptions have the same album are considered to be from
+the same album, and so are all songs if you set the album with `--album`. For
+those songs, the album artist, date, genre and album are only chosen once: when
+you save one of them, they are saved for all of them, including songs that
+were skipped or passed earlier. Use `--individual` to choose them for every
+song.
 
 ## Configuration
 

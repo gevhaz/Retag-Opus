@@ -43,6 +43,76 @@ def get_description(tags: Tags) -> list[str] | None:
     return description_lines
 
 
+def get_album(file_path: Path) -> str | None:
+    """Get the album of a song from its YouTube description.
+
+    :param file_path: The song to get the album for.
+
+    :return: The album, or None if the description doesn't have one.
+    """
+    old_tags: Tags = dict(OggOpus(file_path).items())  # type: ignore
+    description_lines = get_description(old_tags)
+    if not description_lines:
+        return None
+    desc_parser = DescriptionParser()
+    desc_parser.parse("\n".join(description_lines))
+    album = desc_parser.tags.get("album", [""])[0].strip()
+    return album or None
+
+
+def group_by_album(files: list[Path], manual_album: str | None) -> dict[Path, str]:
+    """Find out which songs are on the same album as another song.
+
+    Songs with the same album name (ignoring case) in the YouTube
+    description are considered to be from the same album. If the album
+    has been set manually, all songs are.
+
+    :param files: All songs to be retagged.
+    :param manual_album: The album set by the user, if any.
+
+    :return: Album name for each song that shares album with another.
+    """
+    albums: dict[Path, str | None]
+    if manual_album is not None:
+        albums = {file_path: manual_album for file_path in files}
+    else:
+        albums = {file_path: get_album(file_path) for file_path in files}
+
+    songs_per_album: dict[str, list[Path]] = {}
+    for file_path, album in albums.items():
+        if album is not None:
+            songs_per_album.setdefault(album.casefold(), []).append(file_path)
+
+    groups: dict[Path, str] = {}
+    for album_key, songs in songs_per_album.items():
+        if len(songs) > 1:
+            print(
+                Fore.BLUE + f"{len(songs)} songs are from the album '{albums[songs[0]]}'. Album artist, date, genre "
+                "and album saved for one of them will be saved for all of them." + Fore.RESET
+            )
+            for file_path in songs:
+                groups[file_path] = album_key
+    return groups
+
+
+def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
+    """Set the album level tags of other songs on the same album.
+
+    :param files: The songs to update.
+    :param album_level_tags: The album level tags to set.
+    """
+    for file_path in files:
+        metadata: OggOpus = OggOpus(file_path)  # type: ignore
+        changed = False
+        for tag, value in album_level_tags.items():
+            if metadata.get(tag) != value:  # type: ignore
+                metadata[tag] = value
+                changed = True
+        if changed:
+            metadata.save()
+            print(Fore.GREEN + f"Album level tags saved for file: {Utils().file_path_to_song_data(file_path)}")
+
+
 def run(argv: Sequence[str] | None = None) -> int:
     """Run all the functionality of the app."""
     args = Cli.parse_arguments(argv)
@@ -61,8 +131,14 @@ def run(argv: Sequence[str] | None = None) -> int:
         print(Fore.YELLOW + f"There appears to be no .opus files in the provided directory {args.dir}")
         return 0
 
+    albums: dict[Path, str] = {}
+    if not args.individual:
+        albums = group_by_album(all_files, args.manual_album)
+    album_level_tags: dict[str, Tags] = {}
+
     for idx, file_path in enumerate(all_files):
         redo = True
+        album = albums.get(file_path)
         file_name = Utils().file_path_to_song_data(file_path)
         while redo:
             redo = False
@@ -116,6 +192,11 @@ def run(argv: Sequence[str] | None = None) -> int:
             strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
             tags.prune_resolved_tags(tags_to_delete, strings_to_delete_tags_based_on)
 
+            # 4.6 Use the same album level tags as for earlier songs on
+            # the same album
+            if album is not None and album in album_level_tags:
+                tags.apply_album_level_tags(album_level_tags[album])
+
             if not tags.check_any_new_data_exists() and not args.manual_album:
                 print(Fore.YELLOW + "No new data exists. Skipping song." + Fore.RESET)
                 break
@@ -166,6 +247,10 @@ def run(argv: Sequence[str] | None = None) -> int:
                                 old_metadata[tag] = data
                         old_metadata.save()
                         print(Fore.GREEN + f"Metadata saved for file: {file_name}")
+                        if album is not None:
+                            album_level_tags[album] = tags.get_album_level_tags()
+                            other_songs = [f for f, a in albums.items() if a == album and f != file_path]
+                            update_album_level_tags(other_songs, album_level_tags[album])
                     case "[r] reset":
                         print(f"Trying to improve metadata again for file: {file_name}")
                         redo = True

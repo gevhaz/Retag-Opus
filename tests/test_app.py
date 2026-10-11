@@ -616,3 +616,192 @@ def test_deleting_tag(music_directory, monkeypatch, capsys):
     # This is the core of the test:
     assert "album" not in actual_metadata
     assert "albumartist" in actual_metadata
+
+
+def album_song_metadata(title: str, album: str, genre: str, date: str = "2029-08-22") -> dict[str, list[str]]:
+    """Create metadata for a song with a YouTube description."""
+    return {
+        "title": [title],
+        "genre": [genre],
+        "synopsis": [
+            "Provided to YouTube by Rich Men's Group Digital Ltd."
+            f"\n\n{title} · The Global · Ben Ivor"
+            f"\n\n{album}"
+            f"\n\nReleased on: {date}"
+        ],
+    }
+
+
+def write_opus_file(path: Path, metadata: dict[str, list[str]]) -> None:
+    """Write an opus file with the given metadata."""
+    create_silent_opus_file(path)
+    opus_file: oggopus.OggOpus = oggopus.OggOpus(path)
+    for tag_name, tag_value in metadata.items():
+        opus_file[tag_name] = tag_value
+    opus_file.save()
+
+
+def test_group_by_album(capsys):
+    """Songs with the same album in the description are grouped.
+
+    The album tag isn't used, and setting the album with --album puts
+    all songs in the same group.
+    """
+    with TemporaryDirectory() as temp_dir:
+        first = Path(temp_dir) / "first.opus"
+        second = Path(temp_dir) / "second.opus"
+        single = Path(temp_dir) / "single.opus"
+        no_description_1 = Path(temp_dir) / "no_description_1.opus"
+        no_description_2 = Path(temp_dir) / "no_description_2.opus"
+        write_opus_file(first, album_song_metadata("Song 1", "The Album", "Pop") | {"album": ["My Album"]})
+        write_opus_file(second, album_song_metadata("Song 2", "the album", "Rock") | {"album": ["My Album"]})
+        write_opus_file(single, album_song_metadata("Single", "Single", "Pop") | {"album": ["My Album"]})
+        write_opus_file(no_description_1, {"title": ["Song 3"], "album": ["My Album"]})
+        write_opus_file(no_description_2, {"title": ["Song 4"], "album": ["My Album"]})
+
+        groups = app.group_by_album([first, second, single, no_description_1, no_description_2], None)
+        manual_groups = app.group_by_album([first, single, no_description_1], "Manual")
+
+    assert groups == {first: "the album", second: "the album"}
+    assert manual_groups == {first: "manual", single: "manual", no_description_1: "manual"}
+    out, _ = capsys.readouterr()
+    assert out == (
+        f"{Fore.BLUE}2 songs are from the album 'The Album'. Album artist, date, genre and album saved for "
+        f"one of them will be saved for all of them.{Fore.RESET}\n"
+        f"{Fore.BLUE}3 songs are from the album 'Manual'. Album artist, date, genre and album saved for "
+        f"one of them will be saved for all of them.{Fore.RESET}\n"
+    )
+
+
+def test_manual_album(monkeypatch):
+    """Songs put in one album with --album share album level tags.
+
+    Even though the songs are from different albums according to the
+    descriptions, the album artist, date and genre of the first song
+    should be used for the second song.
+    """
+    # First song: Youtube artist, album artist "The Global", save
+    # Second song: Youtube artist, save
+    choices = [0, 0, 1, 0, 1]
+    mock_show = Mock(side_effect=choices)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    with TemporaryDirectory() as temp_dir:
+        first = Path(temp_dir) / "first.opus"
+        second = Path(temp_dir) / "second.opus"
+        write_opus_file(first, album_song_metadata("Song 1", "Single 1", "Pop") | {"artist": ["The Global"]})
+        write_opus_file(
+            second, album_song_metadata("Song 2", "Single 2", "Rock", "2030-01-01") | {"artist": ["The Global"]}
+        )
+        # Process the files in a known order
+        monkeypatch.setattr(Path, "glob", lambda *_: iter([first, second]))
+
+        exit_code = app.run(["--directory", temp_dir, "--album", "My Album"])
+
+        first_metadata = oggopus.OggOpus(first)
+        second_metadata = oggopus.OggOpus(second)
+
+    assert exit_code == 0
+    assert mock_show.call_count == len(choices)
+    assert first_metadata["album"] == ["My Album"]
+    assert second_metadata["album"] == ["My Album"]
+    assert first_metadata["discsubtitle"] == ["Single 1"]
+    assert second_metadata["discsubtitle"] == ["Single 2"]
+    assert first_metadata["albumartist"] == ["The Global"]
+    assert second_metadata["albumartist"] == ["The Global"]
+    assert first_metadata["genre"] == ["Pop"]
+    assert second_metadata["genre"] == ["Pop"]
+    assert first_metadata["date"] == ["2029-08-22"]
+    assert second_metadata["date"] == ["2029-08-22"]
+
+
+@pytest.mark.parametrize("individual", [False, True])
+def test_saving_album(monkeypatch, capsys, individual):
+    """Album level tags saved for one song should be used for the rest.
+
+    For the second song on the same album, album artist is not asked
+    for, and the date and genre from the first song are used, unless
+    the user asked to handle each song individually.
+    """
+    mock_show = Mock()
+    if individual:
+        # First song: Youtube artist, album artist "The Global", save
+        # Second song: Youtube artist, album artist "Ben Ivor", save
+        choices = [0, 0, 1, 0, 1, 1]
+    else:
+        # First song: Youtube artist, album artist "The Global", save
+        # Second song: Youtube artist, save
+        choices = [0, 0, 1, 0, 1]
+    mock_show.side_effect = choices
+
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    with TemporaryDirectory() as temp_dir:
+        first = Path(temp_dir) / "first.opus"
+        second = Path(temp_dir) / "second.opus"
+        write_opus_file(first, album_song_metadata("Song 1", "The Album", "Pop") | {"artist": ["The Global"]})
+        write_opus_file(
+            second, album_song_metadata("Song 2", "The Album", "Rock", "2030-01-01") | {"artist": ["The Global"]}
+        )
+        # Process the files in a known order
+        monkeypatch.setattr(Path, "glob", lambda *_: iter([first, second]))
+
+        argv = ["--directory", temp_dir] + (["--individual"] if individual else [])
+        exit_code = app.run(argv)
+
+        first_metadata = oggopus.OggOpus(first)
+        second_metadata = oggopus.OggOpus(second)
+
+    assert exit_code == 0
+    assert mock_show.call_count == len(choices)
+    assert first_metadata["albumartist"] == ["The Global"]
+    assert first_metadata["genre"] == ["Pop"]
+    assert second_metadata["album"] == ["The Album"]
+    if individual:
+        assert second_metadata["albumartist"] == ["Ben Ivor"]
+        assert second_metadata["genre"] == ["Rock"]
+        assert second_metadata["date"] == ["2030-01-01"]
+    else:
+        assert second_metadata["albumartist"] == ["The Global"]
+        assert second_metadata["genre"] == ["Pop"]
+        assert second_metadata["date"] == ["2029-08-22"]
+        assert "Genre: Using value from earlier song on the same album" in capsys.readouterr().out
+
+
+def test_saving_album_updates_earlier_songs(monkeypatch):
+    """Album level tags saved for one song are saved for earlier songs.
+
+    Songs on the same album that were already passed should get the
+    album level tags of a song saved later.
+    """
+    # First song: Youtube artist, album artist "The Global", pass
+    # Second song: Youtube artist, album artist "Ben Ivor", save
+    choices = [0, 0, 0, 0, 1, 1]
+    mock_show = Mock(side_effect=choices)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+
+    with TemporaryDirectory() as temp_dir:
+        first = Path(temp_dir) / "first.opus"
+        second = Path(temp_dir) / "second.opus"
+        write_opus_file(first, album_song_metadata("Song 1", "The Album", "Pop") | {"artist": ["The Global"]})
+        write_opus_file(
+            second, album_song_metadata("Song 2", "The Album", "Rock", "2030-01-01") | {"artist": ["The Global"]}
+        )
+        # Process the files in a known order
+        monkeypatch.setattr(Path, "glob", lambda *_: iter([first, second]))
+
+        exit_code = app.run(["--directory", temp_dir])
+
+        first_metadata = oggopus.OggOpus(first)
+
+    assert exit_code == 0
+    assert mock_show.call_count == len(choices)
+    assert first_metadata["album"] == ["The Album"]
+    assert first_metadata["albumartist"] == ["Ben Ivor"]
+    assert first_metadata["genre"] == ["Rock"]
+    assert first_metadata["date"] == ["2030-01-01"]
+    # Tags that aren't album level tags are not saved for passed songs
+    assert first_metadata["artist"] == ["The Global"]
