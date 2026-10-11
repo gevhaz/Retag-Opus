@@ -1100,6 +1100,17 @@ class TestMusicTags(unittest.TestCase):
         tags.determine_album_artist()
         self.assertNotIn("albumartist", tags.resolved)
 
+    @patch("retag_opus.utils.Utils.select_single_tag")
+    def test_determine_album_artist_unsplit_is_candidate(self, select_single_tag: MagicMock) -> None:
+        """Test that the unsplit album artist is offered with split artists."""
+        select_single_tag.return_value = ["artist 1 & artist 2"]
+        tags = MusicTags()
+
+        tags.youtube = {"artist": ["artist 1", "artist 2"], "albumartist": ["artist 1 & artist 2"]}
+        tags.determine_album_artist()
+        select_single_tag.assert_called_once_with(["artist 1 & artist 2", "artist 1", "artist 2"])
+        self.assertEqual(["artist 1 & artist 2"], tags.resolved.get("albumartist"))
+
     def test_determine_album_artist_only_old_exist(self) -> None:
         """Test that two album artists can be selected.
 
