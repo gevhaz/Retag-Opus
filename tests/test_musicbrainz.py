@@ -1,9 +1,16 @@
 """Tests for musicbrainz.py."""
 from typing import Any
+from unittest.mock import MagicMock
+
+import pytest
 
 from retag_opus import musicbrainz
+from retag_opus.music_tags import MusicTags
+from retag_opus.musicbrainz import MusicBrainzMatcher
+from retag_opus.musicbrainz_client import MusicBrainzError
 
 JsonDict = dict[str, Any]
+Tags = dict[str, list[str]]
 
 
 def credit(name: str, joinphrase: str = "") -> JsonDict:
@@ -140,3 +147,274 @@ def test_track_tags_with_little_data() -> None:
         "musicbrainz_artistid": ["id-A"],
         "musicbrainz_albumid": ["rel-2"],
     }
+
+
+SEARCH_RESULT: JsonDict = {
+    "id": "rec-Proper Goodbyes",
+    "title": "Proper Goodbyes",
+    "length": 200_000,
+    "artist-credit": [credit("The Global", " feat. "), credit("Ben Ivor")],
+    "releases": [
+        {"id": "bootleg", "title": "Live Bootleg", "status": "Bootleg", "date": "2020"},
+        {"id": "single", "title": "Proper Goodbyes", "status": "Official", "date": "2022-01-01"},
+        {"id": "rel-1", "title": "Goodbyes", "status": "Official", "date": "2022-08-22"},
+    ],
+}
+
+VIDEO_TITLE = "PROPER GOODBYES Full  Video | The Global -THE MOVIE |Ben Ivor|Some Actor"
+
+
+def song(
+    original: Tags | None = None,
+    youtube: Tags | None = None,
+    duration: float | None = 201.0,
+    manual_album_set: bool = False,
+) -> MusicTags:
+    """Create tags for a song from the given sources."""
+    tags = MusicTags(manual_album_set)
+    tags.original = original or {}
+    tags.youtube = youtube or {}
+    tags.duration = duration
+    return tags
+
+
+def fake_client() -> MagicMock:
+    """Create a client that finds the test recording and release."""
+    client = MagicMock()
+    client.search_recordings.return_value = [SEARCH_RESULT]
+    client.search_recordings_by_words.return_value = [SEARCH_RESULT]
+    client.lookup_recording.return_value = SEARCH_RESULT
+    client.lookup_release.return_value = RELEASE
+    return client
+
+
+@pytest.fixture
+def menu(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    """Replace the terminal menu with a mock."""
+    mock = MagicMock()
+    monkeypatch.setattr(musicbrainz, "TerminalMenu", mock)
+    return mock
+
+
+@pytest.fixture
+def typed(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Replace input with answers taken from the returned list."""
+    answers: list[str] = []
+    monkeypatch.setattr("builtins.input", lambda _: answers.pop(0))
+    return answers
+
+
+def test_song_text() -> None:
+    """Describe songs by the description, or else the existing title."""
+    youtube = {"title": ["Song"], "artist": ["A", "B"]}
+    assert musicbrainz.song_text(song(original={"title": ["Video"]}, youtube=youtube)) == "Song A B"
+    assert musicbrainz.song_text(song(original={"title": ["Video"], "artist": ["Channel"]})) == "Video"
+    assert musicbrainz.song_text(song()) == ""
+
+
+@pytest.mark.parametrize(
+    ("title", "text", "expected"),
+    [
+        ("Kaun Tujhe", "KAUN TUJHE Full  Video | M.S. DHONI -THE UNTOLD STORY |Amaal Mallik Palak", True),
+        ("Nee Paartha Vizhigal: The Touch of Love", "Nee Paartha Vizhigal 8D - 3 (Moonu) Dhanush", True),
+        ("Bhaja Govindam", "Bhaja Govindam song By M.S. Subbulakshmi | Carnatic Classical Music", True),
+        ("Bohemian Rhapsody (Queen)", "Bohemian Rhapsody Queen", True),
+        ("Don\u2019t Go", "Don't Go", True),
+        ("Don\u2019t Go", "Dont Go", False),
+        ("Kaun Tujhe Unplugged", "KAUN TUJHE Full Video", False),
+        ("(Untitled)", "Untitled", False),
+    ],
+)
+def test_title_matches(title: str, text: str, expected: bool) -> None:
+    """Only the main title from MusicBrainz has to be in the text."""
+    assert musicbrainz.title_matches(title, text) is expected
+
+
+def test_format_length() -> None:
+    """Show length as minutes and seconds."""
+    assert musicbrainz.format_length(200_400) == "3:20"
+    assert musicbrainz.format_length(None) == "?:??"
+
+
+def test_duration_matches() -> None:
+    """Lengths match within three seconds."""
+    assert musicbrainz.duration_matches(200_000, 202.5)
+    assert not musicbrainz.duration_matches(200_000, 204.0)
+    assert not musicbrainz.duration_matches(200_000, None)
+    assert not musicbrainz.duration_matches(None, 200.0)
+
+
+def test_choose_release() -> None:
+    """Prefer the stored release, the named album, then the earliest official release."""
+    releases = SEARCH_RESULT["releases"]
+    stored = song(original={"musicbrainz_albumid": ["bootleg"], "album": ["Goodbyes"]})
+    assert musicbrainz.choose_release(releases, stored)["id"] == "bootleg"  # type: ignore[index]
+    named = song(youtube={"album": ["goodbyes"]})
+    assert musicbrainz.choose_release(releases, named)["id"] == "rel-1"  # type: ignore[index]
+    assert musicbrainz.choose_release(releases, song())["id"] == "single"  # type: ignore[index]
+    assert musicbrainz.choose_release(releases[:1], song())["id"] == "bootleg"  # type: ignore[index]
+    editions = [
+        {"id": "remaster", "title": "Goodbyes (2011 Remaster)", "status": "Official", "date": "2011"},
+        {"id": "dvd", "title": "Goodbyes", "status": "Official", "date": "2001"},
+        {"id": "original", "title": "Goodbyes", "status": "Official", "date": "1975"},
+    ]
+    remaster = song(youtube={"album": ["Goodbyes (2011 Remaster)"]})
+    assert musicbrainz.choose_release(editions, remaster)["id"] == "original"  # type: ignore[index]
+    assert musicbrainz.choose_release([], song()) is None
+
+
+def test_match_message() -> None:
+    """Describe a match with the version and release."""
+    live = track(1, "Song", 1000)
+    live["recording"]["disambiguation"] = "live, 1981"
+    release = {"title": "Album", "date": "2007", "country": "CA"}
+    assert musicbrainz.match_message(live, release) == "MusicBrainz: Found 'Song' (live, 1981) on 'Album' (2007, CA)."
+    assert musicbrainz.match_message(track(1, "Song", 1000), {"title": "Album"}) == (
+        "MusicBrainz: Found 'Song' on 'Album'."
+    )
+
+
+def test_search_result_entry() -> None:
+    """Describe search results with length, version, and release."""
+    assert musicbrainz.search_result_entry({**SEARCH_RESULT, "title": "A [B] | C", "disambiguation": "live"}) == (
+        "A (B) / C - The Global feat. Ben Ivor (3:20, live, on 'Live Bootleg')"
+    )
+    assert musicbrainz.search_result_entry({"title": "X"}) == "X -  (?:??)"
+
+
+def test_match_song_from_description(capsys: pytest.CaptureFixture[str]) -> None:
+    """Search for the exact title and artist from the description."""
+    client = fake_client()
+    youtube = {"title": ["Proper Goodbyes (feat. Ben Ivor)"], "artist": ["The Global"], "album": ["Goodbyes"]}
+    tags = MusicBrainzMatcher(client).match_song(song(youtube=youtube))
+    assert tags["album"] == ["Goodbyes"]
+    assert tags["composer"] == ["Com Poser"]
+    client.search_recordings.assert_called_once_with("Proper Goodbyes", "The Global")
+    client.lookup_release.assert_called_once_with("rel-1")
+    out = capsys.readouterr().out
+    assert "Looking up the song on MusicBrainz..." in out
+    assert "MusicBrainz: Found 'Proper Goodbyes' on 'Goodbyes' (2022-08-22)." in out
+
+
+def test_match_song_from_video_title() -> None:
+    """Search for the words of a video title."""
+    client = fake_client()
+    tags = MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE], "artist": ["Channel"]}))
+    assert tags["title"] == ["Proper Goodbyes"]
+    client.search_recordings_by_words.assert_called_once_with(VIDEO_TITLE)
+    client.lookup_release.assert_called_once_with("single")
+
+
+def test_match_song_prefers_title_that_was_searched_for() -> None:
+    """Among results as long as the song, use the one with the searched title."""
+    client = fake_client()
+    mix = {**SEARCH_RESULT, "id": "mix", "title": "Proper Goodbyes (5.1 mix)"}
+    client.search_recordings_by_words.return_value = [{**SEARCH_RESULT, "length": 100}, mix, SEARCH_RESULT]
+    tags = MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE]}))
+    assert tags["title"] == ["Proper Goodbyes"]
+
+
+def test_fit() -> None:
+    """Fewest unsearched words fit best, then most releases."""
+    assert musicbrainz.fit({"title": "Song (5.1 mix)"}, "Song") == (3, 0)
+    assert musicbrainz.fit({"title": "Song", "releases": [{}, {}]}, "Song Artist") == (0, -2)
+
+
+def test_match_song_by_stored_id() -> None:
+    """Use the MusicBrainz IDs in the file instead of searching."""
+    client = fake_client()
+    original = {"musicbrainz_trackid": ["rec-Proper Goodbyes"], "musicbrainz_albumid": ["rel-1"]}
+    tags = MusicBrainzMatcher(client).match_song(song(original=original))
+    assert tags["album"] == ["Goodbyes"]
+    client.lookup_recording.assert_called_once_with("rec-Proper Goodbyes")
+    client.search_recordings_by_words.assert_not_called()
+
+
+def test_match_song_stored_id_not_found() -> None:
+    """Search if the MusicBrainz ID in the file isn't found."""
+    client = fake_client()
+    client.lookup_recording.return_value = None
+    original = {"musicbrainz_trackid": ["gone"], "title": [VIDEO_TITLE]}
+    assert MusicBrainzMatcher(client).match_song(song(original=original))
+    client.search_recordings_by_words.assert_called_once()
+
+
+def test_match_song_manual_album() -> None:
+    """With a manual album, tags describing the release are left out."""
+    tags = MusicBrainzMatcher(fake_client()).match_song(song(original={"title": [VIDEO_TITLE]}, manual_album_set=True))
+    assert not set(tags) & set(musicbrainz.RELEASE_TAGS)
+    assert tags["date"] == ["2022-08-22"]
+
+
+def test_match_song_not_on_release() -> None:
+    """Without the recording on the release there are no tags."""
+    client = fake_client()
+    client.lookup_release.return_value = {"media": []}
+    assert MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE]})) == {}
+    client.lookup_release.return_value = None
+    assert MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE]})) == {}
+    client.search_recordings_by_words.return_value = [{**SEARCH_RESULT, "releases": []}]
+    assert MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE]})) == {}
+
+
+def test_match_song_asks_when_not_confident(menu: MagicMock) -> None:
+    """Let the user pick a result when the length doesn't match."""
+    menu.return_value.show.return_value = 0
+    tags = MusicBrainzMatcher(fake_client()).match_song(song(original={"title": [VIDEO_TITLE]}, duration=150))
+    assert tags["title"] == ["Proper Goodbyes"]
+    assert menu.call_args.args[0][-2:] == ["[e] Edit search", "[s] Skip MusicBrainz for this song"]
+    assert menu.call_args.kwargs["title"] == f"MusicBrainz: Results for '{VIDEO_TITLE}'. The song is 2:30 long."
+
+
+def test_match_song_asks_when_title_not_in_text(menu: MagicMock) -> None:
+    """Let the user pick a result when its title isn't what was searched for."""
+    menu.return_value.show.return_value = 0
+    MusicBrainzMatcher(fake_client()).match_song(song(original={"title": ["Something Else"]}))
+    menu.assert_called_once()
+
+
+@pytest.mark.parametrize("choice", [2, None])
+def test_match_song_user_skips(menu: MagicMock, choice: int | None) -> None:
+    """Skipping or escaping the results menu gives no tags."""
+    menu.return_value.show.return_value = choice
+    client = fake_client()
+    assert MusicBrainzMatcher(client).match_song(song(original={"title": ["X"]}, duration=None)) == {}
+    client.lookup_release.assert_not_called()
+
+
+def test_match_song_edit_search(menu: MagicMock, typed: list[str]) -> None:
+    """Let the user search for something else."""
+    menu.return_value.show.side_effect = [0, 0]
+    typed += ["Proper Goodbyes Ben Ivor", ""]
+    client = fake_client()
+    client.search_recordings_by_words.side_effect = [[], [SEARCH_RESULT]]
+    tags = MusicBrainzMatcher(client).match_song(song(original={"title": ["Wrong"]}))
+    assert tags["title"] == ["Proper Goodbyes"]
+    assert menu.call_args.kwargs["title"] == "MusicBrainz: Nothing found for 'Wrong'. The song is 3:21 long."
+    client.search_recordings_by_words.assert_called_with("Proper Goodbyes Ben Ivor")
+
+
+def test_match_song_without_title(menu: MagicMock, typed: list[str]) -> None:
+    """Without a title, nothing is searched for until the user says what."""
+    menu.return_value.show.side_effect = [0, 1]
+    typed += [""]
+    client = fake_client()
+    assert MusicBrainzMatcher(client).match_song(song()) == {}
+    assert menu.call_args.kwargs["title"] == "MusicBrainz: Nothing found for ''. The song is 3:21 long."
+    client.search_recordings_by_words.assert_not_called()
+
+
+def test_match_song_disabled_after_error(capsys: pytest.CaptureFixture[str]) -> None:
+    """When MusicBrainz can't be reached, don't try again."""
+    client = fake_client()
+    client.search_recordings_by_words.side_effect = MusicBrainzError("Could not get data from MusicBrainz: offline")
+    matcher = MusicBrainzMatcher(client)
+    assert matcher.match_song(song(original={"title": ["A"]})) == {}
+    assert matcher.match_song(song(original={"title": ["A"]})) == {}
+    assert client.search_recordings_by_words.call_count == 1
+    assert "Not using MusicBrainz for the rest of this run." in capsys.readouterr().out
+
+
+def test_matcher_creates_client() -> None:
+    """Create a real client when none is given."""
+    assert MusicBrainzMatcher().client is not None
