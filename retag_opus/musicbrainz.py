@@ -1,10 +1,37 @@
-"""Module for identifying songs on MusicBrainz and turning them into tags."""
+"""Module for identifying songs on MusicBrainz and turning them into tags.
+
+A song is identified by its MusicBrainz ID if the file has one, and
+otherwise by searching for it. A search result is only used without
+asking when its title is in what was searched for and its length is
+the song's.
+"""
+import re
 from typing import Final
 
-from retag_opus import constants
-from retag_opus.musicbrainz_client import JsonDict
+from colorama import Fore
+from simple_term_menu import TerminalMenu
+
+from retag_opus import colors, constants
+from retag_opus.music_tags import MusicTags
+from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrainzError
+from retag_opus.utils import Utils
 
 Tags = dict[str, list[str]]
+
+MAX_DURATION_DIFFERENCE: Final[float] = 3.0
+
+# Tags that describe the release a song is on, rather than the song
+RELEASE_TAGS: Final[list[str]] = [
+    "album",
+    "albumartist",
+    "tracknumber",
+    "totaltracks",
+    "discnumber",
+    "totaldiscs",
+    "musicbrainz_albumid",
+    "musicbrainz_albumartistid",
+    "musicbrainz_releasegroupid",
+]
 
 # MusicBrainz instrument names that differ from the names in the
 # performer tags.
@@ -138,3 +165,258 @@ def track_tags(release: JsonDict, medium: JsonDict, track: JsonDict) -> Tags:
     tags.update(credits_from_relations(recording.get("relations", [])))
     # Leave out the tags that MusicBrainz has no value for
     return {tag_name: value for tag_name, value in tags.items() if value}
+
+
+def song_text(tags: MusicTags) -> str:
+    """Get the words a song is known by, to search for it and match it.
+
+    Those are the title and artists from the YouTube description, e.g.
+    "Proper Goodbyes The Global Ben Ivor". Without a description, it's
+    the existing title, which is then usually a YouTube video title that
+    also names e.g. the artists and the movie the song is from, like
+    "KAUN TUJHE Full Video | M.S. DHONI -THE UNTOLD STORY |Amaal Mallik".
+    """
+    # Tags are lists of values, but a song only has one title
+    youtube_titles = tags.youtube.get("title", [])
+    if youtube_titles:
+        youtube_artists = tags.youtube.get("artist", [])
+        return " ".join([youtube_titles[0]] + youtube_artists)
+    existing_titles = tags.original.get("title", [])
+    if existing_titles:
+        return existing_titles[0]
+    return ""
+
+
+def words(text: str) -> set[str]:
+    """Get the words in text, regardless of typography and case."""
+    return set(re.findall(r"\w+", Utils.normalize(text)))
+
+
+def title_matches(title: str, text: str) -> bool:
+    """Check whether a title from MusicBrainz is in the text.
+
+    Only the main title, before any "(" or ":", has to be in the text.
+    Parentheses usually describe the version, e.g. "Title (live)", and
+    video titles often leave out what comes after a colon, e.g. "The
+    Touch of Love" in "Nee Paartha Vizhigal: The Touch of Love". This
+    also lets e.g. "Requiem: Lacrimosa" match a text with just
+    "Requiem", but the length has to match too, and fit() prefers
+    results whose whole title is in the text.
+    """
+    main_title = words(re.split(r"[(\[:]", title)[0])
+    return bool(main_title) and main_title <= words(text)
+
+
+def fit(recording: JsonDict, text: str) -> tuple[int, int]:
+    """Rank how well a recording fits a song, lower being better.
+
+    The recording whose title has fewest words that weren't searched
+    for fits best, e.g. "Title" rather than "Title (5.1 mix)" if only
+    "Title" was searched for. Of those, the one on the most releases
+    does, since that's usually the original rather than e.g. a mix
+    that was only released once.
+    """
+    unsearched_title_words = words(recording.get("title", "")) - words(text)
+    release_count = len(recording.get("releases", []))
+    return len(unsearched_title_words), -release_count
+
+
+def format_length(milliseconds: int | None) -> str:
+    """Format a length in milliseconds as e.g. "3:39".
+
+    MusicBrainz doesn't know the length of every recording, and the
+    length of a song file may be unknown too. Then "?:??" is shown.
+    """
+    if milliseconds is None:
+        return "?:??"
+    seconds = round(milliseconds / 1000)
+    return f"{seconds // 60}:{seconds % 60:02d}"
+
+
+def duration_matches(milliseconds: int | None, duration: float | None) -> bool:
+    """Check whether a length from MusicBrainz is the song's duration."""
+    if milliseconds is None or duration is None:
+        return False
+    return abs(milliseconds / 1000 - duration) <= MAX_DURATION_DIFFERENCE
+
+
+def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None:
+    """Choose which of the releases of a recording a song is from.
+
+    The release whose ID is in the song's file is preferred, then
+    releases with the album name in the song's tags, ignoring e.g.
+    "(2011 Remaster)", then official releases, and of those the
+    earliest.
+    """
+    if not releases:
+        return None
+    stored_release_ids = tags.original.get("musicbrainz_albumid", [])
+    album_names_in_tags = set()
+    for album_name in tags.youtube.get("album", []) + tags.original.get("album", []):
+        album_names_in_tags.add(Utils.normalize(Utils.prune_title(album_name)))
+
+    def preference(release: JsonDict) -> tuple[bool, bool, bool, str]:
+        """Sort key that puts the preferred releases first."""
+        is_stored = release["id"] in stored_release_ids
+        has_album_name = Utils.normalize(Utils.prune_title(release.get("title", ""))) in album_names_in_tags
+        is_official = release.get("status") == "Official"
+        date = release.get("date") or "9999"  # Unknown dates last
+        # False sorts before True, so releases with a property come first
+        return not is_stored, not has_album_name, not is_official, date
+
+    # Tuples are compared item by item, so this is the release that's
+    # preferred by the first property where the releases differ
+    return min(releases, key=preference)
+
+
+def format_release(release: JsonDict) -> str:
+    """Format a release with when and where it was released.
+
+    E.g. "'A Night at the Opera' (1975-11-21, GB)", since a title alone
+    doesn't say which of the many releases of an album it is.
+    """
+    details = []
+    for detail in [release.get("date"), release.get("country")]:
+        if detail:
+            details.append(detail)
+    if not details:
+        return f"'{release['title']}'"
+    return f"'{release['title']}' ({', '.join(details)})"
+
+
+def match_message(track: JsonDict, release: JsonDict) -> str:
+    """Get the message saying which track a song was matched to.
+
+    E.g. "MusicBrainz: Found 'Love of My Life' (live, 1981-11-24:
+    Montreal Forum) on 'Rock Montreal' (2007, CA)." The version of the
+    recording and the release make a wrong match stand out.
+    """
+    version = track["recording"].get("disambiguation")
+    title = f"'{track['title']}'"
+    if version:
+        title += f" ({version})"
+    return f"MusicBrainz: Found {title} on {format_release(release)}."
+
+
+def search_result_entry(recording: JsonDict) -> str:
+    """Format a search result as a menu entry.
+
+    E.g. "Love of My Life - Queen (3:39, on 'A Night at the Opera')".
+    The menu treats "|" as the start of preview data, and "[" as the
+    start of a shortcut key, so they're replaced.
+    """
+    entry = f"{recording.get('title', '')} - {joined_credit(recording.get('artist-credit', []))}"
+    entry += f" ({format_length(recording.get('length'))}"
+    if recording.get("disambiguation"):
+        entry += f", {recording['disambiguation']}"
+    if recording.get("releases"):
+        entry += f", on '{recording['releases'][0].get('title', '')}'"
+    return entry.replace("|", "/").replace("[", "(").replace("]", ")") + ")"
+
+
+class MusicBrainzMatcher:
+    """Find songs on MusicBrainz, asking the user when unsure."""
+
+    def __init__(self, client: MusicBrainzClient | None = None) -> None:
+        """Create matcher that uses the given client."""
+        self.client = client if client is not None else MusicBrainzClient()
+        self.disabled = False
+
+    def disable(self, error: MusicBrainzError) -> None:
+        """Stop using MusicBrainz, so that later songs don't wait for it."""
+        print(Fore.RED + f"MusicBrainz: {error}. Not using MusicBrainz for the rest of this run." + Fore.RESET)
+        self.disabled = True
+
+    def match_song(self, tags: MusicTags) -> Tags:
+        """Get tags for a song from MusicBrainz.
+
+        When the album is set manually, the release found for the song
+        isn't that album, so tags describing the release are left out.
+
+        :return: Tags from MusicBrainz, or no tags if the song wasn't
+            found, the user skipped it, or MusicBrainz can't be used.
+        """
+        if self.disabled:
+            return {}
+        print(Fore.BLUE + "Looking up the song on MusicBrainz..." + Fore.RESET)
+        try:
+            recording = self.find_recording(tags)
+            release_summary = choose_release(recording.get("releases", []), tags) if recording else None
+            release = self.client.lookup_release(release_summary["id"]) if release_summary else None
+        except MusicBrainzError as e:
+            self.disable(e)
+            return {}
+        if recording is None or release is None:
+            return {}
+
+        for medium, track in release_tracks(release):
+            if track["recording"]["id"] == recording["id"]:
+                print(colors.mb_col + match_message(track, release) + Fore.RESET)
+                song_tags = track_tags(release, medium, track)
+                if tags.manual_album_set:
+                    # The release found for the song isn't the album the user set
+                    for tag_name in RELEASE_TAGS:
+                        song_tags.pop(tag_name, None)
+                return song_tags
+        return {}
+
+    def find_recording(self, tags: MusicTags) -> JsonDict | None:
+        """Find the recording of a song, with the releases it's on.
+
+        A MusicBrainz ID in the file is used if there is one. Otherwise
+        the song is searched for: by exact title and artist if they're
+        in the YouTube description, and otherwise by the words in the
+        title, since a video title mixes the song title with artists,
+        movies, and other words. A result is used without asking if its
+        main title is among the words searched for and it's as long as
+        the song. Otherwise the user picks the result.
+
+        :return: The recording, or None if the user skipped the song.
+        """
+        stored_recording_ids = tags.original.get("musicbrainz_trackid", [])
+        if stored_recording_ids:
+            recording = self.client.lookup_recording(stored_recording_ids[0])
+            if recording is not None:
+                return recording
+
+        text = song_text(tags)
+        youtube_titles = tags.youtube.get("title", [])
+        youtube_artists = tags.youtube.get("artist", [])
+        if youtube_titles and youtube_artists:
+            results = self.client.search_recordings(Utils.prune_title(youtube_titles[0]), youtube_artists[0])
+        elif text:
+            results = self.client.search_recordings_by_words(text)
+        else:
+            results = []
+        while True:
+            confident_results = []
+            for result in results:
+                if title_matches(result.get("title", ""), text) and duration_matches(
+                    result.get("length"), tags.duration
+                ):
+                    confident_results.append(result)
+            if confident_results:
+                # The result that fits the song best, see fit()
+                return min(confident_results, key=lambda result: fit(result, text))
+            choice = self.ask_for_recording(results, text, tags.duration)
+            if choice is not True:
+                return choice or None
+            text = input(f"Search MusicBrainz for [{text}]: ").strip() or text
+            results = self.client.search_recordings_by_words(text) if text else []
+
+    @staticmethod
+    def ask_for_recording(results: list[JsonDict], text: str, duration: float | None) -> JsonDict | bool:
+        """Let the user pick a recording from search results.
+
+        :return: The chosen recording, True if the user wants to search
+            for something else, or False if the user skips the song.
+        """
+        length = format_length(round(duration * 1000)) if duration is not None else "?:??"
+        found = "Results" if results else "Nothing found"
+        title = f"MusicBrainz: {found} for '{text}'. The song is {length} long."
+        entries = [search_result_entry(recording) for recording in results]
+        entries += ["[e] Edit search", "[s] Skip MusicBrainz for this song"]
+        choice = TerminalMenu(entries, title=title).show()
+        if not isinstance(choice, int) or choice == len(results) + 1:
+            return False
+        return True if choice == len(results) else results[choice]

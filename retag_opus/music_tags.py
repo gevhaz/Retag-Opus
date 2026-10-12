@@ -29,6 +29,7 @@ class MusicTags:
         """Create empty attributes for each source."""
         self.base_patterns = deepcopy(constants.all_tags)
         self.performer_patterns = deepcopy(constants.performer_tags)
+        self.manual_album_set = manual_album_set
         if manual_album_set:
             self.base_patterns["discsubtitle"] = self.base_patterns["album"].copy()
             self.base_patterns["discsubtitle"]["print"] = "Disc subtitle"
@@ -39,6 +40,8 @@ class MusicTags:
         self.fromdesc: Tags = {}
         self.resolved: Tags = {}
         self.album_level_tags: Tags = {}
+        # Length of the song in seconds, used to identify it
+        self.duration: float | None = None
 
     def print_metadata_key(
         self,
