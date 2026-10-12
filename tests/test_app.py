@@ -167,7 +167,7 @@ def test_file_without_description_has_existing_tags_parsed(capsys, music_directo
 
     actual_output, _ = capsys.readouterr()
     assert exit_code == 0
-    assert "Version: No value exists in metadata. Using parsed data: ['Live']." in actual_output
+    assert "Version: No value exists in metadata. Using tags parsed from original tags: ['Live']." in actual_output
     assert actual_output.endswith(f"{Fore.YELLOW}Pass. Skipping song: test\n")
 
 
@@ -212,7 +212,7 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         f"\n{Fore.BLUE}Song 1 of 1{Fore.RESET}"
         f"\n{Fore.BLUE}----- Song: test -----{Fore.RESET}"
         f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
-        f'Using parsed data: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
+        f'Using YouTube description: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
         f"\n-----------------------------------------------"
         "\n  Other tags:"
         f"\n  - synopsis: {Fore.CYAN}[Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]{Fore.RESET}"
@@ -274,7 +274,7 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         f"\n{Fore.BLUE}Song 1 of 1{Fore.RESET}"
         f"\n{Fore.BLUE}----- Song: test -----{Fore.RESET}"
         f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
-        f'Using parsed data: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
+        f'Using YouTube description: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
         f"\n-----------------------------------------------"
         "\n  Other tags:"
         f"\n  - synopsis: {Fore.CYAN}[Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]{Fore.RESET}"

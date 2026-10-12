@@ -1407,7 +1407,10 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            Fore.YELLOW + "Artist: No value exists in metadata. Using parsed data: ['artist 1']." + Fore.RESET + "\n",
+            Fore.YELLOW
+            + "Artist: No value exists in metadata. Using YouTube description: ['artist 1']."
+            + Fore.RESET
+            + "\n",
             captured.out,
         )
 
@@ -1419,7 +1422,10 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            Fore.YELLOW + "Artist: No value exists in metadata. Using parsed data: ['artist 1']." + Fore.RESET + "\n",
+            Fore.YELLOW
+            + "Artist: No value exists in metadata. Using tags parsed from YouTube tags: ['artist 1']."
+            + Fore.RESET
+            + "\n",
             captured.out,
         )
 

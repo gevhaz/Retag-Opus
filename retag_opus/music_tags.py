@@ -549,16 +549,20 @@ class MusicTags:
             all_values = self.get_field(tag_name, only_new=True)
 
             if not old_value and len(all_values) > 0:
-                if len(yt_value) > 0:
-                    self.resolved[tag_name] = yt_value
-                elif len(from_tags_value) > 0:
-                    self.resolved[tag_name] = from_tags_value
-                else:  # len(from_desc_value) > 0:
-                    self.resolved[tag_name] = from_desc_value
-                print(
-                    Fore.YELLOW + f"{tag_name.title()}: No value exists in metadata. Using parsed data: "
-                    f"{self.resolved[tag_name]}." + Fore.RESET
-                )
+                # In order of preference
+                sources = {
+                    "YouTube description": yt_value,
+                    "tags parsed from original tags": from_tags_value,
+                    "tags parsed from YouTube tags": from_desc_value,
+                }
+                for source, value in sources.items():
+                    if len(value) > 0:
+                        self.resolved[tag_name] = value
+                        print(
+                            Fore.YELLOW + f"{tag_name.title()}: No value exists in metadata. Using {source}: "
+                            f"{value}." + Fore.RESET
+                        )
+                        break
             elif Utils.is_equal_when_stripped(yt_value, old_value) and len(old_value) > 0:
                 print(Fore.GREEN + f"{tag_name.title()}: Metadata matches YouTube description tags." + Fore.RESET)
                 self.resolved[tag_name] = [v.strip() for v in old_value]
