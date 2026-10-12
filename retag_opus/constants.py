@@ -93,3 +93,20 @@ performer_tags: Final[dict[str, ParsingReference]] = {
     "performer:saxophone": {"print": "- Saxophone", "pattern": [r"(.*, )?[sS]axophone.*:\s*(.+)\s*"]},
     "performer:flute": {"print": "- Flute", "pattern": [r"(.*, )?[fF]lute.*:\s*(.+)\s*"]},
 }
+
+# Prefix of tags with MusicBrainz identifiers. The user can't judge
+# identifiers, only the MusicBrainz match they come from.
+MUSICBRAINZ_ID_PREFIX: Final = "musicbrainz_"
+
+# Tags that are only right if the song was matched to the right track
+# on MusicBrainz, which is announced once. They're set without a message
+# each, but still shown.
+match_tags: Final[list[str]] = ["tracknumber", "totaltracks", "discnumber", "totaldiscs"]
+
+# Tags that describe the release a song was found on, which are only
+# right for the album if it's that release
+release_tags: Final[list[str]] = match_tags + [
+    "musicbrainz_albumid",
+    "musicbrainz_albumartistid",
+    "musicbrainz_releasegroupid",
+]
