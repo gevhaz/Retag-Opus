@@ -25,17 +25,7 @@ MAX_DURATION_DIFFERENCE: Final[float] = 3.0
 MAX_RELEASE_LOOKUPS: Final[int] = 3
 
 # Tags that describe the release a song is on, rather than the song
-RELEASE_TAGS: Final[list[str]] = [
-    "album",
-    "albumartist",
-    "tracknumber",
-    "totaltracks",
-    "discnumber",
-    "totaldiscs",
-    "musicbrainz_albumid",
-    "musicbrainz_albumartistid",
-    "musicbrainz_releasegroupid",
-]
+RELEASE_TAGS: Final[list[str]] = ["album", "albumartist"] + constants.release_tags
 
 # MusicBrainz instrument names that differ from the names in the
 # performer tags.

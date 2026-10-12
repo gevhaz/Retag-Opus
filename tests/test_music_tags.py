@@ -8,6 +8,7 @@ import pytest
 from colorama import Fore
 from mock import patch
 
+from retag_opus import colors
 from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import MusicTags
 
@@ -2101,3 +2102,195 @@ class TestMusicTags(unittest.TestCase):
             "title": ["[Removed]"],
             "producer": ["[Removed]"],
         }
+
+
+class TestMusicBrainzSource(unittest.TestCase):
+    """Test MusicBrainz as a source of tags."""
+
+    @pytest.fixture(autouse=True)
+    def capsys(self, capsys) -> None:  # type: ignore
+        """Fixture for capturing system output."""
+        self.capsys = capsys  # type: ignore
+
+    def test_get_tag_data_includes_musicbrainz(self) -> None:
+        """Test that MusicBrainz values are shown when they're new."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"], "title": ["title 1"]}
+        tags.musicbrainz = {"artist": ["artist 2"], "title": ["title 1"]}
+        self.assertEqual(
+            [f"{Fore.CYAN}artist 1{Fore.RESET}", f"{colors.mb_col}artist 2{Fore.RESET}"],
+            tags.get_tag_data("artist"),
+        )
+        self.assertEqual([f"{Fore.CYAN}title 1{Fore.RESET}"], tags.get_tag_data("title"))
+
+    def test_get_field_includes_musicbrainz(self) -> None:
+        """Test that MusicBrainz values can be selected."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.musicbrainz = {"artist": ["artist 2"]}
+        self.assertEqual(["artist 1", "artist 2"], tags.get_field("artist"))
+        self.assertEqual(["artist 2"], tags.get_field("artist", only_new=True))
+
+    def test_check_any_new_data_exists_in_musicbrainz(self) -> None:
+        """Test that tags only MusicBrainz has are new data."""
+        tags = MusicTags()
+        tags.original = {"title": ["title 1"]}
+        tags.musicbrainz = {"title": ["title 1"]}
+        self.assertFalse(tags.check_any_new_data_exists())
+        tags.musicbrainz["musicbrainz_trackid"] = ["id 1"]
+        self.assertTrue(tags.check_any_new_data_exists())
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    def test_resolve_metadata_uses_musicbrainz_last(self, _: MagicMock) -> None:
+        """Test that MusicBrainz fills tags no other source has."""
+        tags = MusicTags()
+        tags.youtube = {"title": ["title 1"]}
+        tags.musicbrainz = {"title": ["title 2"], "tracknumber": ["3"]}
+        tags.resolve_metadata()
+        self.assertEqual({"title": ["title 1"], "tracknumber": ["3"]}, tags.resolved)
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    def test_resolve_metadata_matches_musicbrainz_regardless_of_typography(self, _: MagicMock) -> None:
+        """Test that MusicBrainz typography doesn't cause a conflict."""
+        tags = MusicTags()
+        tags.original = {"title": ["Don't Go"]}
+        tags.musicbrainz = {"title": ["Don’t Go"]}
+        tags.resolve_metadata()
+        self.assertEqual(["Don't Go"], tags.resolved["title"])
+        out = self.capsys.readouterr().out  # type: ignore
+        self.assertEqual(f"{Fore.GREEN}Title: Metadata matches MusicBrainz.{Fore.RESET}\n", out)
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_starts_on_value_musicbrainz_agrees_with(
+        self, mock_show: MagicMock, mock_menu: MagicMock, _: MagicMock
+    ) -> None:
+        """Test that MusicBrainz is an option and hints at the right one."""
+        mock_show.return_value = 2
+        mock_menu.return_value = None
+        tags = MusicTags()
+        tags.original = {"title": ["Dont Go"]}
+        tags.youtube = {"title": ["Don't Go"]}
+        tags.musicbrainz = {"title": ["Don’t Go"]}
+
+        tags.resolve_metadata()
+
+        out = self.capsys.readouterr().out  # type: ignore
+        self.assertIn(f"MusicBrainz: {colors.mb_col}Don’t Go{Fore.RESET}\n", out)
+        self.assertEqual(
+            ["YouTube description", "Existing metadata", "MusicBrainz", "Other action", "Quit"],
+            mock_menu.call_args.args[0],
+        )
+        self.assertEqual(0, mock_menu.call_args.kwargs["cursor_index"])
+        self.assertEqual(["Don’t Go"], tags.resolved["title"])
+
+        tags.youtube = {"title": ["Do Go"]}
+        tags.fromdesc = {"title": ["Don't Go"]}
+        tags.resolve_metadata()
+        self.assertEqual(2, mock_menu.call_args.kwargs["cursor_index"])
+
+        tags.musicbrainz = {"title": ["Something Else"]}
+        tags.resolve_metadata()
+        self.assertEqual("MusicBrainz", mock_menu.call_args.args[0][mock_menu.call_args.kwargs["cursor_index"]])
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    def test_resolve_metadata_musicbrainz_spelling_of_manual_album(self, _: MagicMock) -> None:
+        """Test that MusicBrainz' spelling of the album set by the user is used."""
+        tags = MusicTags(manual_album_set=True)
+        tags.resolved = {"album": ["a night at the opera"]}
+        tags.musicbrainz = {"album": ["A Night at the Opera"]}
+        tags.resolve_metadata()
+        self.assertEqual(["A Night at the Opera"], tags.resolved["album"])
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    def test_resolve_metadata_sets_musicbrainz_ids_and_numbers_quietly(self, _: MagicMock) -> None:
+        """Test that tags that depend on the match are set without messages."""
+        tags = MusicTags()
+        tags.original = {"musicbrainz_trackid": ["old id"], "tracknumber": ["2"]}
+        tags.musicbrainz = {
+            "musicbrainz_trackid": ["new id"],
+            "musicbrainz_albumid": ["album id"],
+            "tracknumber": ["2"],
+            "totaltracks": ["12"],
+        }
+        tags.resolve_metadata()
+        self.assertEqual(["new id"], tags.resolved["musicbrainz_trackid"])
+        self.assertEqual(["album id"], tags.resolved["musicbrainz_albumid"])
+        self.assertEqual(["12"], tags.resolved["totaltracks"])
+        out = self.capsys.readouterr().out  # type: ignore
+        self.assertEqual(f"{Fore.GREEN}Tracknumber: Metadata matches MusicBrainz.{Fore.RESET}\n", out)
+
+    def test_print_resolved_hides_musicbrainz_ids(self) -> None:
+        """Test that MusicBrainz IDs aren't printed, but track numbers are."""
+        tags = MusicTags()
+        tags.resolved = {"musicbrainz_trackid": ["id"], "tracknumber": ["2"]}
+        tags.print_resolved()
+        out = self.capsys.readouterr().out  # type: ignore
+        self.assertIn("tracknumber", out)
+        self.assertNotIn("musicbrainz_trackid", out)
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_asks_about_other_release(
+        self, mock_show: MagicMock, mock_menu: MagicMock, _: MagicMock
+    ) -> None:
+        """Test that the user chooses the album if MusicBrainz found another release."""
+        mock_show.return_value = 2
+        mock_menu.return_value = None
+        tags = MusicTags()
+        tags.original = {"album": ["Single"]}
+        tags.resolved = {"album": ["Single"]}
+        tags.youtube = {"album": ["Single"]}
+        tags.musicbrainz = {"album": ["Album"], "tracknumber": ["5"]}
+        tags.resolve_metadata()
+        self.assertEqual(
+            ["YouTube description", "Existing metadata", "MusicBrainz", "Other action", "Quit"],
+            mock_menu.call_args.args[0],
+        )
+        self.assertEqual(2, mock_menu.call_args.kwargs["cursor_index"])
+        self.assertEqual(["Album"], tags.resolved["album"])
+        self.assertEqual(["5"], tags.resolved["tracknumber"])
+
+        tags = MusicTags()
+        tags.youtube = {"album": ["Single"]}
+        tags.musicbrainz = {"album": ["Album"]}
+        tags.resolve_metadata()
+        self.assertEqual(["Album"], tags.resolved["album"])
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    @patch("retag_opus.utils.TerminalMenu.__init__")
+    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_keeps_release_tags_consistent(
+        self, mock_show: MagicMock, mock_menu: MagicMock, _: MagicMock
+    ) -> None:
+        """Test that release tags aren't used if the album is another release."""
+        mock_show.return_value = 1  # Existing metadata
+        mock_menu.return_value = None
+        tags = MusicTags()
+        tags.original = {"album": ["Single"], "totaltracks": ["1"]}
+        tags.resolved = {"album": ["Single"], "totaltracks": ["1"]}
+        tags.youtube = {"album": ["Single"]}
+        tags.musicbrainz = {
+            "album": ["Album"],
+            "tracknumber": ["5"],
+            "totaltracks": ["10"],
+            "musicbrainz_albumid": ["album id"],
+            "musicbrainz_trackid": ["track id"],
+        }
+        tags.resolve_metadata()
+        self.assertEqual(["Single"], tags.resolved["album"])
+        self.assertEqual(["1"], tags.resolved["totaltracks"])
+        self.assertNotIn("tracknumber", tags.resolved)
+        self.assertNotIn("musicbrainz_albumid", tags.resolved)
+        self.assertEqual(["track id"], tags.resolved["musicbrainz_trackid"])
+
+    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
+    def test_resolve_metadata_keeps_release_tags_of_same_album(self, _: MagicMock) -> None:
+        """Test that release tags are kept if the album is the release, e.g. remastered."""
+        tags = MusicTags()
+        tags.youtube = {"album": ["Album (2011 Remaster)"]}
+        tags.musicbrainz = {"album": ["album"], "tracknumber": ["5"]}
+        tags.resolve_metadata()
+        self.assertEqual(["5"], tags.resolved["tracknumber"])
