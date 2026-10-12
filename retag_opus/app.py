@@ -16,11 +16,12 @@ from colorama import Fore, init
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import colors
+from retag_opus import colors, constants
 from retag_opus.cli import Cli
 from retag_opus.description_parser import DescriptionParser
 from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import REMOVED_TAG, MusicTags
+from retag_opus.musicbrainz import MusicBrainzMatcher
 from retag_opus.tags_parser import TagsParser
 from retag_opus.utils import Utils
 
@@ -126,6 +127,7 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
     metadata: OggOpus = OggOpus(file_path)  # type: ignore
     old_tags: Tags = dict(metadata.items())  # type: ignore
     tags = MusicTags(manual_album_set=manual_album is not None)
+    tags.duration = getattr(getattr(metadata, "info", None), "length", None)
 
     tags.original = old_tags
     tags.discard_upload_date()
@@ -161,6 +163,42 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
     return metadata, tags
 
 
+def save_tags(metadata: OggOpus, tags: Tags) -> None:
+    """Write tags to a song's file, and delete the ones marked as removed."""
+    for tag, data in tags.items():
+        if data == REMOVED_TAG:
+            metadata.pop(tag, None)  # type: ignore
+        else:
+            metadata[tag] = data
+    metadata.save()
+
+
+def match_albums(matcher: MusicBrainzMatcher, albums: dict[Path, str], manual_album: str | None) -> dict[Path, Tags]:
+    """Identify each album on MusicBrainz, with all its songs at once.
+
+    :param matcher: Used for finding the albums on MusicBrainz.
+    :param albums: Album of each song that shares album with another.
+    :param manual_album: The album set by the user, if any.
+
+    :return: Tags from MusicBrainz for each song whose album was found.
+    """
+    songs_per_album: dict[str, dict[Path, MusicTags]] = {}
+    album_names: dict[str, str] = {}
+    for file_path, album in albums.items():
+        _, tags = read_song(file_path, manual_album)
+        if album not in songs_per_album:
+            songs_per_album[album] = {}
+            # Albums are grouped by their name in lower case, so search
+            # for the name as written instead
+            album_names[album] = manual_album or tags.youtube.get("album", [album])[0]
+        songs_per_album[album][file_path] = tags
+
+    musicbrainz_tags_per_song: dict[Path, Tags] = {}
+    for album, songs in songs_per_album.items():
+        musicbrainz_tags_per_song.update(matcher.match_album(album_names[album], songs))
+    return musicbrainz_tags_per_song
+
+
 def run(argv: Sequence[str] | None = None) -> int:
     """Run all the functionality of the app."""
     args = Cli.parse_arguments(argv)
@@ -184,6 +222,11 @@ def run(argv: Sequence[str] | None = None) -> int:
         albums = group_by_album(all_files, args.manual_album)
     album_level_tags: dict[str, Tags] = {}
 
+    use_musicbrainz = args.musicbrainz if args.musicbrainz is not None else config.get("musicbrainz", False)
+    # One matcher for all songs, so that its cache and rate limit are shared
+    matcher = MusicBrainzMatcher() if use_musicbrainz else None
+    musicbrainz_tags_per_song = match_albums(matcher, albums, args.manual_album) if matcher is not None else {}
+
     for idx, file_path in enumerate(all_files):
         redo = True
         album = albums.get(file_path)
@@ -196,6 +239,10 @@ def run(argv: Sequence[str] | None = None) -> int:
 
             old_metadata, tags = read_song(file_path, args.manual_album)
             description_lines = get_description(tags.original)
+            if matcher is not None:
+                if file_path not in musicbrainz_tags_per_song:
+                    musicbrainz_tags_per_song[file_path] = matcher.match_song(tags)
+                tags.musicbrainz = musicbrainz_tags_per_song[file_path]
 
             # 4.5 Get rid of shady tags
             tags_to_delete = config.get("tags_to_delete", [])
@@ -217,6 +264,18 @@ def run(argv: Sequence[str] | None = None) -> int:
             except UserExitException as e:
                 print(f"RetagOpus exited successfully: {e}")
                 return 0
+
+            # 4.7 Don't ask about saving when nothing that the user can
+            # check would change, but save new MusicBrainz IDs, which the
+            # user can only check by the MusicBrainz match
+            changed = tags.changed_tags()
+            if all(tag.startswith(constants.MUSICBRAINZ_ID_PREFIX) for tag in changed):
+                if changed:
+                    save_tags(old_metadata, tags.resolved)
+                    print(Fore.GREEN + f"MusicBrainz IDs saved for file: {file_name}" + Fore.RESET)
+                else:
+                    print(Fore.YELLOW + "Nothing to change. Skipping song." + Fore.RESET)
+                break
 
             # 5. Show user final result and ask if it should be saved or
             # retried, or song skipped
@@ -250,12 +309,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                         print("RetagOpus exited successfully: Skipping this and all later songs")
                         return 0
                     case "[s] save":
-                        for tag, data in tags.resolved.items():
-                            if data == REMOVED_TAG:
-                                old_metadata.pop(tag, None)  # type: ignore
-                            else:
-                                old_metadata[tag] = data
-                        old_metadata.save()
+                        save_tags(old_metadata, tags.resolved)
                         print(Fore.GREEN + f"Metadata saved for file: {file_name}")
                         if album is not None:
                             album_level_tags[album] = tags.get_album_level_tags()

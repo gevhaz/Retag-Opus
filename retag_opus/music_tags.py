@@ -374,6 +374,15 @@ class MusicTags:
 
         return new_content_exists
 
+    def changed_tags(self) -> list[str]:
+        """Get the names of the tags that would be changed in the file."""
+        changed = []
+        for tag_name, value in self.resolved.items():
+            # A tag that's removed but not in the file isn't a change
+            if value != self.original.get(tag_name, REMOVED_TAG):
+                changed.append(tag_name)
+        return changed
+
     def keep_pruned_tags_removed(self, pruned_tags: list[str]) -> None:
         """Remove pruned tags again if they were restored.
 

@@ -35,6 +35,8 @@ options:
 -d DIR, --directory DIR
                       directory in which the files to be retagged are located
 -i, --individual      Choose album level tags separately for each song, even for songs that are from the same album
+-m, --musicbrainz, --no-musicbrainz
+                      Look up songs on MusicBrainz, overriding the configuration file
 -V, --version         show program's version number and exit
 ```
 
@@ -72,6 +74,52 @@ you save one of them, they are saved for all of them, including songs that
 were skipped or passed earlier. Use `--individual` to choose them for every
 song.
 
+## MusicBrainz
+
+With the `--musicbrainz` flag, or `musicbrainz = true` in the configuration
+file, songs are also looked up on [MusicBrainz](https://musicbrainz.org). Its
+values are shown in orange and treated like the values from the other
+sources, but are used last when sources disagree. When a tag has conflicting
+values, the menu starts on the value MusicBrainz agrees with, or on the
+MusicBrainz value if it agrees with none of them. Values that only differ in
+typography, like straight and curly apostrophes, count as the same.
+
+Besides title, artist, album, album artist and date, MusicBrainz gives track
+and disc numbers, credits such as composer, lyricist, producer and performers,
+and MusicBrainz IDs, which are saved in the same tags as MusicBrainz Picard
+uses. The IDs aren't shown, since they can't be checked by looking at them.
+Instead, the line saying which track a song was found as shows its version and
+release, so that a wrong match stands out. If the IDs are the only new tags for
+a song, they're saved without asking. Track and disc numbers are used without a
+message for each, but are shown in the result. If the song was found on
+another album than the other sources say, e.g. because a single on YouTube is
+only on an album on MusicBrainz, you are asked which album is right. Track and
+disc numbers and release IDs are only used if it's the one found on
+MusicBrainz.
+
+Songs from the same album (see above) are looked up together, without asking
+anything: they are matched by title and length to the tracks of a release with
+the album's name, and the smallest and earliest release that has all of them
+is used, so that e.g. the original edition is preferred over a deluxe edition.
+If you set the album with `--album`, the album is spelled as on MusicBrainz.
+Songs whose album isn't found this way, for example because the album is your
+own collection, are looked up one by one.
+
+A song is looked up by its MusicBrainz ID if the file has one. Otherwise it is
+searched for: by title and artist if they are in the YouTube description, and
+otherwise by the words of its title, which is then usually a YouTube video
+title like `KAUN TUJHE Full Video | M.S. DHONI -THE UNTOLD STORY |Amaal Mallik
+Palak`. A result is used without asking if its title is among those words and
+its length is within three seconds of the song's. Otherwise you choose among
+the results, search for something else, or skip MusicBrainz for that song. If
+you set the album with `--album` and the song wasn't found as part of it, tags
+describing the release the song was found on, like album and track number,
+aren't used.
+
+Looking up songs sends their titles, artists and albums to MusicBrainz. No
+account is needed. MusicBrainz allows one request per second, so looking up a
+song takes a few seconds.
+
 ## Configuration
 
 You can configure tags that should be deleted. There are two ways you can
@@ -85,6 +133,7 @@ You specify this information in the Retag-Opus configuration file which is
 `~/.config/retag.toml`. Here is an example:
 
 ```toml
+musicbrainz = true
 tags_to_delete = [
   "language",
 ]
@@ -94,7 +143,7 @@ strings_to_delete_tags_based_on = [
 ]
 ```
 
-This will delete the `language` tag, any tag containing the exact value
+This will look up songs on MusicBrainz, delete the `language` tag, any tag containing the exact value
 `delete_exactly_this` but not `delete_exactly_this_other_thing`, and also any
 tag that matches the last regex, such as `test_delete_any_partial_match_test`.
 

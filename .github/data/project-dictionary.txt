@@ -8,3 +8,5 @@ YouTube's
 changelog
 reshown
 pypi
+MusicBrainz
+Picard

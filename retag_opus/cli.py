@@ -47,6 +47,15 @@ class Cli:
         )
 
         parser.add_argument(
+            "-m",
+            "--musicbrainz",
+            action=argparse.BooleanOptionalAction,
+            default=None,
+            dest="musicbrainz",
+            help="Look up songs on MusicBrainz, overriding the configuration file",
+        )
+
+        parser.add_argument(
             "-V",
             "--version",
             action="version",
