@@ -9,7 +9,7 @@ import pytest
 from colorama import Fore
 from mutagen import oggopus
 
-from retag_opus import app, utils
+from retag_opus import app, colors, utils
 
 metadata = [
     ("title", ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"]),
@@ -805,3 +805,85 @@ def test_saving_album_updates_earlier_songs(monkeypatch):
     assert first_metadata["date"] == ["2030-01-01"]
     # Tags that aren't album level tags are not saved for passed songs
     assert first_metadata["artist"] == ["The Global"]
+
+
+@pytest.mark.parametrize(
+    ("argv", "config", "expected_lookups"),
+    [
+        (["--musicbrainz"], "", 1),
+        ([], "musicbrainz = true", 1),
+        (["--no-musicbrainz"], "musicbrainz = true", 0),
+        ([], "", 0),
+    ],
+)
+def test_musicbrainz_lookup(capsys, music_directory, monkeypatch, argv, config, expected_lookups):
+    """Look up songs on MusicBrainz only when enabled, once per song."""
+    monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
+    monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    # Resolve artist, reset, resolve artist again, quit
+    monkeypatch.setattr(utils.TerminalMenu, "show", Mock(side_effect=[0, 2, 0, None]))
+    config_dir = Path(music_directory) / "config"
+    config_dir.mkdir()
+    (config_dir / "retag.toml").write_text(config)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(config_dir))
+    matcher = Mock()
+    matcher.match_song.return_value = {"artist": ["The Global"]}
+    monkeypatch.setattr(app, "MusicBrainzMatcher", lambda: matcher)
+
+    exit_code = app.run(["--directory", music_directory] + argv)
+
+    actual_output, _ = capsys.readouterr()
+    assert exit_code == 0
+    assert matcher.match_song.call_count == expected_lookups
+    assert (f"MusicBrainz: {colors.mb_col}The Global{Fore.RESET}" in actual_output) == bool(expected_lookups)
+
+
+def test_match_albums():
+    """Albums are identified with all their songs at once."""
+    matcher = Mock()
+    matcher.match_album.side_effect = lambda album, songs: {path: {"album": [album]} for path in songs}
+    with TemporaryDirectory() as temp_dir:
+        first = Path(temp_dir) / "first.opus"
+        second = Path(temp_dir) / "second.opus"
+        write_opus_file(first, album_song_metadata("Song 1", "The Album", "Pop"))
+        write_opus_file(second, album_song_metadata("Song 2", "The Album", "Pop"))
+
+        matched = app.match_albums(matcher, {first: "the album", second: "the album"}, None)
+
+        songs = matcher.match_album.call_args.args[1]
+    assert matched == {first: {"album": ["The Album"]}, second: {"album": ["The Album"]}}
+    assert [tags.youtube["title"] for tags in songs.values()] == [["Song 1"], ["Song 2"]]
+    assert all(tags.duration is not None for tags in songs.values())
+
+
+@pytest.mark.parametrize(
+    ("found", "expected_output", "expected_trackid"),
+    [
+        (
+            {"title": ["Don’t Go"], "musicbrainz_trackid": ["id"]},
+            "MusicBrainz IDs saved for file: song",
+            ["id"],
+        ),
+        ({"title": ["Don’t Go"]}, "Nothing to change. Skipping song.", None),
+    ],
+)
+def test_musicbrainz_without_visible_changes(monkeypatch, capsys, found, expected_output, expected_trackid):
+    """Don't ask about saving when nothing the user can check changes."""
+    menu = Mock()
+    monkeypatch.setattr(utils.TerminalMenu, "__init__", menu)
+    matcher = Mock()
+    matcher.match_song.return_value = found
+    monkeypatch.setattr(app, "MusicBrainzMatcher", lambda: matcher)
+    with TemporaryDirectory() as temp_dir:
+        path = Path(temp_dir) / "song.opus"
+        write_opus_file(path, {"title": ["Don't Go"]})
+
+        exit_code = app.run(["--directory", temp_dir, "--musicbrainz"])
+
+        saved: oggopus.OggOpus = oggopus.OggOpus(path)
+        assert saved.get("musicbrainz_trackid") == expected_trackid
+        assert saved["title"] == ["Don't Go"]
+    assert exit_code == 0
+    assert expected_output in capsys.readouterr().out
+    menu.assert_not_called()

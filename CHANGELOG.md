@@ -6,6 +6,10 @@
 
 - For songs from the same album, the album artist, date, genre and album only
   have to be chosen once.
+- Look up songs on MusicBrainz, enabled with the `--musicbrainz` flag or
+  `musicbrainz = true` in the configuration file. MusicBrainz is used as one
+  more source of tags, including track numbers, credits and MusicBrainz IDs.
+  Songs from the same album are looked up together.
 
 ### Changed
 
