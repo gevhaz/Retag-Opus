@@ -1,11 +1,13 @@
 """Module for identifying songs on MusicBrainz and turning them into tags.
 
-A song is identified by its MusicBrainz ID if the file has one, and
-otherwise by searching for it. A search result is only used without
-asking when its title is in what was searched for and its length is
-the song's.
+Songs from the same album are identified together as a release, when
+there is a release that has all of them. Other songs are identified by
+their MusicBrainz ID if the file has one, and otherwise by searching
+for them. A search result is only used without asking when its title
+is in what was searched for and its length is the song's.
 """
 import re
+from pathlib import Path
 from typing import Final
 
 from colorama import Fore
@@ -18,7 +20,9 @@ from retag_opus.utils import Utils
 
 Tags = dict[str, list[str]]
 
+MIN_SCORE: Final[int] = 90
 MAX_DURATION_DIFFERENCE: Final[float] = 3.0
+MAX_RELEASE_LOOKUPS: Final[int] = 3
 
 # Tags that describe the release a song is on, rather than the song
 RELEASE_TAGS: Final[list[str]] = [
@@ -269,6 +273,49 @@ def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None
     return min(releases, key=preference)
 
 
+def matching_track_index(tracks: list[tuple[JsonDict, JsonDict]], tags: MusicTags) -> int | None:
+    """Find the track that a song is, by its title and, if known, length.
+
+    :return: The index of the track in tracks, or None if no track is
+        the song.
+    """
+    text = song_text(tags)
+    for index, (_, track) in enumerate(tracks):
+        same_title = title_matches(track["title"], text)
+        same_length = tags.duration is None or duration_matches(track.get("length"), tags.duration)
+        if same_title and same_length:
+            return index
+    return None
+
+
+def match_tracks(release: JsonDict, songs: dict[Path, MusicTags]) -> dict[Path, Tags]:
+    """Match each song to its own track on the release.
+
+    :return: Tags for each song, or no tags if any song isn't on the
+        release.
+    """
+    unmatched_tracks = release_tracks(release)
+    tags_per_song: dict[Path, Tags] = {}
+    for path, tags in songs.items():
+        index = matching_track_index(unmatched_tracks, tags)
+        if index is None:
+            return {}
+        # Each track can only be one of the songs
+        medium, track = unmatched_tracks.pop(index)
+        tags_per_song[path] = track_tags(release, medium, track)
+    return tags_per_song
+
+
+def stored_release_ids(songs: dict[Path, MusicTags]) -> list[str]:
+    """Get the IDs of the MusicBrainz releases stored in the songs' files."""
+    release_ids: list[str] = []
+    for tags in songs.values():
+        for release_id in tags.original.get("musicbrainz_albumid", []):
+            if release_id not in release_ids:
+                release_ids.append(release_id)
+    return release_ids
+
+
 def format_release(release: JsonDict) -> str:
     """Format a release with when and where it was released.
 
@@ -359,6 +406,86 @@ class MusicBrainzMatcher:
                         song_tags.pop(tag_name, None)
                 return song_tags
         return {}
+
+    def match_album(self, album: str, songs: dict[Path, MusicTags]) -> dict[Path, Tags]:
+        """Get tags for songs from the same album from MusicBrainz.
+
+        The songs are matched to the tracks of releases that may be the
+        album, until a release has all of them: first the releases whose
+        IDs are in the songs' files, and then a few releases found by
+        searching. If no release has all of them, e.g. because the album
+        is the user's own collection, the songs have to be looked up one
+        by one.
+
+        :return: Tags for each song, or no tags if no release has all of
+            them.
+        """
+        if self.disabled:
+            return {}
+        print(Fore.BLUE + f"Looking up the album '{album}' on MusicBrainz..." + Fore.RESET)
+        try:
+            for release_id in stored_release_ids(songs):
+                tags_per_song = self.match_release(release_id, album, songs)
+                if tags_per_song:
+                    return tags_per_song
+            # Looking up a release takes at least a second, so only the
+            # likeliest ones are tried
+            for release_id in self.search_album_releases(album, songs)[:MAX_RELEASE_LOOKUPS]:
+                tags_per_song = self.match_release(release_id, album, songs)
+                if tags_per_song:
+                    return tags_per_song
+        except MusicBrainzError as e:
+            self.disable(e)
+            return {}
+        print(Fore.YELLOW + f"MusicBrainz: No release of '{album}' has all {len(songs)} songs." + Fore.RESET)
+        return {}
+
+    def match_release(self, release_id: str, album: str, songs: dict[Path, MusicTags]) -> dict[Path, Tags]:
+        """Match the songs of an album to the tracks of a release.
+
+        :return: Tags for each song, or no tags if any song isn't on the
+            release.
+        """
+        release = self.client.lookup_release(release_id)
+        if release is None:
+            return {}
+        tags_per_song = match_tracks(release, songs)
+        if tags_per_song:
+            found = f"MusicBrainz: Found all {len(songs)} songs from '{album}' on {format_release(release)}."
+            print(colors.mb_col + found + Fore.RESET)
+        return tags_per_song
+
+    def search_album_releases(self, album: str, songs: dict[Path, MusicTags]) -> list[str]:
+        """Search for releases that may be the album, likeliest first.
+
+        Releases with the album's name, ignoring e.g. "(2011 Remaster)",
+        by the songs' artist are searched for. Those that match the
+        search well and have room for all the songs may be the album. Of
+        them, those with fewest tracks, and of those the earliest, come
+        first, so that the original standard edition is preferred over
+        e.g. a deluxe edition or a later remaster that also has the songs.
+
+        :return: IDs of the releases.
+        """
+        artist = None
+        for tags in songs.values():
+            if tags.youtube.get("artist"):
+                artist = tags.youtube["artist"][0]
+                break
+
+        candidates = []
+        for release in self.client.search_releases(Utils.prune_title(album), artist):
+            matches_search = release.get("score", 0) >= MIN_SCORE
+            has_room_for_songs = release.get("track-count", 0) >= len(songs)
+            if matches_search and has_room_for_songs:
+                candidates.append(release)
+
+        def preference(release: JsonDict) -> tuple[int, str]:
+            """Sort key that puts releases with fewest tracks first, earliest first."""
+            return release.get("track-count", 0), release.get("date") or "9999"
+
+        candidates.sort(key=preference)
+        return [release["id"] for release in candidates]
 
     def find_recording(self, tags: MusicTags) -> JsonDict | None:
         """Find the recording of a song, with the releases it's on.

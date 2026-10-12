@@ -1,4 +1,5 @@
 """Tests for musicbrainz.py."""
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -418,3 +419,116 @@ def test_match_song_disabled_after_error(capsys: pytest.CaptureFixture[str]) -> 
 def test_matcher_creates_client() -> None:
     """Create a real client when none is given."""
     assert MusicBrainzMatcher().client is not None
+
+
+RELEASE_RESULTS: list[JsonDict] = [
+    {"id": "deluxe", "score": 100, "track-count": 3},
+    {"id": "other", "score": 60, "track-count": 2},
+    {"id": "rel-1", "score": 100, "track-count": 2},
+    {"id": "single", "score": 100, "track-count": 1},
+    {"id": "unknown size", "score": 100},
+]
+
+
+def album_songs(goodbyes_duration: float | None = 201.0, hello_duration: float | None = 180.0) -> dict[Path, MusicTags]:
+    """Create two songs from the test release."""
+    return {
+        Path("2.opus"): song(original={"title": ["Hello Again (Official Audio)"]}, duration=hello_duration),
+        Path("1.opus"): song(
+            youtube={"title": ["Proper Goodbyes"], "artist": ["The Global"]}, duration=goodbyes_duration
+        ),
+    }
+
+
+def test_match_tracks() -> None:
+    """Match each song to a track by title and duration."""
+    matched = musicbrainz.match_tracks(RELEASE, album_songs())
+    assert {path: tags["tracknumber"] for path, tags in matched.items()} == {
+        Path("1.opus"): ["1"],
+        Path("2.opus"): ["2"],
+    }
+    assert musicbrainz.match_tracks(RELEASE, album_songs(None, None)) == matched
+
+
+def test_match_tracks_needs_every_song() -> None:
+    """A release without all songs matches none of them."""
+    assert musicbrainz.match_tracks(RELEASE, {**album_songs(), Path("3.opus"): song(original={"title": ["X"]})}) == {}
+    assert musicbrainz.match_tracks(RELEASE, album_songs(goodbyes_duration=100)) == {}
+    same_song_twice = {Path(name): song(original={"title": ["Bonus"]}, duration=None) for name in ["a", "b"]}
+    assert musicbrainz.match_tracks(RELEASE, same_song_twice) == {}
+
+
+def test_match_album(capsys: pytest.CaptureFixture[str]) -> None:
+    """Use the smallest release with all songs, without asking."""
+    client = fake_client()
+    client.search_releases.return_value = RELEASE_RESULTS
+    client.lookup_release.side_effect = lambda mbid: RELEASE if mbid == "rel-1" else None
+    matched = MusicBrainzMatcher(client).match_album("Goodbyes (2011 Remaster)", album_songs())
+    assert set(matched) == {Path("1.opus"), Path("2.opus")}
+    client.search_releases.assert_called_once_with("Goodbyes", "The Global")
+    assert [c.args[0] for c in client.lookup_release.call_args_list] == ["rel-1"]
+    out = capsys.readouterr().out
+    assert "Looking up the album 'Goodbyes (2011 Remaster)' on MusicBrainz..." in out
+    assert "MusicBrainz: Found all 2 songs from 'Goodbyes (2011 Remaster)' on 'Goodbyes' (2022-08-22)." in out
+
+
+def test_match_album_no_release(capsys: pytest.CaptureFixture[str]) -> None:
+    """Look up at most a few releases, and give up if none has all songs."""
+    client = fake_client()
+    client.search_releases.return_value = [{"id": str(n), "score": 100, "track-count": 9} for n in range(5)]
+    client.lookup_release.return_value = None
+    assert MusicBrainzMatcher(client).match_album("My Favourites", album_songs()) == {}
+    assert client.lookup_release.call_count == musicbrainz.MAX_RELEASE_LOOKUPS
+    assert "MusicBrainz: No release of 'My Favourites' has all 2 songs." in capsys.readouterr().out
+
+
+def test_match_album_disabled_after_error() -> None:
+    """When MusicBrainz can't be reached, don't try again."""
+    client = fake_client()
+    client.search_releases.side_effect = MusicBrainzError("offline")
+    matcher = MusicBrainzMatcher(client)
+    assert matcher.match_album("Goodbyes", album_songs()) == {}
+    assert matcher.match_album("Goodbyes", album_songs()) == {}
+    client.search_releases.assert_called_once()
+
+
+def test_search_album_releases() -> None:
+    """Search for releases that may be the album, smallest and earliest first."""
+    client = fake_client()
+    client.search_releases.return_value = [
+        {"id": "remaster", "score": 100, "track-count": 2, "date": "2011"},
+        {"id": "undated", "score": 100, "track-count": 2},
+        {"id": "original", "score": 100, "track-count": 2, "date": "1975"},
+        *RELEASE_RESULTS,
+    ]
+    releases = MusicBrainzMatcher(client).search_album_releases("Goodbyes", album_songs())
+    assert releases == ["original", "remaster", "undated", "rel-1", "deluxe"]
+
+
+def test_stored_release_ids() -> None:
+    """Get each release stored in the songs' files once."""
+    songs = album_songs()
+    for tags in songs.values():
+        tags.original["musicbrainz_albumid"] = ["stored"]
+    assert musicbrainz.stored_release_ids(songs) == ["stored"]
+    assert musicbrainz.stored_release_ids(album_songs()) == []
+
+
+def test_match_album_tries_stored_release_first() -> None:
+    """Search for releases when the stored release doesn't have all songs."""
+    client = fake_client()
+    client.search_releases.return_value = RELEASE_RESULTS
+    client.lookup_release.side_effect = lambda mbid: RELEASE if mbid == "rel-1" else None
+    songs = album_songs()
+    songs[Path("2.opus")].original["musicbrainz_albumid"] = ["stored"]
+    assert MusicBrainzMatcher(client).match_album("Goodbyes", songs)
+    assert [c.args[0] for c in client.lookup_release.call_args_list] == ["stored", "rel-1"]
+
+
+def test_match_album_searches_only_when_needed() -> None:
+    """Don't search when a stored release has all songs."""
+    client = fake_client()
+    songs = album_songs()
+    songs[Path("1.opus")].original["musicbrainz_albumid"] = ["rel-1"]
+    assert MusicBrainzMatcher(client).match_album("Goodbyes", songs)
+    client.search_releases.assert_not_called()
