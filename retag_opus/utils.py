@@ -1,6 +1,7 @@
 """Module with helper functions for the rest of the app."""
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import List
 
@@ -119,3 +120,26 @@ class Utils:
         cleaned_values_1 = [v.strip() for v in values_1]
         cleaned_values_2 = [v.strip() for v in values_2]
         return sorted(cleaned_values_1) == sorted(cleaned_values_2)
+
+    @staticmethod
+    def normalize(text: str) -> str:
+        """Make text comparable regardless of typography and case.
+
+        MusicBrainz uses typographic apostrophes, quotes, and dashes,
+        while YouTube and existing tags often don't.
+        """
+        text = unicodedata.normalize("NFKC", text)
+        text = re.sub("[‘’‛´`]", "'", text)
+        text = re.sub("[“”‟]", '"', text)
+        text = re.sub("[‐-―]", "-", text)
+        return " ".join(text.casefold().split())
+
+    @staticmethod
+    def is_equal_when_normalized(values_1: list[str], values_2: list[str]) -> bool:
+        """Compare lists disregarding typography, case, and order.
+
+        Order is disregarded since tags with several values, like
+        artists, may list them in different orders in different sources,
+        just like in is_equal_when_stripped.
+        """
+        return sorted(map(Utils.normalize, values_1)) == sorted(map(Utils.normalize, values_2))
