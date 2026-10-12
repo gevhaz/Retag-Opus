@@ -259,3 +259,14 @@ class TestUtils(unittest.TestCase):
                 ["value 1", "value 2", "value 3"],
             )
         )
+
+    def test_normalize(self) -> None:
+        """Test that typography, case, and whitespace are evened out."""
+        self.assertEqual("don't stop", Utils.normalize("Don’t  Stop"))
+        self.assertEqual('"hi" - there', Utils.normalize("“Hi” – There"))
+        self.assertEqual("abc", Utils.normalize("ＡBC"))
+
+    def test_is_equal_when_normalized(self) -> None:
+        """Test comparing lists regardless of typography and order."""
+        self.assertTrue(Utils.is_equal_when_normalized(["B", "Don't"], ["don’t", "b"]))
+        self.assertFalse(Utils.is_equal_when_normalized(["A"], ["A", "B"]))
