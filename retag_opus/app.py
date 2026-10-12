@@ -113,6 +113,54 @@ def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
             print(Fore.GREEN + f"Album level tags saved for file: {Utils().file_path_to_song_data(file_path)}")
 
 
+def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, MusicTags]:
+    """Read the tags of a song and parse new tags from them.
+
+    :param file_path: The song to read.
+    :param manual_album: The album set by the user, if any.
+
+    :return: The metadata of the song, for saving changes to it, and
+        its tags from all sources.
+    """
+    # 1. Read the data and make basic improvements
+    metadata: OggOpus = OggOpus(file_path)  # type: ignore
+    old_tags: Tags = dict(metadata.items())  # type: ignore
+    tags = MusicTags(manual_album_set=manual_album is not None)
+
+    tags.original = old_tags
+    tags.discard_upload_date()
+    if manual_album is not None:
+        tags.switch_album_to_disc_subtitle(manual_album)
+
+    tags.resolved = deepcopy(old_tags)
+
+    old_tags_parser = TagsParser(tags.original)
+    old_tags_parser.parse_tags()
+    old_tags_parser.split_select_original_tags()
+    tags.fromtags = old_tags_parser.tags
+
+    # 1.1 Manually set album
+    if manual_album is not None:
+        tags.resolved["album"] = [manual_album]
+
+    # 2. Get description
+    description_lines = get_description(old_tags)
+
+    # 3. If description exists, send it to be parsed
+    if description_lines:
+        desc_parser = DescriptionParser(manual_album_set=manual_album is not None)
+        description = "\n".join(description_lines)
+        desc_parser.parse(description)
+        tags.youtube = desc_parser.tags
+        tags.add_source_tag()
+
+        new_tags_parser = TagsParser(tags.youtube)
+        new_tags_parser.parse_tags()
+        tags.fromdesc = new_tags_parser.tags
+
+    return metadata, tags
+
+
 def run(argv: Sequence[str] | None = None) -> int:
     """Run all the functionality of the app."""
     args = Cli.parse_arguments(argv)
@@ -146,46 +194,8 @@ def run(argv: Sequence[str] | None = None) -> int:
             print("\n" + Fore.BLUE + f"Song {idx + 1} of {len(all_files)}" + Fore.RESET)
             print(Fore.BLUE + f"----- Song: {file_name} -----" + Fore.RESET)
 
-            # 1. Read the data and make basic improvements
-            old_metadata: OggOpus = OggOpus(file_path)  # type: ignore
-            old_tags: Tags = {}
-            tag_source = {}
-            for key, val in old_metadata.items():  # type: ignore
-                old_tags[key] = val
-            for key in old_tags.keys():
-                tag_source[key] = colors.md_col
-            tags = MusicTags(manual_album_set=args.manual_album is not None)
-
-            tags.original = old_tags
-            tags.discard_upload_date()
-            if args.manual_album is not None:
-                tags.switch_album_to_disc_subtitle(args.manual_album)
-
-            tags.resolved = deepcopy(old_tags)
-
-            old_tags_parser = TagsParser(tags.original)
-            old_tags_parser.parse_tags()
-            old_tags_parser.split_select_original_tags()
-            tags.fromtags = old_tags_parser.tags
-
-            # 1.1 Manually set album
-            if args.manual_album is not None:
-                tags.resolved["album"] = [args.manual_album]
-
-            # 2. Get description
-            description_lines = get_description(old_tags)
-
-            # 3. If description exists, send it to be parsed
-            if description_lines:
-                desc_parser = DescriptionParser(manual_album_set=args.manual_album is not None)
-                description = "\n".join(description_lines)
-                desc_parser.parse(description)
-                tags.youtube = desc_parser.tags
-                tags.add_source_tag()
-
-                new_tags_parser = TagsParser(tags.youtube)
-                new_tags_parser.parse_tags()
-                tags.fromdesc = new_tags_parser.tags
+            old_metadata, tags = read_song(file_path, args.manual_album)
+            description_lines = get_description(tags.original)
 
             # 4.5 Get rid of shady tags
             tags_to_delete = config.get("tags_to_delete", [])
