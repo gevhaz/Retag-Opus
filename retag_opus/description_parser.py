@@ -51,16 +51,11 @@ class DescriptionParser:
         string line and set the result to the tag field_value. If the
         value already exists, remove duplicate values.
         """
-        pattern = re.compile(regex)
-        pattern_match = re.match(pattern, line)
+        pattern_match = re.match(regex, line)
         if pattern_match:
-            field_value = pattern_match.groups()[len(pattern_match.groups()) - 1]
-            field_value = field_value.strip()
-            if self.tags.get(field_name):
-                self.tags[field_name].append(field_value)
-                self.tags[field_name] = Utils().remove_duplicates(self.tags[field_name])
-            else:
-                self.tags[field_name] = [field_value]
+            field_value = pattern_match.groups()[-1].strip()
+            existing_values = self.tags.get(field_name, [])
+            self.tags[field_name] = Utils.remove_duplicates(existing_values + [field_value])
 
     def parse(self, description_tag_full: str) -> None:
         """Parse the provided youtube description.
