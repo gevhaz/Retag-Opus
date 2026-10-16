@@ -45,51 +45,26 @@ class TagsParser:
         old_genre = self.original_tags.get("genre", [])
         new_genre = []
 
+        version_pattern_names = ["live", "albumversion", "remix", "remix2", "remaster", "remaster2"]
+        instrumental_pattern_names = ["instrumental", "instrumental2"]
+
         for title in old_title:
             featuring_regex = constants.tag_parse_patterns["featuring"]
-            pattern_match = re.match(featuring_regex, title)
-            if pattern_match:
-                new_artist += Utils().split_tag(pattern_match.groups()[1].strip())
+            featuring_match = re.match(featuring_regex, title)
+            if featuring_match:
+                featured_artists = featuring_match.group(2).strip()
+                new_artist += Utils.split_tag(featured_artists)
 
-            live_regex = constants.tag_parse_patterns["live"]
-            live_match = re.match(live_regex, title)
-            if live_match:
-                new_version.append(live_match.groups()[1].strip())
+            for pattern_name in version_pattern_names:
+                version_regex = constants.tag_parse_patterns[pattern_name]
+                version_match = re.match(version_regex, title)
+                if version_match:
+                    new_version.append(version_match.group(2).strip())
 
-            albumversion_regex = constants.tag_parse_patterns["albumversion"]
-            albumversion_match = re.match(albumversion_regex, title)
-            if albumversion_match:
-                new_version.append(albumversion_match.groups()[1].strip())
-
-            instrumental_regex = constants.tag_parse_patterns["instrumental"]
-            instrumental_match = re.match(instrumental_regex, title)
-            if instrumental_match:
-                new_genre.append("Instrumental")
-
-            instrumental2_regex = constants.tag_parse_patterns["instrumental2"]
-            instrumental2_match = re.match(instrumental2_regex, title)
-            if instrumental2_match:
-                new_genre.append("Instrumental")
-
-            remix_regex = constants.tag_parse_patterns["remix"]
-            remix_match = re.match(remix_regex, title)
-            if remix_match:
-                new_version.append(remix_match.groups()[1].strip())
-
-            remix2_regex = constants.tag_parse_patterns["remix2"]
-            remix2_match = re.match(remix2_regex, title)
-            if remix2_match:
-                new_version.append(remix2_match.groups()[1].strip())
-
-            remaster_regex = constants.tag_parse_patterns["remaster"]
-            remaster_match = re.match(remaster_regex, title)
-            if remaster_match:
-                new_version.append(remaster_match.groups()[1].strip())
-
-            remaster2_regex = constants.tag_parse_patterns["remaster2"]
-            remaster2_match = re.match(remaster2_regex, title)
-            if remaster2_match:
-                new_version.append(remaster2_match.groups()[1].strip())
+            for pattern_name in instrumental_pattern_names:
+                instrumental_regex = constants.tag_parse_patterns[pattern_name]
+                if re.match(instrumental_regex, title):
+                    new_genre.append("Instrumental")
 
         if set(new_version) != set(old_version) and len(new_version) > 0:
             self.tags["version"] = Utils().remove_duplicates(old_version + new_version)
