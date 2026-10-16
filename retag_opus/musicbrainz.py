@@ -10,10 +10,9 @@ import re
 from pathlib import Path
 from typing import Final
 
-from colorama import Fore
 from simple_term_menu import TerminalMenu
 
-from retag_opus import colors, constants
+from retag_opus import constants, messages, styles
 from retag_opus.music_tags import MusicTags
 from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrainzError
 from retag_opus.utils import Utils
@@ -361,7 +360,7 @@ class MusicBrainzMatcher:
 
     def disable(self, error: MusicBrainzError) -> None:
         """Stop using MusicBrainz, so that later songs don't wait for it."""
-        print(Fore.RED + f"MusicBrainz: {error}. Not using MusicBrainz for the rest of this run." + Fore.RESET)
+        messages.error(f"MusicBrainz: {error}. Not using MusicBrainz for the rest of this run.")
         self.disabled = True
 
     def match_song(self, tags: MusicTags) -> Tags:
@@ -375,7 +374,7 @@ class MusicBrainzMatcher:
         """
         if self.disabled:
             return {}
-        print(Fore.BLUE + "Looking up the song on MusicBrainz..." + Fore.RESET)
+        messages.info("Looking up the song on MusicBrainz...")
         try:
             recording = self.find_recording(tags)
             release_summary = choose_release(recording.get("releases", []), tags) if recording else None
@@ -388,7 +387,7 @@ class MusicBrainzMatcher:
 
         for medium, track in release_tracks(release):
             if track["recording"]["id"] == recording["id"]:
-                print(colors.mb_col + match_message(track, release) + Fore.RESET)
+                print(styles.musicbrainz(match_message(track, release)))
                 song_tags = track_tags(release, medium, track)
                 if tags.manual_album_set:
                     # The release found for the song isn't the album the user set
@@ -412,7 +411,7 @@ class MusicBrainzMatcher:
         """
         if self.disabled:
             return {}
-        print(Fore.BLUE + f"Looking up the album '{album}' on MusicBrainz..." + Fore.RESET)
+        messages.info(f"Looking up the album '{album}' on MusicBrainz...")
         try:
             for release_id in stored_release_ids(songs):
                 tags_per_song = self.match_release(release_id, album, songs)
@@ -427,7 +426,7 @@ class MusicBrainzMatcher:
         except MusicBrainzError as e:
             self.disable(e)
             return {}
-        print(Fore.YELLOW + f"MusicBrainz: No release of '{album}' has all {len(songs)} songs." + Fore.RESET)
+        messages.warning(f"MusicBrainz: No release of '{album}' has all {len(songs)} songs.")
         return {}
 
     def match_release(self, release_id: str, album: str, songs: dict[Path, MusicTags]) -> dict[Path, Tags]:
@@ -442,7 +441,7 @@ class MusicBrainzMatcher:
         tags_per_song = match_tracks(release, songs)
         if tags_per_song:
             found = f"MusicBrainz: Found all {len(songs)} songs from '{album}' on {format_release(release)}."
-            print(colors.mb_col + found + Fore.RESET)
+            print(styles.musicbrainz(found))
         return tags_per_song
 
     def search_album_releases(self, album: str, songs: dict[Path, MusicTags]) -> list[str]:

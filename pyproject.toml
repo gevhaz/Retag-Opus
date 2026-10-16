@@ -40,14 +40,13 @@ retag = "retag_opus.app:run"
 
 [tool.poetry.dependencies]
 python = "^3.13"
-colorama = "^0.4.4"
 mutagen = "^1.45.1"
 simple-term-menu = "^1.4.1"
 shtab = "^1.5.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.3.0"
-isort = "^5.10.1"
+isort = {version = "^5.10.1", extras = ["colors"]}
 mypy = "^1.6.0"
 flake8 = "^7.1"
 flake8-docstrings = "^1.6.0"

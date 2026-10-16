@@ -12,11 +12,10 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Sequence
 
-from colorama import Fore, init
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import colors, constants
+from retag_opus import constants, messages, styles
 from retag_opus.cli import Cli
 from retag_opus.description_parser import DescriptionParser
 from retag_opus.exceptions import UserExitException
@@ -24,8 +23,6 @@ from retag_opus.music_tags import REMOVED_TAG, MusicTags
 from retag_opus.musicbrainz import MusicBrainzMatcher
 from retag_opus.tags_parser import TagsParser
 from retag_opus.utils import Utils
-
-init(autoreset=True)
 
 Tags = dict[str, list[str]]
 
@@ -87,9 +84,9 @@ def group_by_album(files: list[Path], manual_album: str | None) -> dict[Path, st
     groups: dict[Path, str] = {}
     for album_key, songs in songs_per_album.items():
         if len(songs) > 1:
-            print(
-                Fore.BLUE + f"{len(songs)} songs are from the album '{albums[songs[0]]}'. Album artist, date, genre "
-                "and album saved for one of them will be saved for all of them." + Fore.RESET
+            messages.info(
+                f"{len(songs)} songs are from the album '{albums[songs[0]]}'. Album artist, date, genre "
+                "and album saved for one of them will be saved for all of them."
             )
             for file_path in songs:
                 groups[file_path] = album_key
@@ -111,7 +108,7 @@ def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
                 changed = True
         if changed:
             metadata.save()
-            print(Fore.GREEN + f"Album level tags saved for file: {Utils().file_path_to_song_data(file_path)}")
+            messages.success(f"Album level tags saved for file: {Utils().file_path_to_song_data(file_path)}")
 
 
 def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, MusicTags]:
@@ -209,12 +206,12 @@ def run(argv: Sequence[str] | None = None) -> int:
     except FileNotFoundError:
         config = {}
     if not music_dir.is_dir():
-        print(Fore.RED + f"{args.dir} is not a directory!")
+        messages.error(f"{args.dir} is not a directory!")
         return 1
 
     all_files = list(filter(Path.is_file, Path(music_dir).glob("*.opus")))
     if not all_files:
-        print(Fore.YELLOW + f"There appears to be no .opus files in the provided directory {args.dir}")
+        messages.warning(f"There appears to be no .opus files in the provided directory {args.dir}")
         return 0
 
     albums: dict[Path, str] = {}
@@ -234,8 +231,9 @@ def run(argv: Sequence[str] | None = None) -> int:
         while redo:
             redo = False
             # Print info about file and progress
-            print("\n" + Fore.BLUE + f"Song {idx + 1} of {len(all_files)}" + Fore.RESET)
-            print(Fore.BLUE + f"----- Song: {file_name} -----" + Fore.RESET)
+            print()
+            messages.info(f"Song {idx + 1} of {len(all_files)}")
+            messages.info(f"----- Song: {file_name} -----")
 
             old_metadata, tags = read_song(file_path, args.manual_album)
             description_lines = get_description(tags.original)
@@ -255,7 +253,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                 tags.apply_album_level_tags(album_level_tags[album])
 
             if not tags.check_any_new_data_exists() and not args.manual_album:
-                print(Fore.YELLOW + "No new data exists. Skipping song." + Fore.RESET)
+                messages.warning("No new data exists. Skipping song.")
                 break
 
             # 4. For each field, if there are conflicts, ask user input
@@ -272,9 +270,9 @@ def run(argv: Sequence[str] | None = None) -> int:
             if all(tag.startswith(constants.MUSICBRAINZ_ID_PREFIX) for tag in changed):
                 if changed:
                     save_tags(old_metadata, tags.resolved)
-                    print(Fore.GREEN + f"MusicBrainz IDs saved for file: {file_name}" + Fore.RESET)
+                    messages.success(f"MusicBrainz IDs saved for file: {file_name}")
                 else:
-                    print(Fore.YELLOW + "Nothing to change. Skipping song." + Fore.RESET)
+                    messages.warning("Nothing to change. Skipping song.")
                 break
 
             # 5. Show user final result and ask if it should be saved or
@@ -310,7 +308,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                         return 0
                     case "[s] save":
                         save_tags(old_metadata, tags.resolved)
-                        print(Fore.GREEN + f"Metadata saved for file: {file_name}")
+                        messages.success(f"Metadata saved for file: {file_name}")
                         if album is not None:
                             album_level_tags[album] = tags.get_album_level_tags()
                             other_songs = [f for f, a in albums.items() if a == album and f != file_path]
@@ -320,31 +318,31 @@ def run(argv: Sequence[str] | None = None) -> int:
                         redo = True
                     case "[m] modify tag":
                         tags.modify_resolved_field()
-                        print(Fore.BLUE + "Current metadata to save:")
+                        messages.info("Current metadata to save:")
                         tags.print_resolved()
                         reshow_choices = True
                     case "[d] delete item in tag":
                         tags.delete_tag_item()
                         reshow_choices = True
                     case "[p] pass":
-                        print(Fore.YELLOW + f"Pass. Skipping song: {file_name}")
+                        messages.warning(f"Pass. Skipping song: {file_name}")
                     case "[y] youtube description":
                         if description_lines:
-                            print(Fore.BLUE + "Original YouTube description:")
-                            print(colors.yt_col + "\n".join(description_lines))
+                            messages.info("Original YouTube description:")
+                            print(styles.youtube("\n".join(description_lines)))
                         else:
-                            print(Fore.RED + "No YouTube description tag for this song.")
+                            messages.error("No YouTube description tag for this song.")
                         reshow_choices = True
                     case "[a] all metadata":
-                        print(Fore.BLUE + "All old and new metadata suggested for this file:")
+                        messages.info("All old and new metadata suggested for this file:")
                         tags.print_all()
                         reshow_choices = True
                     case "[e] resolved metadata":
-                        print(Fore.BLUE + "Current metadata to save:")
+                        messages.info("Current metadata to save:")
                         tags.print_resolved()
                         reshow_choices = True
                     case _:
-                        print(Fore.RED + "Something went wrong, starting over")
+                        messages.error("Something went wrong, starting over")
                         redo = True
 
     return 0
