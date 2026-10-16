@@ -434,31 +434,38 @@ class MusicTags:
 
         :return: True if there are new values found, otherwise False.
         """
-        new_content_exists = False
-        all_new_fields = [key for key in self.youtube.keys()]
-        all_new_fields += [key for key in self.fromdesc.keys()]
-        all_new_fields += [key for key in self.fromtags.keys()]
-        all_new_fields += [key for key in self.musicbrainz.keys()]
-        all_new_fields = Utils.remove_duplicates(all_new_fields)
-        for tag in all_new_fields:
+        for tag in self.tags_with_new_data():
             all_sources = set(self.get_field(tag))
             original_tags = set(self.original.get(tag, []))
             if not original_tags.issuperset(all_sources):
                 # If there are no new tags, the set of all tags should
                 # not contain anything that is not already in the
                 # original tags.
-                new_content_exists = True
+                return True
 
-        for tag in self.resolved.keys():
+        for tag, resolved_values in self.resolved.items():
             original_tags = set(self.original.get(tag, []))
-            resolved_tags = set(self.resolved.get(tag, []))
-            if not original_tags.issuperset(resolved_tags):
+            if not original_tags.issuperset(resolved_values):
                 # There may be some automatically added tags in
                 # resolved. Check that resolved doesn't contain any tag
                 # that doesn't already exist in the original tags.
-                new_content_exists = True
+                return True
 
-        return new_content_exists
+        return False
+
+    def tags_with_new_data(self) -> list[str]:
+        """Get the names of the tags that Retag Opus found values for.
+
+        The values are the ones from the YouTube description, parsed from
+        it or from the song's existing tags, or found on MusicBrainz, as
+        opposed to the values the song's file already has. E.g. ["title",
+        "artist", "date"] if those are the only tags any of them has a
+        value for.
+        """
+        tag_names: list[str] = []
+        for new_source in [self.youtube, self.fromdesc, self.fromtags, self.musicbrainz]:
+            tag_names.extend(new_source.keys())
+        return Utils.remove_duplicates(tag_names)
 
     def changed_tags(self) -> list[str]:
         """Get the names of the tags that would be changed in the file."""
@@ -650,11 +657,6 @@ class MusicTags:
         :raises UserExitException: Raised when the user chooses to quit
             the app.
         """
-        all_tags_with_new_data = [tag_name for tag_name in self.youtube.keys()]
-        all_tags_with_new_data += [tag_name for tag_name in self.fromdesc.keys()]
-        all_tags_with_new_data += [tag_name for tag_name in self.fromtags.keys()]
-        all_tags_with_new_data += [tag_name for tag_name in self.musicbrainz.keys()]
-        all_tags_with_new_data = Utils.remove_duplicates(all_tags_with_new_data)
         pruned_tags = [tag_name for tag_name, value in self.resolved.items() if value == REMOVED_TAG]
 
         for tag_name in self.album_level_tags.keys():
@@ -663,7 +665,7 @@ class MusicTags:
                 f"{self.album_level_tags[tag_name]}."
             )
 
-        for tag_name in all_tags_with_new_data:
+        for tag_name in self.tags_with_new_data():
             if tag_name == "albumartist":
                 continue  # Handled by determine_album_artist
             if tag_name in self.album_level_tags:
