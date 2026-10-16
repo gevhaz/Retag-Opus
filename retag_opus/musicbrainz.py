@@ -506,12 +506,12 @@ class MusicBrainzMatcher:
         else:
             results = []
         while True:
-            confident_results = []
-            for result in results:
-                if title_matches(result.get("title", ""), text) and duration_matches(
-                    result.get("length"), tags.duration
-                ):
-                    confident_results.append(result)
+            confident_results = [
+                result
+                for result in results
+                if title_matches(result.get("title", ""), text)
+                and duration_matches(result.get("length"), tags.duration)
+            ]
             if confident_results:
                 # The result that fits the song best, see fit()
                 return min(confident_results, key=lambda result: fit(result, text))
