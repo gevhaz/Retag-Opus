@@ -458,8 +458,9 @@ class MusicBrainzMatcher:
         """
         artist = None
         for tags in songs.values():
-            if tags.youtube.get("artist"):
-                artist = tags.youtube["artist"][0]
+            youtube_artists = tags.youtube.get("artist")
+            if youtube_artists:
+                artist = youtube_artists[0]
                 break
 
         candidates = []
