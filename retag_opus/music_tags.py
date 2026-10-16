@@ -268,33 +268,52 @@ class MusicTags:
         if performer_tags:
             print("  Performers:")
             for tag_id in performer_tags:
-                print_name = self.performer_print_name(tag_id)
-                resolved_tag = self.resolved.get(tag_id, [])
-                all_sources_tag = self.get_tag_data(tag_id)
-                # If the user chose to remove a tag that existed before
-                if resolved_tag == REMOVED_TAG:
-                    self.print_metadata_key(print_name, tag_id, styles.removed, self.original)
-                # If the resolved tag differs from the original tag
-                elif resolved_tag != self.original.get(tag_id, []) and self.resolved.get(tag_id) is not None:
-                    self.print_metadata_key(print_name, tag_id, styles.changed, self.resolved)
-                # original and resolved are equal, but other tags exist
-                elif len(all_sources_tag) > 0 and print_all:
-                    print("  " + print_name + ": " + " | ".join(all_sources_tag))
-                else:
-                    self.print_metadata_key(print_name, tag_id, styles.metadata, self.resolved)
+                self.print_resolved_tag(self.performer_print_name(tag_id), tag_id, print_all)
         for tag_id, tag_data in self.base_patterns.items():
-            resolved_tag = self.resolved.get(tag_id, [])
-            all_sources_tag = self.get_tag_data(tag_id)
-            if resolved_tag == REMOVED_TAG:
-                self.print_metadata_key(tag_data["print"], tag_id, styles.removed, self.original)
-            elif resolved_tag != self.original.get(tag_id, []) and self.resolved.get(tag_id) is not None:
-                self.print_metadata_key(tag_data["print"], tag_id, styles.changed, self.resolved)
-            elif len(all_sources_tag) > 0 and print_all:
-                print("  " + tag_data["print"] + ": " + " | ".join(all_sources_tag))
-            else:
-                self.print_metadata_key(tag_data["print"], tag_id, styles.metadata, self.resolved)
+            self.print_resolved_tag(tag_data["print"], tag_id, print_all)
 
         print("")
+
+    def print_resolved_tag(self, printed_tag_name: str, tag_id: str, print_all: bool) -> None:
+        """Print the line showing what will be saved in one of the song's tags.
+
+        The resolved tags are the tags that will be saved to the song's
+        file. The line shows the tag's resolved value, colored by how it
+        compares to the value the file has now:
+
+        - Red (styles.removed), with "(Removed)" after the name: the tag
+          will be removed from the file. The value shown is the one the
+          file has now.
+        - Green (styles.changed): the tag will get the value shown.
+        - Cyan (styles.metadata): the tag keeps the value it has now.
+          If print_all is set, the values found in all sources are shown
+          instead, each in the color of its source, so that they can be
+          compared before choosing a value.
+        - Gray (styles.unset) "Not found": the tag has no value and won't
+          get one.
+
+        For example, if the title "Song (Live)" will be changed to
+        "Song", the line is "  Title: Song" in green.
+
+        :param printed_tag_name: The name the tag is shown with, e.g.
+            "Title" for the tag "title".
+        :param tag_id: The name of the tag in the file, e.g. "title".
+        :param print_all: Whether to show the values from all sources for
+            a tag that keeps the value it has now.
+        """
+        resolved_tag = self.resolved.get(tag_id)
+        all_sources_tag = self.get_tag_data(tag_id)
+        # If the user chose to remove a tag that existed before
+        if resolved_tag == REMOVED_TAG:
+            self.print_metadata_key(printed_tag_name, tag_id, styles.removed, self.original)
+        # If the resolved tag differs from the original tag
+        elif resolved_tag is not None and resolved_tag != self.original.get(tag_id, []):
+            self.print_metadata_key(printed_tag_name, tag_id, styles.changed, self.resolved)
+        # original and resolved are equal, but other tags exist
+        elif len(all_sources_tag) > 0 and print_all:
+            print("  " + printed_tag_name + ": " + " | ".join(all_sources_tag))
+        else:
+            self.print_metadata_key(printed_tag_name, tag_id, styles.metadata, self.resolved)
 
     def switch_album_to_disc_subtitle(self, manual_album_name: str) -> None:
         """Move album tag to discsubtitle tag.
