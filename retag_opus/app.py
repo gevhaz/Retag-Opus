@@ -224,6 +224,8 @@ def run(argv: Sequence[str] | None = None) -> int:
     # One matcher for all songs, so that its cache and rate limit are shared
     matcher = MusicBrainzMatcher() if use_musicbrainz else None
     musicbrainz_tags_per_song = match_albums(matcher, albums, args.manual_album) if matcher is not None else {}
+    tags_to_delete = config.get("tags_to_delete", [])
+    strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
 
     for idx, file_path in enumerate(all_files):
         redo = True
@@ -244,8 +246,6 @@ def run(argv: Sequence[str] | None = None) -> int:
                 tags.musicbrainz = musicbrainz_tags_per_song[file_path]
 
             # 4.5 Get rid of shady tags
-            tags_to_delete = config.get("tags_to_delete", [])
-            strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
             tags.prune_resolved_tags(tags_to_delete, strings_to_delete_tags_based_on)
 
             # 4.6 Use the same album level tags as for earlier songs on
