@@ -210,7 +210,7 @@ def run(argv: Sequence[str] | None = None) -> int:
         messages.error(f"{args.dir} is not a directory!")
         return 1
 
-    all_files = list(filter(Path.is_file, Path(music_dir).glob("*.opus")))
+    all_files = list(filter(Path.is_file, music_dir.glob("*.opus")))
     if not all_files:
         messages.warning(f"There appears to be no .opus files in the provided directory {args.dir}")
         return 0
