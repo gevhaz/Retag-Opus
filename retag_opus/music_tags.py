@@ -330,8 +330,9 @@ class MusicTags:
 
     def discard_upload_date(self) -> None:
         """If the date is just the upload date, discard it."""
-        if self.original.get("date") and re.match(r"\d\d\d\d\d\d\d\d", self.original["date"][0]):
-            self.original.pop("date", None)
+        original_date = self.original.get("date")
+        if original_date and re.match(r"\d\d\d\d\d\d\d\d", original_date[0]):
+            del self.original["date"]
 
     def prune_resolved_tags(self, tags_to_delete: list[str], strings_to_delete_tags_based_on: list[str]) -> None:
         """Remove tags that the user wants removed by default."""
