@@ -6,10 +6,9 @@ from tempfile import TemporaryDirectory
 from unittest.mock import Mock
 
 import pytest
-from colorama import Fore
 from mutagen import oggopus
 
-from retag_opus import app, colors, utils
+from retag_opus import app, utils
 
 metadata = [
     ("title", ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"]),
@@ -88,7 +87,7 @@ def test_no_songs_in_directory(capsys):
         exit_code = app.run(["--directory", temp_dir])
     out, _ = capsys.readouterr()
     assert exit_code == 0
-    assert re.match(r"^\x1b\[33mThere appears to be no .opus files in the provided directory /tmp.*", out)
+    assert re.match(r"^There appears to be no .opus files in the provided directory /tmp.*", out)
 
 
 def test_directory_not_found(capsys):
@@ -96,7 +95,7 @@ def test_directory_not_found(capsys):
     exit_code = app.run(["--directory", "/this/does/not/exist/"])
     out, _ = capsys.readouterr()
     assert exit_code == 1
-    assert re.match(r"^\x1b\[31m/this/does/not/exist/ is not a directory!\n", out)
+    assert re.match(r"^/this/does/not/exist/ is not a directory!\n", out)
 
 
 def test_config_path_from_xdg_config_home(monkeypatch):
@@ -123,12 +122,7 @@ def test_file_without_metadata(capsys, music_directory, monkeypatch):
     exit_code = app.run(["--directory", music_directory])
 
     actual_output, _ = capsys.readouterr()
-    expected_output = (
-        "\n"
-        f"{Fore.BLUE}Song 1 of 1{Fore.RESET}\n"
-        f"{Fore.BLUE}----- Song: test -----{Fore.RESET}\n"
-        f"{Fore.YELLOW}No new data exists. Skipping song.{Fore.RESET}\n"
-    )
+    expected_output = "\nSong 1 of 1\n----- Song: test -----\nNo new data exists. Skipping song.\n"
 
     assert exit_code == 0
     assert actual_output == expected_output
@@ -142,12 +136,7 @@ def test_file_with_no_new_metadata(capsys, music_directory, monkeypatch):
     exit_code = app.run(["--directory", music_directory])
 
     actual_output, _ = capsys.readouterr()
-    expected_output = (
-        "\n"
-        f"{Fore.BLUE}Song 1 of 1{Fore.RESET}\n"
-        f"{Fore.BLUE}----- Song: test -----{Fore.RESET}\n"
-        f"{Fore.YELLOW}No new data exists. Skipping song.{Fore.RESET}\n"
-    )
+    expected_output = "\nSong 1 of 1\n----- Song: test -----\nNo new data exists. Skipping song.\n"
 
     assert exit_code == 0
     assert actual_output == expected_output
@@ -168,7 +157,7 @@ def test_file_without_description_has_existing_tags_parsed(capsys, music_directo
     actual_output, _ = capsys.readouterr()
     assert exit_code == 0
     assert "Version: No value exists in metadata. Using tags parsed from original tags: ['Live']." in actual_output
-    assert actual_output.endswith(f"{Fore.YELLOW}Pass. Skipping song: test\n")
+    assert actual_output.endswith("Pass. Skipping song: test\n")
 
 
 def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
@@ -209,39 +198,35 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
 
     actual_output, _ = capsys.readouterr()
     expected_output = (
-        f"\n{Fore.BLUE}Song 1 of 1{Fore.RESET}"
-        f"\n{Fore.BLUE}----- Song: test -----{Fore.RESET}"
-        f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
-        f'Using YouTube description: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
-        f"\n-----------------------------------------------"
+        "\nSong 1 of 1"
+        "\n----- Song: test -----"
+        "\nOrganization: No value exists in metadata. "
+        'Using YouTube description: ["Rich Men\'s Group Digital Ltd."].'
+        "\n-----------------------------------------------"
         "\n  Other tags:"
-        f"\n  - synopsis: {Fore.CYAN}[Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]{Fore.RESET}"
-        f"\n  Title: {Fore.GREEN}Proper Goodbyes{Fore.RESET} | "
-        f"{Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
-        f"\n  Album: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
-        f"\n  Album Artist: {Fore.MAGENTA}The Global{Fore.RESET}"
-        "\n  Artist(s): "
-        f"{Fore.GREEN}The Global | Ben Ivor{Fore.RESET}"
-        f" | {Fore.CYAN}artist 1{Fore.RESET}"
-        f" | {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
-        f"\n  Date: {Fore.MAGENTA}2029-08-22{Fore.RESET}"
-        f"\n  Genre: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Version: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Performer: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Organization: {Fore.GREEN}Rich Men's Group Digital Ltd.{Fore.RESET}"
-        f"\n  Copyright: {Fore.MAGENTA}2022 The Global under exclusive license to 5BE Ltd{Fore.RESET}"
-        f"\n  Composer: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Conductor: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Arranger: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Author: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Producer: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Publisher: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Lyricist: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n\n{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}"
-        f"\nYouTube description: {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
-        f"\nExisting metadata:  {Fore.CYAN}artist 1{Fore.RESET}"
-        f"\nParsed from YouTube tags: {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}"
-        f"\nRetagOpus exited successfully: Skipping this and all later songs\n"
+        "\n  - synopsis: [Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]"
+        "\n  Title: Proper Goodbyes | Proper Goodbyes (feat. Ben Ivor)"
+        "\n  Album: Proper Goodbyes (feat. Ben Ivor)"
+        "\n  Album Artist: The Global"
+        "\n  Artist(s): The Global | Ben Ivor | artist 1 | The Global | Ben Ivor"
+        "\n  Date: 2029-08-22"
+        "\n  Genre: Not found"
+        "\n  Version: Not found"
+        "\n  Performer: Not found"
+        "\n  Organization: Rich Men's Group Digital Ltd."
+        "\n  Copyright: 2022 The Global under exclusive license to 5BE Ltd"
+        "\n  Composer: Not found"
+        "\n  Conductor: Not found"
+        "\n  Arranger: Not found"
+        "\n  Author: Not found"
+        "\n  Producer: Not found"
+        "\n  Publisher: Not found"
+        "\n  Lyricist: Not found"
+        "\n\nArtist: Mismatch between values in description and metadata:"
+        "\nYouTube description: The Global | Ben Ivor"
+        "\nExisting metadata:  artist 1"
+        "\nParsed from YouTube tags: The Global | Ben Ivor"
+        "\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
 
     assert exit_code == 0
@@ -271,45 +256,38 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
 
     actual_output, _ = capsys.readouterr()
     expected_output = (
-        f"\n{Fore.BLUE}Song 1 of 1{Fore.RESET}"
-        f"\n{Fore.BLUE}----- Song: test -----{Fore.RESET}"
-        f"\n{Fore.YELLOW}Organization: No value exists in metadata. "
-        f'Using YouTube description: ["Rich Men\'s Group Digital Ltd."].{Fore.RESET}'
-        f"\n-----------------------------------------------"
+        "\nSong 1 of 1"
+        "\n----- Song: test -----"
+        "\nOrganization: No value exists in metadata. "
+        'Using YouTube description: ["Rich Men\'s Group Digital Ltd."].'
+        "\n-----------------------------------------------"
         "\n  Other tags:"
-        f"\n  - synopsis: {Fore.CYAN}[Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]{Fore.RESET}"
-        "\n  Title: "
-        f"{Fore.YELLOW}Proper Goodbyes{Fore.RESET}"
-        f" | {Fore.GREEN}Proper Goodbyes{Fore.RESET}"
-        f" | {Fore.CYAN}Proper Goodbyes (feat. Benny Ivor) (2039 Remaster){Fore.RESET}"
-        f" | {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor) (2036 Remaster){Fore.RESET}"
-        f"\n  Album: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
-        f"\n  Album Artist: {Fore.MAGENTA}The Global{Fore.RESET}"
-        "\n  Artist(s):"
-        f" {Fore.YELLOW}artist 1 | artist 2{Fore.RESET}"
-        f" | {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}"
-        f" | {Fore.CYAN}artist 1 and artist 2{Fore.RESET}"
-        f" | {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
-        f"\n  Date: {Fore.MAGENTA}2029-08-22{Fore.RESET}"
-        f"\n  Genre: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Version: {Fore.YELLOW}2039 Remaster{Fore.RESET} | {Fore.GREEN}2036 Remaster{Fore.RESET}"
-        f"\n  Performer: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Organization: {Fore.GREEN}Rich Men's Group Digital Ltd.{Fore.RESET}"
-        f"\n  Copyright: {Fore.MAGENTA}2022 The Global under exclusive license to 5BE Ltd{Fore.RESET}"
-        f"\n  Composer: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Conductor: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Arranger: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Author: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Producer: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Publisher: {Fore.BLACK}Not found{Fore.RESET}"
-        f"\n  Lyricist: {Fore.BLACK}Not found{Fore.RESET}"
+        "\n  - synopsis: [Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]"
+        "\n  Title: Proper Goodbyes | Proper Goodbyes | Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"
+        " | Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"
+        "\n  Album: Proper Goodbyes (feat. Ben Ivor)"
+        "\n  Album Artist: The Global"
+        "\n  Artist(s): artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2 | The Global | Ben Ivor"
+        "\n  Date: 2029-08-22"
+        "\n  Genre: Not found"
+        "\n  Version: 2039 Remaster | 2036 Remaster"
+        "\n  Performer: Not found"
+        "\n  Organization: Rich Men's Group Digital Ltd."
+        "\n  Copyright: 2022 The Global under exclusive license to 5BE Ltd"
+        "\n  Composer: Not found"
+        "\n  Conductor: Not found"
+        "\n  Arranger: Not found"
+        "\n  Author: Not found"
+        "\n  Producer: Not found"
+        "\n  Publisher: Not found"
+        "\n  Lyricist: Not found"
         # All sources should show up here
-        f"\n\n{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}"
-        f"\nYouTube description: {Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
-        f"\nParsed from original tags: {Fore.YELLOW}artist 1 | artist 2{Fore.RESET}"
-        f"\nExisting metadata:  {Fore.CYAN}artist 1 and artist 2{Fore.RESET}"
-        f"\nParsed from YouTube tags: {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}"
-        f"\nRetagOpus exited successfully: Skipping this and all later songs\n"
+        "\n\nArtist: Mismatch between values in description and metadata:"
+        "\nYouTube description: The Global | Ben Ivor"
+        "\nParsed from original tags: artist 1 | artist 2"
+        "\nExisting metadata:  artist 1 and artist 2"
+        "\nParsed from YouTube tags: The Global | Ben Ivor"
+        "\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
 
     assert exit_code == 0
@@ -337,9 +315,9 @@ def test_setting_manual_album(capsys, music_directory, monkeypatch):
     exit_code = app.run(["--directory", music_directory, "--album", "manualalbum"])
 
     actual_output, _ = capsys.readouterr()
-    expected_album_output = f"Album: {Fore.GREEN}manualalbum{Fore.RESET}"
-    not_expected_album_output = f"Album: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
-    expected_discsubtitle_output = f"Disc subtitle: {Fore.MAGENTA}Proper Goodbyes (feat. Ben Ivor){Fore.RESET}"
+    expected_album_output = "Album: manualalbum"
+    not_expected_album_output = "Album: Proper Goodbyes (feat. Ben Ivor)"
+    expected_discsubtitle_output = "Disc subtitle: Proper Goodbyes (feat. Ben Ivor)"
 
     assert exit_code == 0
     assert expected_album_output in actual_output
@@ -364,7 +342,7 @@ def test_pass(capsys, music_directory, monkeypatch):
     exit_code = app.run(["--directory", music_directory])
 
     actual_output = capsys.readouterr().out.split("\n")
-    expected_last_output_line = f"{Fore.YELLOW}Pass. Skipping song: test"
+    expected_last_output_line = "Pass. Skipping song: test"
 
     assert exit_code == 0
     assert expected_last_output_line == actual_output[-2]
@@ -428,20 +406,14 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     expected_regex = re.compile(
         # Original status print
         re.escape(
-            rf"Artist(s): {Fore.YELLOW}artist 1 | artist 2{Fore.RESET} | "
-            rf"{Fore.GREEN}The Global | Ben Ivor{Fore.RESET} | "
-            rf"{Fore.CYAN}artist 1 and artist 2{Fore.RESET} | "
-            rf"{Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
+            "Artist(s): artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2 | The Global | Ben Ivor"
         )
         + r".*"
         # # One of the resolved status prints
-        + re.escape(rf"Artist(s): {Fore.GREEN}The Global | Ben Ivor{Fore.RESET}") + ".*"
+        + re.escape("Artist(s): The Global | Ben Ivor") + ".*"
         # # Reset status print (same as first)
         + re.escape(
-            rf"Artist(s): {Fore.YELLOW}artist 1 | artist 2{Fore.RESET} | "
-            rf"{Fore.GREEN}The Global | Ben Ivor{Fore.RESET} | "
-            rf"{Fore.CYAN}artist 1 and artist 2{Fore.RESET} | "
-            rf"{Fore.MAGENTA}The Global | Ben Ivor{Fore.RESET}"
+            "Artist(s): artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2 | The Global | Ben Ivor"
         )
         + ".*",
         re.DOTALL,
@@ -666,10 +638,10 @@ def test_group_by_album(capsys):
     assert manual_groups == {first: "manual", single: "manual", no_description_1: "manual"}
     out, _ = capsys.readouterr()
     assert out == (
-        f"{Fore.BLUE}2 songs are from the album 'The Album'. Album artist, date, genre and album saved for "
-        f"one of them will be saved for all of them.{Fore.RESET}\n"
-        f"{Fore.BLUE}3 songs are from the album 'Manual'. Album artist, date, genre and album saved for "
-        f"one of them will be saved for all of them.{Fore.RESET}\n"
+        "2 songs are from the album 'The Album'. Album artist, date, genre and album saved for "
+        "one of them will be saved for all of them.\n"
+        "3 songs are from the album 'Manual'. Album artist, date, genre and album saved for "
+        "one of them will be saved for all of them.\n"
     )
 
 
@@ -836,7 +808,7 @@ def test_musicbrainz_lookup(capsys, music_directory, monkeypatch, argv, config, 
     actual_output, _ = capsys.readouterr()
     assert exit_code == 0
     assert matcher.match_song.call_count == expected_lookups
-    assert (f"MusicBrainz: {colors.mb_col}The Global{Fore.RESET}" in actual_output) == bool(expected_lookups)
+    assert ("MusicBrainz: The Global" in actual_output) == bool(expected_lookups)
 
 
 def test_match_albums():

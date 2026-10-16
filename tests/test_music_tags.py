@@ -1,14 +1,14 @@
 """Tests for music_tags.py."""
+import os
 import sys
 import unittest
 from copy import deepcopy
 from unittest.mock import MagicMock
 
 import pytest
-from colorama import Fore
 from mock import patch
 
-from retag_opus import colors
+from retag_opus import styles
 from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import MusicTags
 
@@ -26,33 +26,33 @@ class TestMusicTags(unittest.TestCase):
     def test_print_metadata_key(self) -> None:
         """Test printing of a single metadata key."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "title": ["title 1", "title 2"]}
-        MusicTags().print_metadata_key("Artist", "artist", Fore.RED, tags)
+        MusicTags().print_metadata_key("Artist", "artist", styles.metadata, tags)
         captured = self.capsys.readouterr()  # type: ignore
-        self.assertEqual(f"  Artist: {Fore.RED}artist 1 | artist 2{Fore.RESET}\n", captured.out)
+        self.assertEqual("  Artist: artist 1 | artist 2\n", captured.out)
 
     def test_print_metadata(self) -> None:
         """Test printing of metadata."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "title": ["title 1", "title 2"]}
-        MusicTags().print_metadata(tags, Fore.RED)
+        MusicTags().print_metadata(tags, styles.metadata)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
-            f"  Title: {Fore.RED}title 1 | title 2{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.RED}artist 1 | artist 2{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  Title: title 1 | title 2\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 1 | artist 2\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
 
         self.assertEqual(expected, captured.out)
@@ -60,28 +60,28 @@ class TestMusicTags(unittest.TestCase):
     def test_print_metadata_with_performers(self) -> None:
         """Test printing of metadata where there are performer tags."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "performer:vocals": ["bassist 1"]}
-        MusicTags().print_metadata(tags, Fore.RED)
+        MusicTags().print_metadata(tags, styles.metadata)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            f"  - Vocals: {Fore.RED}bassist 1{Fore.RESET}\n"
-            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.RED}artist 1 | artist 2{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  - Vocals: bassist 1\n"
+            "  Title: Not found\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 1 | artist 2\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
 
         self.assertEqual(expected, captured.out)
@@ -89,26 +89,26 @@ class TestMusicTags(unittest.TestCase):
     def test_print_metadata_with_unknown_performer_tag(self) -> None:
         """Test printing of metadata with unknown performer tag."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "performer:unknown": ["person 1"]}
-        MusicTags().print_metadata(tags, Fore.RED)
+        MusicTags().print_metadata(tags, styles.metadata)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
-            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.RED}artist 1 | artist 2{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  Title: Not found\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 1 | artist 2\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
 
         self.assertEqual(expected, captured.out)
@@ -118,7 +118,7 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         actual = tags.get_tag_data("artist")
-        expected = [f"{Fore.CYAN}artist 1{Fore.RESET}"]
+        expected = ["artist 1"]
         self.assertListEqual(expected, actual)
 
     def test_get_tag_data_two_sources(self) -> None:
@@ -127,7 +127,7 @@ class TestMusicTags(unittest.TestCase):
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
         actual = tags.get_tag_data("artist")
-        expected = [f"{Fore.CYAN}artist 1{Fore.RESET}", f"{Fore.MAGENTA}artist 2{Fore.RESET}"]
+        expected = ["artist 1", "artist 2"]
         self.assertListEqual(expected, actual)
 
     def test_get_tag_data_two_overlapping_sources(self) -> None:
@@ -136,7 +136,7 @@ class TestMusicTags(unittest.TestCase):
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 1", "artist 2"]}
         actual = tags.get_tag_data("artist")
-        expected = [f"{Fore.CYAN}artist 1{Fore.RESET}", f"{Fore.MAGENTA}artist 1 | artist 2{Fore.RESET}"]
+        expected = ["artist 1", "artist 1 | artist 2"]
         self.assertListEqual(expected, actual)
 
     def test_get_tag_data_no_values(self) -> None:
@@ -155,10 +155,10 @@ class TestMusicTags(unittest.TestCase):
         tags.fromdesc = {"artist": ["artist 4"]}
         actual = tags.get_tag_data("artist")
         expected = [
-            f"{Fore.YELLOW}artist 3{Fore.RESET}",
-            f"{Fore.GREEN}artist 4{Fore.RESET}",
-            f"{Fore.CYAN}artist 1{Fore.RESET}",
-            f"{Fore.MAGENTA}artist 2{Fore.RESET}",
+            "artist 3",
+            "artist 4",
+            "artist 1",
+            "artist 2",
         ]
         self.assertListEqual(expected, actual)
 
@@ -172,27 +172,23 @@ class TestMusicTags(unittest.TestCase):
         tags.print_all()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
-            f"Title: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Album: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Album Artist: {Fore.BLACK}Not set{Fore.RESET}\n"
-            "Artist(s): "
-            f"{Fore.YELLOW}artist 3{Fore.RESET} | "
-            f"{Fore.GREEN}artist 4{Fore.RESET} | "
-            f"{Fore.CYAN}artist 1{Fore.RESET} | "
-            f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
-            f"Date: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Genre: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Version: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Performer: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Organization: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Copyright: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Composer: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Conductor: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Arranger: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Author: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Producer: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Publisher: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Lyricist: {Fore.BLACK}Not set{Fore.RESET}\n\n"
+            "Title: Not set\n"
+            "Album: Not set\n"
+            "Album Artist: Not set\n"
+            "Artist(s): artist 3 | artist 4 | artist 1 | artist 2\n"
+            "Date: Not set\n"
+            "Genre: Not set\n"
+            "Version: Not set\n"
+            "Performer: Not set\n"
+            "Organization: Not set\n"
+            "Copyright: Not set\n"
+            "Composer: Not set\n"
+            "Conductor: Not set\n"
+            "Arranger: Not set\n"
+            "Author: Not set\n"
+            "Producer: Not set\n"
+            "Publisher: Not set\n"
+            "Lyricist: Not set\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -207,27 +203,24 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "Performers:\n"
-            f"- Vocals: {Fore.GREEN}artist 4{Fore.RESET}\n"
-            f"Title: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Album: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Album Artist: {Fore.BLACK}Not set{Fore.RESET}\n"
-            "Artist(s): "
-            f"{Fore.YELLOW}artist 3{Fore.RESET} | "
-            f"{Fore.CYAN}artist 1{Fore.RESET} | "
-            f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
-            f"Date: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Genre: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Version: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Performer: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Organization: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Copyright: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Composer: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Conductor: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Arranger: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Author: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Producer: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Publisher: {Fore.BLACK}Not set{Fore.RESET}\n"
-            f"Lyricist: {Fore.BLACK}Not set{Fore.RESET}\n\n"
+            "- Vocals: artist 4\n"
+            "Title: Not set\n"
+            "Album: Not set\n"
+            "Album Artist: Not set\n"
+            "Artist(s): artist 3 | artist 1 | artist 2\n"
+            "Date: Not set\n"
+            "Genre: Not set\n"
+            "Version: Not set\n"
+            "Performer: Not set\n"
+            "Organization: Not set\n"
+            "Copyright: Not set\n"
+            "Composer: Not set\n"
+            "Conductor: Not set\n"
+            "Arranger: Not set\n"
+            "Author: Not set\n"
+            "Producer: Not set\n"
+            "Publisher: Not set\n"
+            "Lyricist: Not set\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -236,7 +229,7 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.print_all()
         captured = self.capsys.readouterr()  # type: ignore
-        expected = f"{Fore.RED}There's no data to be printed{Fore.RESET}\n"
+        expected = "There's no data to be printed\n"
         self.assertEqual(expected, captured.out)
 
     def test_print_youtube(self) -> None:
@@ -250,24 +243,24 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            f"  - Vocals: {Fore.MAGENTA}artist 5{Fore.RESET}\n"
-            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.MAGENTA}artist 2{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  - Vocals: artist 5\n"
+            "  Title: Not found\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 2\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -279,7 +272,7 @@ class TestMusicTags(unittest.TestCase):
         tags.fromdesc = {"performer:vocals": ["artist 4"]}
         tags.print_youtube()
         captured = self.capsys.readouterr()  # type: ignore
-        expected = f"{Fore.RED}No new data parsed from description{Fore.RESET}\n"
+        expected = "No new data parsed from description\n"
         self.assertEqual(expected, captured.out)
 
     def test_print_original_tags(self) -> None:
@@ -293,24 +286,24 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            f"  - Vocals: {Fore.CYAN}artist 5{Fore.RESET}\n"
-            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.CYAN}artist 2{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  - Vocals: artist 5\n"
+            "  Title: Not found\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 2\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -322,7 +315,7 @@ class TestMusicTags(unittest.TestCase):
         tags.fromdesc = {"performer:vocals": ["artist 4"]}
         tags.print_original()
         captured = self.capsys.readouterr()  # type: ignore
-        expected = f"{Fore.RED}There were no pre-existing tags for this file{Fore.RESET}\n"
+        expected = "There were no pre-existing tags for this file\n"
         self.assertEqual(expected, captured.out)
 
     def test_print_from_tags(self) -> None:
@@ -336,24 +329,24 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            f"  - Vocals: {Fore.YELLOW}artist 5{Fore.RESET}\n"
-            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.YELLOW}artist 2{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  - Vocals: artist 5\n"
+            "  Title: Not found\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 2\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -365,7 +358,7 @@ class TestMusicTags(unittest.TestCase):
         tags.fromdesc = {"performer:vocals": ["artist 4"]}
         tags.print_from_tags()
         captured = self.capsys.readouterr()  # type: ignore
-        expected = f"{Fore.RED}No new data parsed from tags{Fore.RESET}\n"
+        expected = "No new data parsed from tags\n"
         self.assertEqual(expected, captured.out)
 
     def test_print_from_descripton(self) -> None:
@@ -379,24 +372,24 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            f"  - Vocals: {Fore.GREEN}artist 5{Fore.RESET}\n"
-            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.GREEN}artist 2{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  - Vocals: artist 5\n"
+            "  Title: Not found\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 2\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -408,7 +401,7 @@ class TestMusicTags(unittest.TestCase):
         tags.fromtags = {"performer:vocals": ["artist 4"]}
         tags.print_from_desc()
         captured = self.capsys.readouterr()  # type: ignore
-        expected = f"{Fore.RED}No new data parsed from tags parsed from description{Fore.RESET}\n"
+        expected = "No new data parsed from tags parsed from description\n"
         self.assertEqual(expected, captured.out)
 
     def test_print_resolved(self) -> None:
@@ -419,23 +412,23 @@ class TestMusicTags(unittest.TestCase):
         tags.print_resolved(print_all=False)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
-            f"  Title: {Fore.GREEN}title 2{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.CYAN}artist 1{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer (Removed): {Fore.RED}someone{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  Title: title 2\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 1\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer (Removed): someone\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -456,41 +449,41 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            f"  - Vocals: {Fore.CYAN}artist 1{Fore.RESET}\n"
-            f"  - Background Vocals: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Drums: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Percussion: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Keyboard (Removed): {Fore.RED}some guy{Fore.RESET}\n"
-            f"  - Piano: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Synthesizer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Electric guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Bass guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Acoustic guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Ukulele: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Violin: {Fore.GREEN}artist 2{Fore.RESET}\n"
-            f"  - Double bass: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Cello: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Programming: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Saxophone: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Flute: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  - Vocals: artist 1\n"
+            "  - Background Vocals: Not found\n"
+            "  - Drums: Not found\n"
+            "  - Percussion: Not found\n"
+            "  - Keyboard (Removed): some guy\n"
+            "  - Piano: Not found\n"
+            "  - Synthesizer: Not found\n"
+            "  - Guitar: Not found\n"
+            "  - Electric guitar: Not found\n"
+            "  - Bass guitar: Not found\n"
+            "  - Acoustic guitar: Not found\n"
+            "  - Ukulele: Not found\n"
+            "  - Violin: artist 2\n"
+            "  - Double bass: Not found\n"
+            "  - Cello: Not found\n"
+            "  - Programming: Not found\n"
+            "  - Saxophone: Not found\n"
+            "  - Flute: Not found\n"
+            "  Title: Not found\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): Not found\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
@@ -520,41 +513,41 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            f"  - Vocals: {Fore.CYAN}artist 1{Fore.RESET}\n"
-            f"  - Background Vocals: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Drums: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Percussion: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Keyboard (Removed): {Fore.RED}the keyboard master{Fore.RESET}\n"
-            f"  - Piano: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Synthesizer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Guitar: {Fore.CYAN}artist 3{Fore.RESET} | {Fore.MAGENTA}artist 4{Fore.RESET}\n"
-            f"  - Electric guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Bass guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Acoustic guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Ukulele: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Violin: {Fore.GREEN}artist 2{Fore.RESET}\n"
-            f"  - Double bass: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Cello: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Programming: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Saxophone: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Flute: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  - Vocals: artist 1\n"
+            "  - Background Vocals: Not found\n"
+            "  - Drums: Not found\n"
+            "  - Percussion: Not found\n"
+            "  - Keyboard (Removed): the keyboard master\n"
+            "  - Piano: Not found\n"
+            "  - Synthesizer: Not found\n"
+            "  - Guitar: artist 3 | artist 4\n"
+            "  - Electric guitar: Not found\n"
+            "  - Bass guitar: Not found\n"
+            "  - Acoustic guitar: Not found\n"
+            "  - Ukulele: Not found\n"
+            "  - Violin: artist 2\n"
+            "  - Double bass: Not found\n"
+            "  - Cello: Not found\n"
+            "  - Programming: Not found\n"
+            "  - Saxophone: Not found\n"
+            "  - Flute: Not found\n"
+            "  Title: Not found\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): Not found\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -584,41 +577,41 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            f"  - Vocals: {Fore.CYAN}artist 1{Fore.RESET}\n"
-            f"  - Background Vocals: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Drums: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Percussion: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Keyboard (Removed): {Fore.RED}artist 5{Fore.RESET}\n"
-            f"  - Piano: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Synthesizer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Electric guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Bass guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Acoustic guitar: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Ukulele: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Violin: {Fore.GREEN}artist 2{Fore.RESET}\n"
-            f"  - Double bass: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Cello: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Programming: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Saxophone: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  - Flute: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  - Vocals: artist 1\n"
+            "  - Background Vocals: Not found\n"
+            "  - Drums: Not found\n"
+            "  - Percussion: Not found\n"
+            "  - Keyboard (Removed): artist 5\n"
+            "  - Piano: Not found\n"
+            "  - Synthesizer: Not found\n"
+            "  - Guitar: Not found\n"
+            "  - Electric guitar: Not found\n"
+            "  - Bass guitar: Not found\n"
+            "  - Acoustic guitar: Not found\n"
+            "  - Ukulele: Not found\n"
+            "  - Violin: artist 2\n"
+            "  - Double bass: Not found\n"
+            "  - Cello: Not found\n"
+            "  - Programming: Not found\n"
+            "  - Saxophone: Not found\n"
+            "  - Flute: Not found\n"
+            "  Title: Not found\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): Not found\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer: Not found\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -646,23 +639,23 @@ class TestMusicTags(unittest.TestCase):
         tags.print_resolved(print_all=True)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
-            f"  Title: {Fore.GREEN}title 2{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.CYAN}artist 1 | artist 2{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.CYAN}artist 1{Fore.RESET} | {Fore.MAGENTA}artist 2{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer (Removed): {Fore.RED}person 1{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  Title: title 2\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 1 | artist 2\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: artist 1 | artist 2\n"
+            "  Author: Not found\n"
+            "  Producer (Removed): person 1\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -690,23 +683,23 @@ class TestMusicTags(unittest.TestCase):
         tags.print_resolved(print_all=False)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
-            f"  Title: {Fore.GREEN}title 2{Fore.RESET}\n"
-            f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Artist(s): {Fore.CYAN}artist 1 | artist 2{Fore.RESET}\n"
-            f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Producer (Removed): {Fore.RED}person 1{Fore.RESET}\n"
-            f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-            f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
+            "  Title: title 2\n"
+            "  Album: Not found\n"
+            "  Album Artist: Not found\n"
+            "  Artist(s): artist 1 | artist 2\n"
+            "  Date: Not found\n"
+            "  Genre: Not found\n"
+            "  Version: Not found\n"
+            "  Performer: Not found\n"
+            "  Organization: Not found\n"
+            "  Copyright: Not found\n"
+            "  Composer: Not found\n"
+            "  Conductor: Not found\n"
+            "  Arranger: Not found\n"
+            "  Author: Not found\n"
+            "  Producer (Removed): person 1\n"
+            "  Publisher: Not found\n"
+            "  Lyricist: Not found\n\n"
         )
         sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
@@ -956,7 +949,7 @@ class TestMusicTags(unittest.TestCase):
         tags.delete_tag_item()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
         captured = self.capsys.readouterr()  # type: ignore
-        self.assertEqual(f"{Fore.YELLOW}Returning without removing anything{Fore.RESET}\n", captured.out)
+        self.assertEqual("Returning without removing anything\n", captured.out)
 
     @patch("retag_opus.utils.TerminalMenu.__init__")
     @patch("retag_opus.utils.TerminalMenu.show")
@@ -991,7 +984,7 @@ class TestMusicTags(unittest.TestCase):
         tags.delete_tag_item()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
         captured = self.capsys.readouterr()  # type: ignore
-        self.assertEqual(f"{Fore.YELLOW}Returning without removing anything{Fore.RESET}\n", captured.out)
+        self.assertEqual("Returning without removing anything\n", captured.out)
 
     @patch("retag_opus.utils.TerminalMenu.__init__")
     @patch("retag_opus.utils.TerminalMenu.show")
@@ -1019,7 +1012,7 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
         self.assertEqual(["[Removed]"], tags.resolved.get("title"))
         captured = self.capsys.readouterr()  # type: ignore
-        self.assertEqual(f"{Fore.YELLOW}Returning without removing anything{Fore.RESET}\n", captured.out)
+        self.assertEqual("Returning without removing anything\n", captured.out)
 
     @patch("retag_opus.music_tags.input")
     def test_modify_resolved_field(self, mock_input: MagicMock) -> None:
@@ -1390,7 +1383,7 @@ class TestMusicTags(unittest.TestCase):
 
         self.assertTrue(repeat)
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
-        self.assertEqual(Fore.RED + "Invalid choice, try again\n", captured.out)
+        self.assertEqual("Invalid choice, try again\n", captured.out)
 
     def test_resolve_metadata_defaults_positive(self) -> None:
         """Test defaults taken from any source when lacking other data.
@@ -1408,10 +1401,7 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            Fore.YELLOW
-            + "Artist: No value exists in metadata. Using YouTube description: ['artist 1']."
-            + Fore.RESET
-            + "\n",
+            "Artist: No value exists in metadata. Using YouTube description: ['artist 1'].\n",
             captured.out,
         )
 
@@ -1423,10 +1413,7 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            Fore.YELLOW
-            + "Artist: No value exists in metadata. Using tags parsed from YouTube tags: ['artist 1']."
-            + Fore.RESET
-            + "\n",
+            "Artist: No value exists in metadata. Using tags parsed from YouTube tags: ['artist 1'].\n",
             captured.out,
         )
 
@@ -1519,7 +1506,7 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            Fore.GREEN + "Artist: Metadata matches YouTube description tags." + Fore.RESET + "\n",
+            "Artist: Metadata matches YouTube description tags.\n",
             captured.out,
         )
 
@@ -1532,7 +1519,7 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            Fore.GREEN + "Artist: Metadata matches tags parsed from YouTube tags." + Fore.RESET + "\n",
+            "Artist: Metadata matches tags parsed from YouTube tags.\n",
             captured.out,
         )
 
@@ -1545,7 +1532,7 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            Fore.GREEN + "Artist: Metadata matches tags parsed from original tags." + Fore.RESET + "\n",
+            "Artist: Metadata matches tags parsed from original tags.\n",
             captured.out,
         )
 
@@ -1574,32 +1561,28 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
-                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-                "  Artist(s): "
-                f"{Fore.YELLOW}artist 2{Fore.RESET} | "
-                f"{Fore.GREEN}artist 2{Fore.RESET} | "
-                f"{Fore.CYAN}artist 1{Fore.RESET} | "
-                f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
-                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
-                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
-                f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
-                f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
-                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
-                f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
+                "  Title: Not found\n"
+                "  Album: Not found\n"
+                "  Album Artist: Not found\n"
+                "  Artist(s): artist 2 | artist 2 | artist 1 | artist 2\n"
+                "  Date: Not found\n"
+                "  Genre: Not found\n"
+                "  Version: Not found\n"
+                "  Performer: Not found\n"
+                "  Organization: Not found\n"
+                "  Copyright: Not found\n"
+                "  Composer: Not found\n"
+                "  Conductor: Not found\n"
+                "  Arranger: Not found\n"
+                "  Author: Not found\n"
+                "  Producer: Not found\n"
+                "  Publisher: Not found\n"
+                "  Lyricist: Not found\n\n"
+                "Artist: Mismatch between values in description and metadata:\n"
+                "YouTube description: artist 2\n"
+                "Parsed from original tags: artist 2\n"
+                "Existing metadata:  artist 1\n"
+                "Parsed from YouTube tags: artist 2\n"
             ),
             captured.out,
         )
@@ -1628,28 +1611,26 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
-                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-                "  Artist(s): "
-                f"{Fore.CYAN}artist 1{Fore.RESET} | "
-                f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
-                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
-                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
-                f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
-                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
+                "  Title: Not found\n"
+                "  Album: Not found\n"
+                "  Album Artist: Not found\n"
+                "  Artist(s): artist 1 | artist 2\n"
+                "  Date: Not found\n"
+                "  Genre: Not found\n"
+                "  Version: Not found\n"
+                "  Performer: Not found\n"
+                "  Organization: Not found\n"
+                "  Copyright: Not found\n"
+                "  Composer: Not found\n"
+                "  Conductor: Not found\n"
+                "  Arranger: Not found\n"
+                "  Author: Not found\n"
+                "  Producer: Not found\n"
+                "  Publisher: Not found\n"
+                "  Lyricist: Not found\n\n"
+                "Artist: Mismatch between values in description and metadata:\n"
+                "YouTube description: artist 2\n"
+                "Existing metadata:  artist 1\n"
             ),
             captured.out,
         )
@@ -1664,28 +1645,26 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
-                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-                "  Artist(s): "
-                f"{Fore.GREEN}artist 2{Fore.RESET} | "
-                f"{Fore.CYAN}artist 1{Fore.RESET}\n"
-                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
-                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
-                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
-                f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
+                "  Title: Not found\n"
+                "  Album: Not found\n"
+                "  Album Artist: Not found\n"
+                "  Artist(s): artist 2 | artist 1\n"
+                "  Date: Not found\n"
+                "  Genre: Not found\n"
+                "  Version: Not found\n"
+                "  Performer: Not found\n"
+                "  Organization: Not found\n"
+                "  Copyright: Not found\n"
+                "  Composer: Not found\n"
+                "  Conductor: Not found\n"
+                "  Arranger: Not found\n"
+                "  Author: Not found\n"
+                "  Producer: Not found\n"
+                "  Publisher: Not found\n"
+                "  Lyricist: Not found\n\n"
+                "Artist: Mismatch between values in description and metadata:\n"
+                "Existing metadata:  artist 1\n"
+                "Parsed from YouTube tags: artist 2\n"
             ),
             captured.out,
         )
@@ -1721,32 +1700,28 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
-                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-                "  Artist(s): "
-                f"{Fore.YELLOW}artist 2{Fore.RESET} | "
-                f"{Fore.GREEN}artist 2{Fore.RESET} | "
-                f"{Fore.CYAN}artist 1{Fore.RESET} | "
-                f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
-                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
-                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
-                f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
-                f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
-                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
-                f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
+                "  Title: Not found\n"
+                "  Album: Not found\n"
+                "  Album Artist: Not found\n"
+                "  Artist(s): artist 2 | artist 2 | artist 1 | artist 2\n"
+                "  Date: Not found\n"
+                "  Genre: Not found\n"
+                "  Version: Not found\n"
+                "  Performer: Not found\n"
+                "  Organization: Not found\n"
+                "  Copyright: Not found\n"
+                "  Composer: Not found\n"
+                "  Conductor: Not found\n"
+                "  Arranger: Not found\n"
+                "  Author: Not found\n"
+                "  Producer: Not found\n"
+                "  Publisher: Not found\n"
+                "  Lyricist: Not found\n\n"
+                "Artist: Mismatch between values in description and metadata:\n"
+                "YouTube description: artist 2\n"
+                "Parsed from original tags: artist 2\n"
+                "Existing metadata:  artist 1\n"
+                "Parsed from YouTube tags: artist 2\n"
             ),
             captured.out,
         )
@@ -1759,32 +1734,28 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
-                f"  Title: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Album Artist: {Fore.BLACK}Not found{Fore.RESET}\n"
-                "  Artist(s): "
-                f"{Fore.YELLOW}artist 2{Fore.RESET} | "
-                f"{Fore.GREEN}artist 2{Fore.RESET} | "
-                f"{Fore.CYAN}artist 1{Fore.RESET} | "
-                f"{Fore.MAGENTA}artist 2{Fore.RESET}\n"
-                f"  Date: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Genre: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Version: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Performer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Organization: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Copyright: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Composer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Conductor: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Arranger: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Author: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Producer: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Publisher: {Fore.BLACK}Not found{Fore.RESET}\n"
-                f"  Lyricist: {Fore.BLACK}Not found{Fore.RESET}\n\n"
-                f"{Fore.RED}Artist: Mismatch between values in description and metadata:{Fore.RESET}\n"
-                f"YouTube description: {Fore.MAGENTA}artist 2{Fore.RESET}\n"
-                f"Parsed from original tags: {Fore.YELLOW}artist 2{Fore.RESET}\n"
-                f"Existing metadata:  {Fore.CYAN}artist 1{Fore.RESET}\n"
-                f"Parsed from YouTube tags: {Fore.GREEN}artist 2{Fore.RESET}\n"
+                "  Title: Not found\n"
+                "  Album: Not found\n"
+                "  Album Artist: Not found\n"
+                "  Artist(s): artist 2 | artist 2 | artist 1 | artist 2\n"
+                "  Date: Not found\n"
+                "  Genre: Not found\n"
+                "  Version: Not found\n"
+                "  Performer: Not found\n"
+                "  Organization: Not found\n"
+                "  Copyright: Not found\n"
+                "  Composer: Not found\n"
+                "  Conductor: Not found\n"
+                "  Arranger: Not found\n"
+                "  Author: Not found\n"
+                "  Producer: Not found\n"
+                "  Publisher: Not found\n"
+                "  Lyricist: Not found\n\n"
+                "Artist: Mismatch between values in description and metadata:\n"
+                "YouTube description: artist 2\n"
+                "Parsed from original tags: artist 2\n"
+                "Existing metadata:  artist 1\n"
+                "Parsed from YouTube tags: artist 2\n"
             ),
             captured.out,
         )
@@ -2118,10 +2089,10 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.original = {"artist": ["artist 1"], "title": ["title 1"]}
         tags.musicbrainz = {"artist": ["artist 2"], "title": ["title 1"]}
         self.assertEqual(
-            [f"{Fore.CYAN}artist 1{Fore.RESET}", f"{colors.mb_col}artist 2{Fore.RESET}"],
+            ["artist 1", "artist 2"],
             tags.get_tag_data("artist"),
         )
-        self.assertEqual([f"{Fore.CYAN}title 1{Fore.RESET}"], tags.get_tag_data("title"))
+        self.assertEqual(["title 1"], tags.get_tag_data("title"))
 
     def test_get_field_includes_musicbrainz(self) -> None:
         """Test that MusicBrainz values can be selected."""
@@ -2158,7 +2129,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.resolve_metadata()
         self.assertEqual(["Don't Go"], tags.resolved["title"])
         out = self.capsys.readouterr().out  # type: ignore
-        self.assertEqual(f"{Fore.GREEN}Title: Metadata matches MusicBrainz.{Fore.RESET}\n", out)
+        self.assertEqual("Title: Metadata matches MusicBrainz.\n", out)
 
     @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
     @patch("retag_opus.utils.TerminalMenu.__init__")
@@ -2177,7 +2148,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.resolve_metadata()
 
         out = self.capsys.readouterr().out  # type: ignore
-        self.assertIn(f"MusicBrainz: {colors.mb_col}Don’t Go{Fore.RESET}\n", out)
+        self.assertIn("MusicBrainz: Don’t Go\n", out)
         self.assertEqual(
             ["YouTube description", "Existing metadata", "MusicBrainz", "Other action", "Quit"],
             mock_menu.call_args.args[0],
@@ -2219,7 +2190,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(["album id"], tags.resolved["musicbrainz_albumid"])
         self.assertEqual(["12"], tags.resolved["totaltracks"])
         out = self.capsys.readouterr().out  # type: ignore
-        self.assertEqual(f"{Fore.GREEN}Tracknumber: Metadata matches MusicBrainz.{Fore.RESET}\n", out)
+        self.assertEqual("Tracknumber: Metadata matches MusicBrainz.\n", out)
 
     def test_print_resolved_hides_musicbrainz_ids(self) -> None:
         """Test that MusicBrainz IDs aren't printed, but track numbers are."""
@@ -2294,3 +2265,51 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.musicbrainz = {"album": ["album"], "tracknumber": ["5"]}
         tags.resolve_metadata()
         self.assertEqual(["5"], tags.resolved["tracknumber"])
+
+
+@patch.dict(os.environ, {"FORCE_COLOR": "1", "NO_COLOR": ""})
+class TestMusicTagsColors(unittest.TestCase):
+    """Test that tags are printed in the style that tells what they are."""
+
+    @pytest.fixture(autouse=True)
+    def capsys(self, capsys) -> None:  # type: ignore
+        """Fixture for capturing system output."""
+        self.capsys = capsys  # type: ignore
+
+    def test_get_tag_data_styles_sources(self) -> None:
+        """Test that each source of a tag has its own style."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.youtube = {"artist": ["artist 2"]}
+        tags.fromtags = {"artist": ["artist 3"]}
+        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.musicbrainz = {"artist": ["artist 5"]}
+        expected = [
+            styles.from_tags("artist 3"),
+            styles.from_desc("artist 4"),
+            styles.metadata("artist 1"),
+            styles.youtube("artist 2"),
+            styles.musicbrainz("artist 5"),
+        ]
+        self.assertListEqual(expected, tags.get_tag_data("artist"))
+
+    def test_print_resolved_styles_changes(self) -> None:
+        """Test that changed, removed, unchanged and unset tags are styled."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"], "title": ["title 1"], "producer": ["someone"]}
+        tags.resolved = {"artist": ["artist 1"], "title": ["title 2"], "producer": ["[Removed]"]}
+        tags.print_resolved(print_all=False)
+        lines = self.capsys.readouterr().out.split("\n")  # type: ignore
+        self.assertIn("  Title: " + styles.changed("title 2"), lines)
+        self.assertIn("  Artist(s): " + styles.metadata("artist 1"), lines)
+        self.assertIn("  Producer (Removed): " + styles.removed("someone"), lines)
+        self.assertIn("  Album: " + styles.unset("Not found"), lines)
+
+    def test_print_all_styles_unset_tags(self) -> None:
+        """Test that tags without a value in any source are styled as unset."""
+        tags = MusicTags()
+        tags.original = {"artist": ["artist 1"]}
+        tags.print_all()
+        lines = self.capsys.readouterr().out.split("\n")  # type: ignore
+        self.assertIn("Artist(s): " + styles.metadata("artist 1"), lines)
+        self.assertIn("Title: " + styles.unset("Not set"), lines)

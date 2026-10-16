@@ -15,11 +15,16 @@
 
 - Python 3.13 or newer is now required.
 - The short option for `--album` is now `-a` instead of `-b`.
+- Unset tags are shown in gray instead of black, so they are readable on dark
+  terminal backgrounds.
+- Colors are turned off when the `NO_COLOR` environment variable is set, and
+  can be forced on with `FORCE_COLOR`.
 
 ### Removed
 
 - The `-a`/`--all` option. It never did anything: existing tags are parsed for
   all songs, whether or not they have a YouTube description.
+- The dependency on colorama.
 
 ### Fixed
 

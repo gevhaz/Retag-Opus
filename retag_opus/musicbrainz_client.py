@@ -12,9 +12,7 @@ import urllib.parse
 import urllib.request
 from typing import Any, Callable, Final
 
-from colorama import Fore
-
-from retag_opus import __version__
+from retag_opus import __version__, messages
 
 JsonDict = dict[str, Any]
 
@@ -95,7 +93,7 @@ class MusicBrainzClient:
                 # When busy, wait for the next delay, unless all delays are used up
                 retry_delay = next(retry_delays, None)
                 if e.code == 503 and retry_delay is not None:
-                    print(Fore.YELLOW + f"MusicBrainz is busy. Trying again in {retry_delay:g} seconds." + Fore.RESET)
+                    messages.warning(f"MusicBrainz is busy. Trying again in {retry_delay:g} seconds.")
                     self._sleep(retry_delay)
                     continue
                 raise MusicBrainzError(f"MusicBrainz returned HTTP {e.code} for {url}") from e

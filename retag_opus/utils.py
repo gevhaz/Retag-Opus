@@ -5,10 +5,9 @@ import unicodedata
 from pathlib import Path
 from typing import List
 
-from colorama import Fore
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants
+from retag_opus import constants, messages
 
 
 class Utils:
@@ -99,9 +98,9 @@ class Utils:
         choose_one_tag_menu = TerminalMenu(candidates, title="Choose one tag to use")
         choice = choose_one_tag_menu.show()
         if choice is None:
-            print(Fore.YELLOW + "No tag selected")
+            messages.warning("No tag selected")
         elif isinstance(choice, int) and choice != len(candidates) - 1:
-            print(Fore.BLUE + f"Using {candidates[choice]} as tag for this song")
+            messages.info(f"Using {candidates[choice]} as tag for this song")
             return [candidates[choice]]
         return []
 
