@@ -367,9 +367,9 @@ class MusicTags:
         musicbrainz_value = self.musicbrainz.get(field, [])
         new_values = yt_value + from_desc_value + from_tags_value + musicbrainz_value
         if only_new:
-            return Utils().remove_duplicates(new_values)
+            return Utils.remove_duplicates(new_values)
         else:
-            return Utils().remove_duplicates(old_value + new_values)
+            return Utils.remove_duplicates(old_value + new_values)
 
     def modify_resolved_field(self) -> None:
         """Manually add key-value pairs to the set of resolved tags."""
@@ -544,7 +544,7 @@ class MusicTags:
             print("-----------------------------------------------")
             self.print_resolved(print_all=True)
             messages.info("Select the album artist:")
-            one_artist = Utils().select_single_tag(all_artists)
+            one_artist = Utils.select_single_tag(all_artists)
             if len(one_artist) > 0:
                 self.resolved["albumartist"] = one_artist
         elif not self.original.get("albumartist"):

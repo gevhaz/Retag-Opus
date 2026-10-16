@@ -108,7 +108,7 @@ def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
                 changed = True
         if changed:
             metadata.save()
-            messages.success(f"Album level tags saved for file: {Utils().file_path_to_song_data(file_path)}")
+            messages.success(f"Album level tags saved for file: {Utils.file_path_to_song_data(file_path)}")
 
 
 def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, MusicTags]:
@@ -230,7 +230,7 @@ def run(argv: Sequence[str] | None = None) -> int:
     for idx, file_path in enumerate(all_files):
         redo = True
         album = albums.get(file_path)
-        file_name = Utils().file_path_to_song_data(file_path)
+        file_name = Utils.file_path_to_song_data(file_path)
         while redo:
             redo = False
             # Print info about file and progress
