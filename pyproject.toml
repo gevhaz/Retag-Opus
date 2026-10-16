@@ -45,7 +45,7 @@ mutagen = "^1.45.1"
 simple-term-menu = "^1.4.1"
 shtab = "^1.5.4"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^22.3.0"
 isort = "^5.10.1"
 mypy = "^1.6.0"
