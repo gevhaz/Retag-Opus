@@ -121,9 +121,10 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
         its tags from all sources.
     """
     # 1. Read the data and make basic improvements
+    manual_album_set = manual_album is not None
     metadata: OggOpus = OggOpus(file_path)  # type: ignore
     old_tags: Tags = dict(metadata.items())  # type: ignore
-    tags = MusicTags(manual_album_set=manual_album is not None)
+    tags = MusicTags(manual_album_set=manual_album_set)
     tags.duration = getattr(getattr(metadata, "info", None), "length", None)
 
     tags.original = old_tags
@@ -147,7 +148,7 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
 
     # 3. If description exists, send it to be parsed
     if description_lines:
-        desc_parser = DescriptionParser(manual_album_set=manual_album is not None)
+        desc_parser = DescriptionParser(manual_album_set=manual_album_set)
         description = "\n".join(description_lines)
         desc_parser.parse(description)
         tags.youtube = desc_parser.tags
