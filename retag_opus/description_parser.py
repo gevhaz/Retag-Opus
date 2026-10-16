@@ -108,9 +108,11 @@ class DescriptionParser:
                 single_artists += Utils.split_tag(joined_artists)
             self.tags["artist"] = Utils.remove_duplicates(single_artists)
 
-        for key, value in self.tags.items():
-            if value == []:
-                self.tags.pop(key)
+        # Loop over a copy of the names, since tags can't be deleted from
+        # the dict while looping over it
+        for tag_name in list(self.tags):
+            if not self.tags[tag_name]:
+                del self.tags[tag_name]
 
         # Basic pattern:
         # r".*[ ]   .*:\s*(.*)\s*"
