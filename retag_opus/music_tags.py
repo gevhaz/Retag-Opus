@@ -113,7 +113,7 @@ class MusicTags:
         :param data: The tags from which to get the given key.
         """
         value = constants.SEP.join(data.get(key, ["Not found"])).replace(" ", constants.SPACE)
-        if self.resolved.get(key) == ["[Removed]"]:
+        if self.resolved.get(key) == REMOVED_TAG:
             key_type = f"{key_type} (Removed)"
         style = style if data.get(key) else styles.unset
         print("  " + key_type + ": " + style(value))
