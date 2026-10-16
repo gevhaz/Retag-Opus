@@ -13,3 +13,4 @@ Picard
 colorama
 Quod
 Libet
+docstrings
