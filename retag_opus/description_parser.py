@@ -103,15 +103,10 @@ class DescriptionParser:
         artist = self.tags.get("artist")
         if artist:
             self.tags["albumartist"] = [artist[0]]
-            if len(artist) > 1:
-                many_artist: list[str] = []
-                for a in artist:
-                    many_artist = many_artist + Utils().split_tag(a)
-                artist = many_artist
-            else:
-                artist = Utils().split_tag(artist[0])
-            artist = Utils().remove_duplicates(artist)
-            self.tags["artist"] = artist
+            single_artists: list[str] = []
+            for joined_artists in artist:
+                single_artists += Utils.split_tag(joined_artists)
+            self.tags["artist"] = Utils.remove_duplicates(single_artists)
 
         for key, value in self.tags.items():
             if value == []:
