@@ -390,12 +390,12 @@ class MusicTags:
         remove from the list of values from this key.
         """
         tags_in_resolved = []
-        for tag in self.resolved.keys():
-            if tag in self.base_patterns.keys() or self.is_performer_tag(tag):
-                if self.resolved[tag] != REMOVED_TAG:
-                    tags_in_resolved.append(tag)
+        for tag_name, tag_values in self.resolved.items():
+            is_known_tag = tag_name in self.base_patterns or self.is_performer_tag(tag_name)
+            if is_known_tag and tag_values != REMOVED_TAG:
+                tags_in_resolved.append(tag_name)
 
-        tags_in_resolved = sorted(tags_in_resolved)
+        tags_in_resolved.sort()
         tags_in_resolved.append("Quit")
         removal_menu = TerminalMenu(tags_in_resolved, title="Which field do you want to delete items from?")
         tag_index = removal_menu.show()
