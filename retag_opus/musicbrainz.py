@@ -339,12 +339,14 @@ def search_result_entry(recording: JsonDict) -> str:
     The menu treats "|" as the start of preview data, and "[" as the
     start of a shortcut key, so they're replaced.
     """
+    recording_version = recording.get("disambiguation")
+    releases_with_recording = recording.get("releases")
     entry = f"{recording.get('title', '')} - {joined_credit(recording.get('artist-credit', []))}"
     entry += f" ({format_length(recording.get('length'))}"
-    if recording.get("disambiguation"):
-        entry += f", {recording['disambiguation']}"
-    if recording.get("releases"):
-        entry += f", on '{recording['releases'][0].get('title', '')}'"
+    if recording_version:
+        entry += f", {recording_version}"
+    if releases_with_recording:
+        entry += f", on '{releases_with_recording[0].get('title', '')}'"
     return entry.replace("|", "/").replace("[", "(").replace("]", ")") + ")"
 
 
