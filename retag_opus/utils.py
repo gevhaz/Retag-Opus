@@ -68,17 +68,16 @@ class Utils:
         text_to_print = str(file_path)
         basename_match = re.match(r"(.+/)*(.*).opus", text_to_print)
         if basename_match:
-            basename = basename_match.groups()[1]
-            text_to_print = basename
+            text_to_print = basename_match.group(2)
             playlist_match = re.match(r"<(.*)> - <(.*?)(?: - Topic)*> - <(.*)> - <(.*)>", text_to_print)
             artist_title_match = re.match("<(.*?)(?: - Topic)*> - <(.*)>", text_to_print)
             title_only_match = re.match("<(.*)>", text_to_print)
             if playlist_match:
-                text_to_print = playlist_match.groups()[1] + " - " + playlist_match.groups()[2]
+                text_to_print = playlist_match.group(2) + " - " + playlist_match.group(3)
             elif artist_title_match:
-                text_to_print = artist_title_match.groups()[0] + " - " + artist_title_match.groups()[1]
+                text_to_print = artist_title_match.group(1) + " - " + artist_title_match.group(2)
             elif title_only_match:
-                text_to_print = title_only_match.groups()[0]
+                text_to_print = title_only_match.group(1)
         return text_to_print
 
     @staticmethod
