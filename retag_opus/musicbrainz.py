@@ -26,30 +26,29 @@ MAX_RELEASE_LOOKUPS: Final[int] = 3
 # Tags that describe the release a song is on, rather than the song
 RELEASE_TAGS: Final[list[str]] = ["album", "albumartist"] + constants.release_tags
 
-# MusicBrainz instrument names that differ from the names in the
-# performer tags.
-INSTRUMENT_ALIASES: Final[dict[str, str]] = {
-    "drums (drum set)": "drums",
-    "drum set": "drums",
-    "synthesiser": "synthesizer",
-    "electric bass guitar": "bass guitar",
-    "tenor saxophone": "saxophone",
-    "alto saxophone": "saxophone",
-}
+# Attributes of vocal and instrument relationships that say how the
+# artist took part rather than in what role, e.g. "guest". Like Picard,
+# they're left out of the role.
+CREDIT_ATTRIBUTES: Final[set[str]] = {"guest", "additional", "minor", "solo"}
+
+# Roles of vocal and instrument relationships whose attributes don't
+# say which vocals or instruments, named as in Picard
+DEFAULT_ROLES: Final[dict[str, str]] = {"vocal": "vocals", "instrument": "instruments"}
 
 # Relationship types between a recording or a work and an artist, and
-# the tag the artist is put in. Vocals and instruments are handled
-# separately since they depend on the relationship attributes.
+# the tag the artist is put in, as in Picard. Vocals and instruments are
+# handled separately since they depend on the relationship attributes.
 RELATION_TAGS: Final[dict[str, str]] = {
     "producer": "producer",
     "arranger": "arranger",
     "instrument arranger": "arranger",
     "vocal arranger": "arranger",
     "conductor": "conductor",
+    # Picard has no tag for programming
     "programming": "performer:programming",
     "composer": "composer",
     "lyricist": "lyricist",
-    "writer": "lyricist",
+    "writer": "writer",
 }
 
 
@@ -71,25 +70,24 @@ def artist_ids(artist_credit: list[JsonDict]) -> list[str]:
 def relation_tag_names(relation: JsonDict) -> list[str]:
     """Get the tags that the artist of a relationship should be put in.
 
-    The tags are the ones Retag Opus already uses for credits parsed from
-    YouTube descriptions, so that values from MusicBrainz and from
-    YouTube end up in the same tag and can be compared. That's why some
-    MusicBrainz names are translated, e.g. the instrument "drums (drum
-    set)" to the tag "performer:drums", and why instruments without a
-    performer tag in Retag Opus are left out.
+    The tags are named as in MusicBrainz Picard. Vocals and instruments
+    get one performer tag each, named after the vocals or instrument on
+    MusicBrainz, e.g. "performer:drums (drum set)". Picard instead puts
+    all instruments of a relationship in one tag, e.g. "performer:guitar
+    and piano", but then they can't be compared with the performer tags
+    from YouTube descriptions.
     """
     relation_type = relation.get("type", "")
-    attributes: list[str] = relation.get("attributes") or []
-    if relation_type == "vocal":
-        if "background vocals" in attributes:
-            return ["performer:background vocals"]
-        return ["performer:vocals"]
-    if relation_type == "instrument":
+    if relation_type in DEFAULT_ROLES:
+        roles = []
+        for attribute in relation.get("attributes") or []:
+            if attribute not in CREDIT_ATTRIBUTES:
+                roles.append(attribute)
+        if not roles:
+            roles = [DEFAULT_ROLES[relation_type]]
         tag_names = []
-        for instrument in attributes:
-            tag_name = f"performer:{INSTRUMENT_ALIASES.get(instrument, instrument)}"
-            if tag_name in constants.performer_tags:
-                tag_names.append(tag_name)
+        for role in roles:
+            tag_names.append(constants.PERFORMER_PREFIX + role)
         return tag_names
     if relation_type in RELATION_TAGS:
         return [RELATION_TAGS[relation_type]]

@@ -57,23 +57,30 @@ all_tags: Final[dict[str, ParsingReference]] = {
     "author": {"print": "Author", "pattern": [r"(.*, )?[aA]uthor.*:\s*(.+)\s*"]},
     "producer": {"print": "Producer", "pattern": [r"(.*, )?[pP]roducer.*:\s*(.+)\s*"]},
     "publisher": {"print": "Publisher", "pattern": [r"(.*, )?[pP]ublisher.*:\s*(.+)\s*"]},
-    "lyricist": {
-        "print": "Lyricist",
-        "pattern": [
-            r"(.*, )?[wW]riter.*:\s*(.+)\s*",
-            r"(.*, )?[wW]ritten\s+[bB]y.*:\s*(.+)\s*",
-            r".*[lL]yricist.*:\s*(.+)\s*",
-        ],
+    "lyricist": {"print": "Lyricist", "pattern": [r".*[lL]yricist.*:\s*(.+)\s*"]},
+    "writer": {
+        "print": "Writer",
+        "pattern": [r"(.*, )?[wW]riter.*:\s*(.+)\s*", r"(.*, )?[wW]ritten\s+[bB]y.*:\s*(.+)\s*"],
     },
 }
 
+# Prefix of tags with a performer's role, e.g. "performer:lead vocals".
+# Quod Libet uses the same tags, and Picard reads them.
+PERFORMER_PREFIX: Final = "performer:"
+
+# Performer tags that are parsed from YouTube descriptions. The roles
+# are named as on MusicBrainz, so that values from MusicBrainz and from
+# YouTube end up in the same tag and can be compared.
 performer_tags: Final[dict[str, ParsingReference]] = {
-    "performer:vocals": {"print": "- Vocals", "pattern": [r"(.*, )?(Lead\s+)?[vV]ocal(?!.*[eE]ngineer).*:\s*(.+)\s*"]},
+    "performer:lead vocals": {
+        "print": "- Lead vocals",
+        "pattern": [r"(.*, )?(Lead\s+)?[vV]ocal(?!.*[eE]ngineer).*:\s*(.+)\s*"],
+    },
     "performer:background vocals": {
         "print": "- Background Vocals",
         "pattern": [r"(.*, )?[bB]ackground\s+[vV]ocal.*:\s*(.+)\s*"],
     },
-    "performer:drums": {"print": "- Drums", "pattern": [r"(.*, )?[dD]rum.*:\s*(.+)\s*"]},
+    "performer:drums (drum set)": {"print": "- Drums (drum set)", "pattern": [r"(.*, )?[dD]rum.*:\s*(.+)\s*"]},
     "performer:percussion": {"print": "- Percussion", "pattern": [r".*[pP]ercussion.*:\s*(.+)\s*"]},
     "performer:keyboard": {"print": "- Keyboard", "pattern": [r"(.*, )?[kK]eyboard.*:\s*(.+)\s*"]},
     "performer:piano": {"print": "- Piano", "pattern": [r"(.*, )?[pP]iano.*:\s*(.+)\s*"]},

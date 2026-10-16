@@ -85,9 +85,9 @@ MusicBrainz value if it agrees with none of them. Values that only differ in
 typography, like straight and curly apostrophes, count as the same.
 
 Besides title, artist, album, album artist and date, MusicBrainz gives track
-and disc numbers, credits such as composer, lyricist, producer and performers,
-and MusicBrainz IDs, which are saved in the same tags as MusicBrainz Picard
-uses. The IDs aren't shown, since they can't be checked by looking at them.
+and disc numbers, credits such as composer, lyricist, writer, producer and
+performers, and MusicBrainz IDs, which are saved in the same tags as MusicBrainz
+Picard uses. The IDs aren't shown, since they can't be checked by looking at them.
 Instead, the line saying which track a song was found as shows its version and
 release, so that a wrong match stands out. If the IDs are the only new tags for
 a song, they're saved without asking. Track and disc numbers are used without a
@@ -96,6 +96,12 @@ another album than the other sources say, e.g. because a single on YouTube is
 only on an album on MusicBrainz, you are asked which album is right. Track and
 disc numbers and release IDs are only used if it's the one found on
 MusicBrainz.
+
+Credits are named as on MusicBrainz, both those from MusicBrainz and those from
+YouTube descriptions, so that they can be compared. Performers are saved in one
+tag per role, named after the instrument or vocals, e.g.
+`performer:drums (drum set)=Roger Taylor`. [Quod Libet](https://quodlibet.readthedocs.io)
+uses the same tags, and Picard reads them.
 
 Songs from the same album (see above) are looked up together, without asking
 anything: they are matched by title and length to the tracks of a release with

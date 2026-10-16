@@ -13,6 +13,16 @@
 
 ### Changed
 
+- Credits are put in tags named as on MusicBrainz: "Vocals" in YouTube
+  descriptions goes in `performer:lead vocals` instead of `performer:vocals`,
+  "Drums" in `performer:drums (drum set)` instead of `performer:drums`, and
+  "Writer" or "Written by" in `writer` instead of `lyricist`. Tags with the old
+  names are left as they are.
+- All `performer:` tags are shown as performers, not only the ones parsed from
+  YouTube descriptions.
+- The result shown before saving only lists performers that have a value or
+  were removed, instead of every performer that can be parsed from YouTube
+  descriptions.
 - Python 3.13 or newer is now required.
 - The short option for `--album` is now `-a` instead of `-b`.
 - Unset tags are shown in gray instead of black, so they are readable on dark
