@@ -40,7 +40,7 @@ class DescriptionParser:
         artist: list[str] = artist_and_title[1:]
 
         if len(artist) < 2 and ", " in artist[0]:
-            artist = Utils().split_tag(artist[0])
+            artist = Utils.split_tag(artist[0])
 
         return artist, title
 
@@ -79,7 +79,7 @@ class DescriptionParser:
                 lines_since_title_artist = 0
                 youtube_artist, youtube_title = self.parse_artist_and_title(description_line)
                 if youtube_artist:
-                    self.tags["artist"] = Utils().remove_duplicates(youtube_artist)
+                    self.tags["artist"] = Utils.remove_duplicates(youtube_artist)
                 self.tags["title"] = [youtube_title]
 
             if lines_since_title_artist == 1:
