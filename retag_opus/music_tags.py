@@ -686,6 +686,9 @@ class MusicTags:
             album_differs_from_musicbrainz = tag_name == "album" and self.differs_from_musicbrainz_album(
                 [old_value, yt_value, from_tags_value, from_desc_value]
             )
+            # The existing value can be kept if a source agrees with it
+            can_keep_old_value = len(old_value) > 0 and not album_differs_from_musicbrainz
+            stripped_old_value = [v.strip() for v in old_value]
 
             if tag_name.startswith(constants.MUSICBRAINZ_ID_PREFIX) and len(musicbrainz_value) > 0:
                 self.resolved[tag_name] = musicbrainz_value
@@ -705,38 +708,18 @@ class MusicTags:
                                 f"{tag_name.title()}: No value exists in metadata. Using {source}: {value}."
                             )
                         break
-            elif (
-                Utils.is_equal_when_stripped(yt_value, old_value)
-                and len(old_value) > 0
-                and not album_differs_from_musicbrainz
-            ):
+            elif can_keep_old_value and Utils.is_equal_when_stripped(yt_value, old_value):
                 messages.success(f"{tag_name.title()}: Metadata matches YouTube description tags.")
-                self.resolved[tag_name] = [v.strip() for v in old_value]
-                continue
-            elif (
-                Utils.is_equal_when_stripped(from_desc_value, old_value)
-                and len(old_value) > 0
-                and not album_differs_from_musicbrainz
-            ):
+                self.resolved[tag_name] = stripped_old_value
+            elif can_keep_old_value and Utils.is_equal_when_stripped(from_desc_value, old_value):
                 messages.success(f"{tag_name.title()}: Metadata matches tags parsed from YouTube tags.")
-                self.resolved[tag_name] = [v.strip() for v in old_value]
-                continue
-            elif (
-                Utils.is_equal_when_stripped(from_tags_value, old_value)
-                and len(old_value) > 0
-                and not album_differs_from_musicbrainz
-            ):
+                self.resolved[tag_name] = stripped_old_value
+            elif can_keep_old_value and Utils.is_equal_when_stripped(from_tags_value, old_value):
                 messages.success(f"{tag_name.title()}: Metadata matches tags parsed from original tags.")
-                self.resolved[tag_name] = [v.strip() for v in old_value]
-                continue
-            elif (
-                Utils.is_equal_when_normalized(musicbrainz_value, old_value)
-                and len(old_value) > 0
-                and not album_differs_from_musicbrainz
-            ):
+                self.resolved[tag_name] = stripped_old_value
+            elif can_keep_old_value and Utils.is_equal_when_normalized(musicbrainz_value, old_value):
                 messages.success(f"{tag_name.title()}: Metadata matches MusicBrainz.")
-                self.resolved[tag_name] = [v.strip() for v in old_value]
-                continue
+                self.resolved[tag_name] = stripped_old_value
             else:
                 redo = True
                 print("-----------------------------------------------")
