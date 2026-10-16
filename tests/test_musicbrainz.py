@@ -86,14 +86,29 @@ def test_joined_credit() -> None:
 def test_credits_from_relations() -> None:
     """Relationships, also of works, become credit tags."""
     assert musicbrainz.credits_from_relations(GOODBYES_RELATIONS) == {
-        "performer:vocals": ["Ben Ivor"],
+        "performer:lead vocals": ["Ben Ivor"],
         "performer:background vocals": ["Ann Choir"],
         "performer:guitar": ["Gus Tar"],
-        "performer:drums": ["Drum Mer"],
+        "performer:theremin": ["Gus Tar"],
+        "performer:drums (drum set)": ["Drum Mer"],
         "producer": ["Pro Ducer", "P. Ducer"],
         "composer": ["Com Poser"],
-        "lyricist": ["Wri Ter"],
+        "writer": ["Wri Ter"],
     }
+
+
+def test_relation_tag_names() -> None:
+    """Vocals and instruments get a performer tag each, named as on MusicBrainz."""
+    assert musicbrainz.relation_tag_names(artist_relation("instrument", "A", ["guest", "electric bass guitar"])) == [
+        "performer:electric bass guitar"
+    ]
+    assert musicbrainz.relation_tag_names(artist_relation("vocal", "A", ["choir vocals", "alto vocals"])) == [
+        "performer:choir vocals",
+        "performer:alto vocals",
+    ]
+    assert musicbrainz.relation_tag_names(artist_relation("vocal", "A", ["solo"])) == ["performer:vocals"]
+    assert musicbrainz.relation_tag_names(artist_relation("instrument", "A")) == ["performer:instruments"]
+    assert musicbrainz.relation_tag_names(artist_relation("mix", "A")) == []
 
 
 def test_release_tracks() -> None:
@@ -121,13 +136,14 @@ def test_track_tags() -> None:
         "musicbrainz_albumid": ["rel-1"],
         "musicbrainz_albumartistid": ["id-The Global"],
         "musicbrainz_releasegroupid": ["rg-1"],
-        "performer:vocals": ["Ben Ivor"],
+        "performer:lead vocals": ["Ben Ivor"],
         "performer:background vocals": ["Ann Choir"],
         "performer:guitar": ["Gus Tar"],
-        "performer:drums": ["Drum Mer"],
+        "performer:theremin": ["Gus Tar"],
+        "performer:drums (drum set)": ["Drum Mer"],
         "producer": ["Pro Ducer", "P. Ducer"],
         "composer": ["Com Poser"],
-        "lyricist": ["Wri Ter"],
+        "writer": ["Wri Ter"],
     }
 
 

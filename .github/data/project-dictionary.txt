@@ -11,3 +11,5 @@ pypi
 MusicBrainz
 Picard
 colorama
+Quod
+Libet

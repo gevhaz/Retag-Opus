@@ -43,6 +43,61 @@ class MusicTags:
         # Length of the song in seconds, used to identify it
         self.duration: float | None = None
 
+    @staticmethod
+    def is_performer_tag(tag_id: str) -> bool:
+        """Check if a tag is a performer's role, e.g. "performer:violin"."""
+        return tag_id.startswith(constants.PERFORMER_PREFIX)
+
+    def performer_tags_in_print_order(self, *sources: Tags) -> list[str]:
+        """Get the performer tags in the sources, in the order to print them.
+
+        First come the performer tags that can be parsed from YouTube
+        descriptions, in the order of constants.performer_tags. Then come
+        the ones that can't, e.g. "performer:theremin" from MusicBrainz,
+        in alphabetical order.
+
+        :param sources: The tags to look for performer tags in.
+
+        :return: Performer tag names, e.g. "performer:violin".
+        """
+        performer_tags_in_sources = []
+        for source in sources:
+            for tag_id in source.keys():
+                if self.is_performer_tag(tag_id) and tag_id not in performer_tags_in_sources:
+                    performer_tags_in_sources.append(tag_id)
+
+        performer_tags_with_pattern = []
+        for tag_id in self.performer_patterns.keys():
+            if tag_id in performer_tags_in_sources:
+                performer_tags_with_pattern.append(tag_id)
+
+        performer_tags_without_pattern = []
+        for tag_id in performer_tags_in_sources:
+            if tag_id not in self.performer_patterns:
+                performer_tags_without_pattern.append(tag_id)
+
+        return performer_tags_with_pattern + sorted(performer_tags_without_pattern)
+
+    def performer_print_name(self, tag_id: str) -> str:
+        """Get the name to print before the values of a performer tag.
+
+        Performers are printed as a list, e.g.:
+
+          Performers:
+          - Lead vocals: Freddie Mercury
+          - Timpani: Roger Taylor
+
+        :param tag_id: A performer tag, e.g. "performer:timpani".
+
+        :return: The name to print, e.g. "- Timpani".
+        """
+        # Tags that can be parsed from YouTube descriptions have a name
+        if tag_id in self.performer_patterns:
+            return self.performer_patterns[tag_id]["print"]
+        role = tag_id.removeprefix(constants.PERFORMER_PREFIX)
+        role_with_capital = role[:1].upper() + role[1:]
+        return "- " + role_with_capital
+
     def print_metadata_key(
         self,
         key_type: str,
@@ -69,11 +124,11 @@ class MusicTags:
         :param metadata: The set of tags to print.
         :param style: The style to print the tags in.
         """
-        if any(t in self.performer_patterns.keys() for t in metadata.keys()):
+        if any(self.is_performer_tag(t) for t in metadata.keys()):
             print("  Performers:")
-            for tag_id, tag_data in self.performer_patterns.items():
+            for tag_id in self.performer_tags_in_print_order(metadata):
                 if tag_id in metadata and metadata[tag_id] is not None:
-                    self.print_metadata_key(tag_data["print"], tag_id, style, metadata)
+                    self.print_metadata_key(self.performer_print_name(tag_id), tag_id, style, metadata)
         for tag_id, tag_data in self.base_patterns.items():
             self.print_metadata_key(tag_data["print"], tag_id, style, metadata)
         print("")
@@ -117,11 +172,12 @@ class MusicTags:
         """
         performer_block = []
         there_are_tags = False
-        for tag_id, tag_data in self.performer_patterns.items():
+        sources = [self.original, self.youtube, self.fromdesc, self.fromtags, self.musicbrainz]
+        for tag_id in self.performer_tags_in_print_order(*sources):
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
                 there_are_tags = True
-                performer_block.append(tag_data["print"] + ": " + " | ".join(tag_all_values))
+                performer_block.append(self.performer_print_name(tag_id) + ": " + " | ".join(tag_all_values))
 
         main_block = []
         for tag_id, tag_data in self.base_patterns.items():
@@ -185,7 +241,7 @@ class MusicTags:
         for tag_id in self.resolved.keys():
             if tag_id.startswith(constants.MUSICBRAINZ_ID_PREFIX):
                 continue
-            if tag_id not in self.base_patterns and tag_id not in self.performer_patterns:
+            if tag_id not in self.base_patterns and not self.is_performer_tag(tag_id):
                 other_tags.append(tag_id)
         if other_tags:
             print("  Other tags:")
@@ -201,22 +257,31 @@ class MusicTags:
                 else:
                     self.print_metadata_key(f"- {tag}", tag, styles.metadata, self.resolved)
 
-        if "performer:" in " ".join(self.resolved.keys()):
+        # Only performers with something to show are printed: the resolved
+        # ones, which include the file's tags and removed tags, and when
+        # printing all, the ones in the other sources too
+        if print_all:
+            sources = [self.resolved, self.original, self.youtube, self.fromdesc, self.fromtags, self.musicbrainz]
+            performer_tags = self.performer_tags_in_print_order(*sources)
+        else:
+            performer_tags = self.performer_tags_in_print_order(self.resolved)
+        if performer_tags:
             print("  Performers:")
-            for tag_id, tag_data in self.performer_patterns.items():
+            for tag_id in performer_tags:
+                print_name = self.performer_print_name(tag_id)
                 resolved_tag = self.resolved.get(tag_id, [])
                 all_sources_tag = self.get_tag_data(tag_id)
                 # If the user chose to remove a tag that existed before
                 if resolved_tag == REMOVED_TAG:
-                    self.print_metadata_key(tag_data["print"], tag_id, styles.removed, self.original)
+                    self.print_metadata_key(print_name, tag_id, styles.removed, self.original)
                 # If the resolved tag differs from the original tag
                 elif resolved_tag != self.original.get(tag_id, []) and self.resolved.get(tag_id) is not None:
-                    self.print_metadata_key(tag_data["print"], tag_id, styles.changed, self.resolved)
+                    self.print_metadata_key(print_name, tag_id, styles.changed, self.resolved)
                 # original and resolved are equal, but other tags exist
                 elif len(all_sources_tag) > 0 and print_all:
-                    print("  " + tag_data["print"] + ": " + " | ".join(all_sources_tag))
+                    print("  " + print_name + ": " + " | ".join(all_sources_tag))
                 else:
-                    self.print_metadata_key(tag_data["print"], tag_id, styles.metadata, self.resolved)
+                    self.print_metadata_key(print_name, tag_id, styles.metadata, self.resolved)
         for tag_id, tag_data in self.base_patterns.items():
             resolved_tag = self.resolved.get(tag_id, [])
             all_sources_tag = self.get_tag_data(tag_id)
@@ -304,7 +369,7 @@ class MusicTags:
         """
         tags_in_resolved = []
         for tag in self.resolved.keys():
-            if tag in self.base_patterns.keys() or tag in self.performer_patterns.keys():
+            if tag in self.base_patterns.keys() or self.is_performer_tag(tag):
                 if self.resolved[tag] != REMOVED_TAG:
                     tags_in_resolved.append(tag)
 

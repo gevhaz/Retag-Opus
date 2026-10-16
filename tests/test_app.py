@@ -222,6 +222,7 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         "\n  Producer: Not found"
         "\n  Publisher: Not found"
         "\n  Lyricist: Not found"
+        "\n  Writer: Not found"
         "\n\nArtist: Mismatch between values in description and metadata:"
         "\nYouTube description: The Global | Ben Ivor"
         "\nExisting metadata:  artist 1"
@@ -281,6 +282,7 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         "\n  Producer: Not found"
         "\n  Publisher: Not found"
         "\n  Lyricist: Not found"
+        "\n  Writer: Not found"
         # All sources should show up here
         "\n\nArtist: Mismatch between values in description and metadata:"
         "\nYouTube description: The Global | Ben Ivor"

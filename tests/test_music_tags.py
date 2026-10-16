@@ -52,19 +52,20 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
 
         self.assertEqual(expected, captured.out)
 
     def test_print_metadata_with_performers(self) -> None:
         """Test printing of metadata where there are performer tags."""
-        tags: Tags = {"artist": ["artist 1", "artist 2"], "performer:vocals": ["bassist 1"]}
+        tags: Tags = {"artist": ["artist 1", "artist 2"], "performer:lead vocals": ["bassist 1"]}
         MusicTags().print_metadata(tags, styles.metadata)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            "  - Vocals: bassist 1\n"
+            "  - Lead vocals: bassist 1\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
             "  Album Artist: Not found\n"
@@ -81,17 +82,30 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
 
         self.assertEqual(expected, captured.out)
 
-    def test_print_metadata_with_unknown_performer_tag(self) -> None:
-        """Test printing of metadata with unknown performer tag."""
-        tags: Tags = {"artist": ["artist 1", "artist 2"], "performer:unknown": ["person 1"]}
+    def test_print_metadata_with_performer_tags_without_pattern(self) -> None:
+        """Test printing of performer tags that can't be parsed from descriptions.
+
+        They're printed after the ones that can, in alphabetical order.
+        """
+        tags: Tags = {
+            "artist": ["artist 1", "artist 2"],
+            "performer:theremin": ["person 1"],
+            "performer:accordion": ["person 2"],
+            "performer:violin": ["person 3"],
+        }
         MusicTags().print_metadata(tags, styles.metadata)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
+            "  Performers:\n"
+            "  - Violin: person 3\n"
+            "  - Accordion: person 2\n"
+            "  - Theremin: person 1\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
             "  Album Artist: Not found\n"
@@ -108,7 +122,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
 
         self.assertEqual(expected, captured.out)
@@ -188,7 +203,8 @@ class TestMusicTags(unittest.TestCase):
             "Author: Not set\n"
             "Producer: Not set\n"
             "Publisher: Not set\n"
-            "Lyricist: Not set\n\n"
+            "Lyricist: Not set\n"
+            "Writer: Not set\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -198,12 +214,12 @@ class TestMusicTags(unittest.TestCase):
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
         tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
         tags.print_all()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "Performers:\n"
-            "- Vocals: artist 4\n"
+            "- Lead vocals: artist 4\n"
             "Title: Not set\n"
             "Album: Not set\n"
             "Album Artist: Not set\n"
@@ -220,7 +236,8 @@ class TestMusicTags(unittest.TestCase):
             "Author: Not set\n"
             "Producer: Not set\n"
             "Publisher: Not set\n"
-            "Lyricist: Not set\n\n"
+            "Lyricist: Not set\n"
+            "Writer: Not set\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -236,14 +253,14 @@ class TestMusicTags(unittest.TestCase):
         """Test printing data from youtube tags."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"], "performer:vocals": ["artist 5"]}
+        tags.youtube = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
         tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
         tags.print_youtube()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            "  - Vocals: artist 5\n"
+            "  - Lead vocals: artist 5\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
             "  Album Artist: Not found\n"
@@ -260,7 +277,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -269,7 +287,7 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
         tags.print_youtube()
         captured = self.capsys.readouterr()  # type: ignore
         expected = "No new data parsed from description\n"
@@ -278,15 +296,15 @@ class TestMusicTags(unittest.TestCase):
     def test_print_original_tags(self) -> None:
         """Test printing original tags, including performer tags."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 2"], "performer:vocals": ["artist 5"]}
+        tags.original = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
         tags.youtube = {"artist": ["artist 1"]}
         tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
         tags.print_original()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            "  - Vocals: artist 5\n"
+            "  - Lead vocals: artist 5\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
             "  Album Artist: Not found\n"
@@ -303,7 +321,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -312,7 +331,7 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.youtube = {"artist": ["artist 1"]}
         tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
         tags.print_original()
         captured = self.capsys.readouterr()  # type: ignore
         expected = "There were no pre-existing tags for this file\n"
@@ -323,13 +342,13 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 3"]}
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromtags = {"artist": ["artist 2"], "performer:vocals": ["artist 5"]}
-        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.fromtags = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
+        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
         tags.print_from_tags()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            "  - Vocals: artist 5\n"
+            "  - Lead vocals: artist 5\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
             "  Album Artist: Not found\n"
@@ -346,7 +365,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -355,7 +375,7 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 3"]}
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromdesc = {"performer:vocals": ["artist 4"]}
+        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
         tags.print_from_tags()
         captured = self.capsys.readouterr()  # type: ignore
         expected = "No new data parsed from tags\n"
@@ -366,13 +386,13 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 3"]}
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromtags = {"performer:vocals": ["artist 4"]}
-        tags.fromdesc = {"artist": ["artist 2"], "performer:vocals": ["artist 5"]}
+        tags.fromtags = {"performer:lead vocals": ["artist 4"]}
+        tags.fromdesc = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
         tags.print_from_desc()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            "  - Vocals: artist 5\n"
+            "  - Lead vocals: artist 5\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
             "  Album Artist: Not found\n"
@@ -389,7 +409,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -398,7 +419,7 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 3"]}
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromtags = {"performer:vocals": ["artist 4"]}
+        tags.fromtags = {"performer:lead vocals": ["artist 4"]}
         tags.print_from_desc()
         captured = self.capsys.readouterr()  # type: ignore
         expected = "No new data parsed from tags parsed from description\n"
@@ -428,7 +449,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer (Removed): someone\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -436,12 +458,12 @@ class TestMusicTags(unittest.TestCase):
         """Test that resolved tags print, including performers."""
         tags = MusicTags()
         tags.original = {
-            "performer:vocals": ["artist 1"],
+            "performer:lead vocals": ["artist 1"],
             "performer:violin": ["artist 1"],
             "performer:keyboard": ["some guy"],
         }
         tags.resolved = {
-            "performer:vocals": ["artist 1"],
+            "performer:lead vocals": ["artist 1"],
             "performer:violin": ["artist 2"],
             "performer:keyboard": ["[Removed]"],
         }
@@ -449,24 +471,9 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            "  - Vocals: artist 1\n"
-            "  - Background Vocals: Not found\n"
-            "  - Drums: Not found\n"
-            "  - Percussion: Not found\n"
+            "  - Lead vocals: artist 1\n"
             "  - Keyboard (Removed): some guy\n"
-            "  - Piano: Not found\n"
-            "  - Synthesizer: Not found\n"
-            "  - Guitar: Not found\n"
-            "  - Electric guitar: Not found\n"
-            "  - Bass guitar: Not found\n"
-            "  - Acoustic guitar: Not found\n"
-            "  - Ukulele: Not found\n"
             "  - Violin: artist 2\n"
-            "  - Double bass: Not found\n"
-            "  - Cello: Not found\n"
-            "  - Programming: Not found\n"
-            "  - Saxophone: Not found\n"
-            "  - Flute: Not found\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
             "  Album Artist: Not found\n"
@@ -483,10 +490,26 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
+
+    def test_print_resolved_with_performer_tags_without_pattern(self) -> None:
+        """Test that all performer tags are printed as performers.
+
+        Performer tags that can't be parsed from descriptions, e.g. from
+        MusicBrainz or with names from older versions, are printed last.
+        """
+        tags = MusicTags()
+        tags.original = {"performer:vocals": ["artist 1"]}
+        tags.resolved = {"performer:vocals": ["artist 1"], "performer:theremin": ["artist 2"]}
+        tags.print_resolved(print_all=False)
+        captured = self.capsys.readouterr()  # type: ignore
+        self.assertNotIn("Other tags", captured.out)
+        expected = "  Performers:\n  - Theremin: artist 2\n  - Vocals: artist 1\n  Title: Not found\n"
+        self.assertIn(expected, captured.out)
 
     def test_print_all_resolved_with_performers(self) -> None:
         """Test that resolved tags print, including performers.
@@ -496,7 +519,7 @@ class TestMusicTags(unittest.TestCase):
         """
         tags = MusicTags()
         tags.original = {
-            "performer:vocals": ["artist 1"],
+            "performer:lead vocals": ["artist 1"],
             "performer:violin": ["artist 1"],
             "performer:guitar": ["artist 3"],
             "performer:keyboard": ["the keyboard master"],
@@ -505,7 +528,7 @@ class TestMusicTags(unittest.TestCase):
             "performer:guitar": ["artist 4"],
         }
         tags.resolved = {
-            "performer:vocals": ["artist 1"],
+            "performer:lead vocals": ["artist 1"],
             "performer:violin": ["artist 2"],
             "performer:keyboard": ["[Removed]"],
         }
@@ -513,24 +536,10 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            "  - Vocals: artist 1\n"
-            "  - Background Vocals: Not found\n"
-            "  - Drums: Not found\n"
-            "  - Percussion: Not found\n"
+            "  - Lead vocals: artist 1\n"
             "  - Keyboard (Removed): the keyboard master\n"
-            "  - Piano: Not found\n"
-            "  - Synthesizer: Not found\n"
             "  - Guitar: artist 3 | artist 4\n"
-            "  - Electric guitar: Not found\n"
-            "  - Bass guitar: Not found\n"
-            "  - Acoustic guitar: Not found\n"
-            "  - Ukulele: Not found\n"
             "  - Violin: artist 2\n"
-            "  - Double bass: Not found\n"
-            "  - Cello: Not found\n"
-            "  - Programming: Not found\n"
-            "  - Saxophone: Not found\n"
-            "  - Flute: Not found\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
             "  Album Artist: Not found\n"
@@ -547,7 +556,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -559,7 +569,7 @@ class TestMusicTags(unittest.TestCase):
         """
         tags = MusicTags()
         tags.original = {
-            "performer:vocals": ["artist 1"],
+            "performer:lead vocals": ["artist 1"],
             "performer:violin": ["artist 1"],
             "performer:guitar": ["artist 3"],
             "performer:keyboard": ["artist 5"],
@@ -569,7 +579,7 @@ class TestMusicTags(unittest.TestCase):
             "performer:keyboard": ["artist 6"],
         }
         tags.resolved = {
-            "performer:vocals": ["artist 1"],
+            "performer:lead vocals": ["artist 1"],
             "performer:violin": ["artist 2"],
             "performer:keyboard": ["[Removed]"],
         }
@@ -577,24 +587,9 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
-            "  - Vocals: artist 1\n"
-            "  - Background Vocals: Not found\n"
-            "  - Drums: Not found\n"
-            "  - Percussion: Not found\n"
+            "  - Lead vocals: artist 1\n"
             "  - Keyboard (Removed): artist 5\n"
-            "  - Piano: Not found\n"
-            "  - Synthesizer: Not found\n"
-            "  - Guitar: Not found\n"
-            "  - Electric guitar: Not found\n"
-            "  - Bass guitar: Not found\n"
-            "  - Acoustic guitar: Not found\n"
-            "  - Ukulele: Not found\n"
             "  - Violin: artist 2\n"
-            "  - Double bass: Not found\n"
-            "  - Cello: Not found\n"
-            "  - Programming: Not found\n"
-            "  - Saxophone: Not found\n"
-            "  - Flute: Not found\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
             "  Album Artist: Not found\n"
@@ -611,7 +606,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer: Not found\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -655,7 +651,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer (Removed): person 1\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         self.assertEqual(expected, captured.out)
 
@@ -699,7 +696,8 @@ class TestMusicTags(unittest.TestCase):
             "  Author: Not found\n"
             "  Producer (Removed): person 1\n"
             "  Publisher: Not found\n"
-            "  Lyricist: Not found\n\n"
+            "  Lyricist: Not found\n"
+            "  Writer: Not found\n\n"
         )
         sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
@@ -909,9 +907,9 @@ class TestMusicTags(unittest.TestCase):
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
         tags = MusicTags()
-        tags.resolved = {"artist": ["artist 1"], "performer:vocals": ["artist 1", "artist 2"]}
+        tags.resolved = {"artist": ["artist 1"], "performer:lead vocals": ["artist 1", "artist 2"]}
         tags.delete_tag_item()
-        self.assertEqual(["artist 1"], tags.resolved.get("performer:vocals"))
+        self.assertEqual(["artist 1"], tags.resolved.get("performer:lead vocals"))
 
     @patch("retag_opus.utils.TerminalMenu.__init__")
     @patch("retag_opus.utils.TerminalMenu.show")
@@ -1577,7 +1575,8 @@ class TestMusicTags(unittest.TestCase):
                 "  Author: Not found\n"
                 "  Producer: Not found\n"
                 "  Publisher: Not found\n"
-                "  Lyricist: Not found\n\n"
+                "  Lyricist: Not found\n"
+                "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
                 "YouTube description: artist 2\n"
                 "Parsed from original tags: artist 2\n"
@@ -1627,7 +1626,8 @@ class TestMusicTags(unittest.TestCase):
                 "  Author: Not found\n"
                 "  Producer: Not found\n"
                 "  Publisher: Not found\n"
-                "  Lyricist: Not found\n\n"
+                "  Lyricist: Not found\n"
+                "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
                 "YouTube description: artist 2\n"
                 "Existing metadata:  artist 1\n"
@@ -1661,7 +1661,8 @@ class TestMusicTags(unittest.TestCase):
                 "  Author: Not found\n"
                 "  Producer: Not found\n"
                 "  Publisher: Not found\n"
-                "  Lyricist: Not found\n\n"
+                "  Lyricist: Not found\n"
+                "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
                 "Existing metadata:  artist 1\n"
                 "Parsed from YouTube tags: artist 2\n"
@@ -1716,7 +1717,8 @@ class TestMusicTags(unittest.TestCase):
                 "  Author: Not found\n"
                 "  Producer: Not found\n"
                 "  Publisher: Not found\n"
-                "  Lyricist: Not found\n\n"
+                "  Lyricist: Not found\n"
+                "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
                 "YouTube description: artist 2\n"
                 "Parsed from original tags: artist 2\n"
@@ -1750,7 +1752,8 @@ class TestMusicTags(unittest.TestCase):
                 "  Author: Not found\n"
                 "  Producer: Not found\n"
                 "  Publisher: Not found\n"
-                "  Lyricist: Not found\n\n"
+                "  Lyricist: Not found\n"
+                "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
                 "YouTube description: artist 2\n"
                 "Parsed from original tags: artist 2\n"
