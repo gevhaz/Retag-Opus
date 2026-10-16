@@ -71,7 +71,6 @@ class DescriptionParser:
         description_tag_lines: list[str] = description_tag_full.splitlines(False)
 
         for description_line in description_tag_lines:
-            description_line = re.sub("\n", "", description_line)
             if re.match(r"^\s*$", description_line):
                 continue
             lines_since_title_artist = lines_since_title_artist + 1
@@ -123,9 +122,6 @@ class DescriptionParser:
 
         # Custom patterns
         for description_line in description_tag_lines:
-            description_line = description_line.replace("\n", "")
-            description_line = re.sub("\n", "", description_line)
-
             self.standard_pattern("copyright_date", r"\u2117 (\d\d\d\d)\s", description_line)
 
         copyright_date = self.tags.pop("copyright_date", None)
