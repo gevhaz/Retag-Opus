@@ -91,7 +91,7 @@ class TagsParser:
 
         for tag in tags_to_split:
             tags_tag = self.original_tags.get(tag)
-            if tags_tag is not None and not len(tags_tag) > 1:
+            if tags_tag is not None and len(tags_tag) == 1:
                 new_tag = Utils().split_tag(tags_tag[0])
                 if new_tag != tags_tag:
                     self.tags[tag] = new_tag
