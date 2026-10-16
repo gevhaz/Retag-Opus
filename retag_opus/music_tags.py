@@ -659,10 +659,9 @@ class MusicTags:
         """
         pruned_tags = [tag_name for tag_name, value in self.resolved.items() if value == REMOVED_TAG]
 
-        for tag_name in self.album_level_tags.keys():
+        for tag_name, album_level_value in self.album_level_tags.items():
             messages.success(
-                f"{tag_name.title()}: Using value from earlier song on the same album: "
-                f"{self.album_level_tags[tag_name]}."
+                f"{tag_name.title()}: Using value from earlier song on the same album: {album_level_value}."
             )
 
         for tag_name in self.tags_with_new_data():
