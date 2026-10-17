@@ -33,7 +33,7 @@ class Cli:
             "--directory",
             action="store",
             required=True,
-            dest="dir",
+            dest="directory",
             help="directory in which the files to be retagged are " "located",
         ).complete = shtab.DIRECTORY  # type: ignore
 

@@ -128,8 +128,8 @@ class MusicTags:
             self.print_metadata_key(tag_data["print_name"], tag_id, style, metadata)
         print("")
 
-    def get_tag_data(self, tag_id: str) -> list[str]:
-        """Get data from all sources for given tag.
+    def get_colored_values_from_all_sources(self, tag_id: str) -> list[str]:
+        """Get the values of a tag from all sources, colored by source.
 
         Returns a list of all values for a specific tag from various
         sources with color depending on source.
@@ -141,23 +141,23 @@ class MusicTags:
         sources. If no source contains the tag, an empty list is
         returned.
         """
-        print_data: list[str] = []
+        colored_values: list[str] = []
         original = self.original.get(tag_id)
         youtube = self.youtube.get(tag_id)
         parsed_from_youtube = self.parsed_from_youtube.get(tag_id)
         parsed_from_original = self.parsed_from_original.get(tag_id)
         musicbrainz = self.musicbrainz.get(tag_id)
         if parsed_from_original and parsed_from_original != original:
-            print_data.append(styles.parsed_from_original(" | ".join(parsed_from_original)))
+            colored_values.append(styles.parsed_from_original(" | ".join(parsed_from_original)))
         if parsed_from_youtube and parsed_from_youtube != original:
-            print_data.append(styles.parsed_from_youtube(" | ".join(parsed_from_youtube)))
+            colored_values.append(styles.parsed_from_youtube(" | ".join(parsed_from_youtube)))
         if original:
-            print_data.append(styles.original(" | ".join(original)))
+            colored_values.append(styles.original(" | ".join(original)))
         if youtube and original != youtube:
-            print_data.append(styles.youtube(" | ".join(youtube)))
+            colored_values.append(styles.youtube(" | ".join(youtube)))
         if musicbrainz and original != musicbrainz:
-            print_data.append(styles.musicbrainz(" | ".join(musicbrainz)))
-        return print_data
+            colored_values.append(styles.musicbrainz(" | ".join(musicbrainz)))
+        return colored_values
 
     def print_all(self) -> None:
         """Print all tags from all sources.
@@ -169,14 +169,14 @@ class MusicTags:
         there_are_tags = False
         sources = [self.original, self.youtube, self.parsed_from_youtube, self.parsed_from_original, self.musicbrainz]
         for tag_id in self.performer_tags_in_print_order(*sources):
-            tag_all_values = self.get_tag_data(tag_id)
+            tag_all_values = self.get_colored_values_from_all_sources(tag_id)
             if len(tag_all_values) > 0:
                 there_are_tags = True
                 performer_block.append(self.performer_print_name(tag_id) + ": " + " | ".join(tag_all_values))
 
         main_block = []
         for tag_id, tag_data in self.tags_printed_for_every_song.items():
-            tag_all_values = self.get_tag_data(tag_id)
+            tag_all_values = self.get_colored_values_from_all_sources(tag_id)
             if len(tag_all_values) > 0:
                 there_are_tags = True
                 main_block.append(tag_data["print_name"] + ": " + " | ".join(tag_all_values))
@@ -304,7 +304,7 @@ class MusicTags:
             a tag that keeps the value it has now.
         """
         resolved_tag = self.resolved.get(tag_id)
-        all_sources_tag = self.get_tag_data(tag_id)
+        all_sources_tag = self.get_colored_values_from_all_sources(tag_id)
         # If the user chose to remove a tag that existed before
         if resolved_tag == REMOVED_TAG:
             self.print_metadata_key(printed_tag_name, tag_id, styles.removed, self.original)
@@ -355,18 +355,18 @@ class MusicTags:
         if is_from_youtube and "youtube-dl" not in original_comment:
             self.resolved["comment"] = original_comment + ["youtube-dl"]
 
-    def get_field(self, field: str, only_new: bool = False) -> list[str]:
-        """Get values for field from all sources.
+    def get_values_from_all_sources(self, tag_name: str, only_new: bool = False) -> list[str]:
+        """Get the values of a tag from all sources.
 
-        :param field: Tag to get values for.
-        :param only_new: Whether to include the value of the field in
-            the original music file.
+        :param tag_name: Tag to get values for.
+        :param only_new: Whether to leave out the values in the original
+            music file.
         """
-        original_values = self.original.get(field, [])
-        youtube_values = self.youtube.get(field, [])
-        parsed_from_youtube_values = self.parsed_from_youtube.get(field, [])
-        parsed_from_original_values = self.parsed_from_original.get(field, [])
-        musicbrainz_values = self.musicbrainz.get(field, [])
+        original_values = self.original.get(tag_name, [])
+        youtube_values = self.youtube.get(tag_name, [])
+        parsed_from_youtube_values = self.parsed_from_youtube.get(tag_name, [])
+        parsed_from_original_values = self.parsed_from_original.get(tag_name, [])
+        musicbrainz_values = self.musicbrainz.get(tag_name, [])
         new_values = youtube_values + parsed_from_youtube_values + parsed_from_original_values + musicbrainz_values
         if only_new:
             return utils.remove_duplicates(new_values)
@@ -437,7 +437,7 @@ class MusicTags:
         :return: True if there are new values found, otherwise False.
         """
         for tag in self.tags_with_new_data():
-            all_sources = set(self.get_field(tag))
+            all_sources = set(self.get_values_from_all_sources(tag))
             original_tags = set(self.original.get(tag, []))
             if not original_tags.issuperset(all_sources):
                 # If there are no new tags, the set of all tags should
@@ -538,7 +538,9 @@ class MusicTags:
 
     def determine_album_artist(self) -> None:
         """Choose value to use for albumartist tag."""
-        all_artists = utils.remove_duplicates(self.get_field("albumartist", only_new=True) + self.get_field("artist"))
+        all_artists = utils.remove_duplicates(
+            self.get_values_from_all_sources("albumartist", only_new=True) + self.get_values_from_all_sources("artist")
+        )
         resolved_artist = self.resolved.get("artist")
         original_artist = self.original.get("artist")
 
@@ -546,7 +548,7 @@ class MusicTags:
             print("-----------------------------------------------")
             self.print_resolved(print_all=True)
             messages.info("Select the album artist:")
-            one_artist = utils.select_single_tag(all_artists)
+            one_artist = utils.select_single_value(all_artists)
             if len(one_artist) > 0:
                 self.resolved["albumartist"] = one_artist
         elif not self.original.get("albumartist"):
@@ -618,7 +620,7 @@ class MusicTags:
                 self.print_youtube()
                 return True
             case "[s] Select items from a list":
-                available_tags = self.get_field(tag_name)
+                available_tags = self.get_values_from_all_sources(tag_name)
                 tag_selection_menu = TerminalMenu(
                     available_tags,
                     title="Select the items you want in this tag",
@@ -680,7 +682,7 @@ class MusicTags:
             parsed_from_youtube_values = self.parsed_from_youtube.get(tag_name, [])
             parsed_from_original_values = self.parsed_from_original.get(tag_name, [])
             musicbrainz_values = self.musicbrainz.get(tag_name, [])
-            all_values = self.get_field(tag_name, only_new=True)
+            all_values = self.get_values_from_all_sources(tag_name, only_new=True)
 
             # MusicBrainz may have found the song on another release than
             # the album that the other sources say, e.g. on an album rather

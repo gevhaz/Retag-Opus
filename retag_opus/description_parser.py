@@ -42,18 +42,19 @@ class DescriptionParser:
 
         return artist, title
 
-    def standard_pattern(self, field_name: str, regex: str, line: str) -> None:
-        """Parse metadata from line with regex and put in field_name.
+    def add_value_from_line(self, line: str, pattern: str, tag_name: str) -> None:
+        """Add the value that a pattern finds in a line to a tag.
 
-        Use a regex on a standard format to extract metadata from the
-        string line and set the result to the tag field_value. If the
-        value already exists, remove duplicate values.
+        The value is the last group of the pattern. For example, the
+        pattern for the copyright year finds "2020" in "℗ 2020 Label".
+        Nothing is added if the line doesn't match, or if the tag already
+        has the value.
         """
-        pattern_match = re.match(regex, line)
+        pattern_match = re.match(pattern, line)
         if pattern_match:
-            field_value = pattern_match.groups()[-1].strip()
-            existing_values = self.tags.get(field_name, [])
-            self.tags[field_name] = utils.remove_duplicates(existing_values + [field_value])
+            parsed_value = pattern_match.groups()[-1].strip()
+            existing_values = self.tags.get(tag_name, [])
+            self.tags[tag_name] = utils.remove_duplicates(existing_values + [parsed_value])
 
     def add_credits(self, lines: list[str]) -> None:
         """Add the tags from lines with roles and a name.
@@ -106,7 +107,7 @@ class DescriptionParser:
 
             for tag_id, tag_data in self.description_patterns.items():
                 for pattern in tag_data["patterns"]:
-                    self.standard_pattern(tag_id, pattern, description_line)
+                    self.add_value_from_line(line=description_line, pattern=pattern, tag_name=tag_id)
 
             title = self.tags.pop("title", None)
             if title:
@@ -129,8 +130,9 @@ class DescriptionParser:
                 del self.tags[tag_name]
 
         # Custom patterns
+        copyright_year_pattern = r"\u2117 (\d\d\d\d)\s"
         for description_line in description_tag_lines:
-            self.standard_pattern("copyright_date", r"\u2117 (\d\d\d\d)\s", description_line)
+            self.add_value_from_line(line=description_line, pattern=copyright_year_pattern, tag_name="copyright_date")
 
         copyright_date = self.tags.pop("copyright_date", None)
         date = self.tags.get("date")

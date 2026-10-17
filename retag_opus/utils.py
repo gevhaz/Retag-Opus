@@ -55,7 +55,7 @@ def split_manual_value(tag_name: str, value: str) -> list[str]:
     return [v.strip() for v in values if v.strip()]
 
 
-def file_path_to_song_data(file_path: Path) -> str:
+def file_path_to_song_name(file_path: Path) -> str:
     """Convert file name to readable string.
 
     Produce a string with song title and artist on a readable format
@@ -77,14 +77,14 @@ def file_path_to_song_data(file_path: Path) -> str:
     return text_to_print
 
 
-def select_single_tag(candidates: list[str]) -> list[str]:
+def select_single_value(candidates: list[str]) -> list[str]:
     """Select a single value to keep for a tag from a menu.
 
-    Let's the user select one out of the candidate tags and returns
+    Lets the user select one of the candidate values and returns
     a list with that as the only item. The user can also choose to
     skip with q, escape, or choosing the --No change-- item.
 
-    :param candidates: The list of tags to choose between.
+    :param candidates: The values to choose between.
 
     :return: A list with the selected candidate or an empty list if
     none is selected.
