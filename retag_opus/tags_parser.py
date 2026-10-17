@@ -75,16 +75,27 @@ class TagsParser:
         if set(versions_from_titles) != set(original_versions) and len(versions_from_titles) > 0:
             self.tags["version"] = utils.remove_duplicates(original_versions + versions_from_titles)
 
-        if set(featured_artists) != set(original_artists) and len(featured_artists) > 0:
-            self.tags["artist"] = utils.remove_duplicates(original_artists + featured_artists)
-
         if set(genres_from_titles) != set(original_genres) and len(genres_from_titles) > 0:
             self.tags["genre"] = utils.remove_duplicates(original_genres + genres_from_titles)
 
+        artists_of_song = original_artists
         if len(original_titles) > 0:
             pruned_title = utils.prune_title(original_titles[0])
+            artist_and_title = utils.split_artist_from_title(pruned_title, original_artists)
+            if artist_and_title is not None:
+                # The artist as named in the title replaces the YouTube
+                # channel, e.g. "Ellen Allien" for "Ellen Allien UFO"
+                named_artist, artist_from_title, pruned_title = artist_and_title
+                artists_of_song = []
+                for artist in original_artists:
+                    artists_of_song.append(artist_from_title if artist == named_artist else artist)
             if original_titles[0] != pruned_title:
                 self.tags["title"] = [pruned_title]
+
+        artist_differs_in_title = artists_of_song != original_artists
+        has_new_featured_artists = set(featured_artists) != set(original_artists) and len(featured_artists) > 0
+        if artist_differs_in_title or has_new_featured_artists:
+            self.tags["artist"] = utils.remove_duplicates(artists_of_song + featured_artists)
 
     def split_select_original_tags(self) -> None:
         """Split certain original tags on predefined separators.
