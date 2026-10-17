@@ -19,8 +19,8 @@ class DescriptionParser:
         self.manual_album_set = manual_album_set
         if manual_album_set:
             self.description_patterns["discsubtitle"] = self.description_patterns["album"].copy()
-            self.description_patterns["discsubtitle"]["print"] = "Disc subtitle"
-            self.description_patterns["album"]["pattern"] = []
+            self.description_patterns["discsubtitle"]["print_name"] = "Disc subtitle"
+            self.description_patterns["album"]["patterns"] = []
 
     def parse_artist_and_title(self, source_line: str) -> tuple[list[str], str]:
         """Parse artist and title from standard ContentID line.
@@ -105,7 +105,7 @@ class DescriptionParser:
                     self.tags["album"] = [description_line.strip()]
 
             for tag_id, tag_data in self.description_patterns.items():
-                for pattern in tag_data["pattern"]:
+                for pattern in tag_data["patterns"]:
                     self.standard_pattern(tag_id, pattern, description_line)
 
             title = self.tags.pop("title", None)

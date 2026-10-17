@@ -23,7 +23,7 @@ def prune_title(original_title: str) -> str:
     and trailing whitespace.
     """
     pruned = original_title
-    for pattern in constants.tag_parse_patterns.values():
+    for pattern in constants.title_parse_patterns.values():
         pruned = re.sub(pattern, r"\1 \3", pruned)
     return pruned.strip()
 

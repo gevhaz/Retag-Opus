@@ -44,24 +44,31 @@ class TagsParser:
         old_genre = self.original_tags.get("genre", [])
         new_genre = []
 
-        version_pattern_names = ["live", "albumversion", "remix", "remix2", "remaster", "remaster2"]
-        instrumental_pattern_names = ["instrumental", "instrumental2"]
+        version_pattern_names = [
+            "live",
+            "albumversion",
+            "remix_in_parentheses",
+            "remix_after_dash",
+            "remaster_in_brackets",
+            "remaster_after_dash",
+        ]
+        instrumental_pattern_names = ["instrumental_in_parentheses", "instrumental_in_square_brackets"]
 
         for title in old_title:
-            featuring_regex = constants.tag_parse_patterns["featuring"]
+            featuring_regex = constants.title_parse_patterns["featuring"]
             featuring_match = re.match(featuring_regex, title)
             if featuring_match:
                 featured_artists = featuring_match.group(2).strip()
                 new_artist += utils.split_tag(featured_artists)
 
             for pattern_name in version_pattern_names:
-                version_regex = constants.tag_parse_patterns[pattern_name]
+                version_regex = constants.title_parse_patterns[pattern_name]
                 version_match = re.match(version_regex, title)
                 if version_match:
                     new_version.append(version_match.group(2).strip())
 
             for pattern_name in instrumental_pattern_names:
-                instrumental_regex = constants.tag_parse_patterns[pattern_name]
+                instrumental_regex = constants.title_parse_patterns[pattern_name]
                 if re.match(instrumental_regex, title):
                     new_genre.append("Instrumental")
 

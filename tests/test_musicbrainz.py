@@ -364,7 +364,7 @@ def test_match_song_stored_id_not_found() -> None:
 def test_match_song_manual_album() -> None:
     """With a manual album, tags describing the release are left out."""
     tags = MusicBrainzMatcher(fake_client()).match_song(song(original={"title": [VIDEO_TITLE]}, manual_album_set=True))
-    assert not set(tags) & set(musicbrainz.RELEASE_TAGS)
+    assert not set(tags) & set(musicbrainz.ALBUM_AND_RELEASE_TAGS)
     assert tags["date"] == ["2022-08-22"]
 
 

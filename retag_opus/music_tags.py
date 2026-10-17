@@ -29,8 +29,8 @@ class MusicTags:
         self.manual_album_set = manual_album_set
         if manual_album_set:
             self.tags_printed_for_every_song["discsubtitle"] = self.tags_printed_for_every_song["album"].copy()
-            self.tags_printed_for_every_song["discsubtitle"]["print"] = "Disc subtitle"
-            self.tags_printed_for_every_song["album"]["pattern"] = []
+            self.tags_printed_for_every_song["discsubtitle"]["print_name"] = "Disc subtitle"
+            self.tags_printed_for_every_song["album"]["patterns"] = []
         self.original: Tags = {}
         self.youtube: Tags = {}
         self.parsed_from_original: Tags = {}
@@ -107,7 +107,7 @@ class MusicTags:
         :param style: Style to print the data in.
         :param data: The tags from which to get the given key.
         """
-        value = constants.SEP.join(data.get(key, ["Not found"])).replace(" ", constants.SPACE)
+        value = constants.VALUE_SEPARATOR.join(data.get(key, ["Not found"])).replace(" ", constants.PRINTED_SPACE)
         if self.resolved.get(key) == REMOVED_TAG:
             key_type = f"{key_type} (Removed)"
         style = style if data.get(key) else styles.unset
@@ -125,7 +125,7 @@ class MusicTags:
                 if tag_id in metadata and metadata[tag_id] is not None:
                     self.print_metadata_key(self.performer_print_name(tag_id), tag_id, style, metadata)
         for tag_id, tag_data in self.tags_printed_for_every_song.items():
-            self.print_metadata_key(tag_data["print"], tag_id, style, metadata)
+            self.print_metadata_key(tag_data["print_name"], tag_id, style, metadata)
         print("")
 
     def get_tag_data(self, tag_id: str) -> list[str]:
@@ -179,9 +179,9 @@ class MusicTags:
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
                 there_are_tags = True
-                main_block.append(tag_data["print"] + ": " + " | ".join(tag_all_values))
+                main_block.append(tag_data["print_name"] + ": " + " | ".join(tag_all_values))
             else:
-                main_block.append(tag_data["print"] + ": " + styles.unset("Not set"))
+                main_block.append(tag_data["print_name"] + ": " + styles.unset("Not set"))
 
         if there_are_tags:
             if len(performer_block) > 0:
@@ -272,7 +272,7 @@ class MusicTags:
             for tag_id in performer_tags:
                 self.print_resolved_tag(self.performer_print_name(tag_id), tag_id, print_all)
         for tag_id, tag_data in self.tags_printed_for_every_song.items():
-            self.print_resolved_tag(tag_data["print"], tag_id, print_all)
+            self.print_resolved_tag(tag_data["print_name"], tag_id, print_all)
 
         print("")
 
@@ -705,7 +705,7 @@ class MusicTags:
                 for source, value in sources.items():
                     if len(value) > 0:
                         self.resolved[tag_name] = value
-                        if tag_name not in constants.match_tags:
+                        if tag_name not in constants.track_position_tags:
                             messages.warning(
                                 f"{tag_name.title()}: No value exists in metadata. Using {source}: {value}."
                             )
