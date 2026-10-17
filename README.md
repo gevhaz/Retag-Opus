@@ -48,6 +48,14 @@ this:
 
 ![Retag Opus terminal example](screenshot_1.png)
 
+Credits in descriptions are read as roles and a name, e.g. `Drums: Roger
+Taylor`, and the roles are put in tags named as on MusicBrainz, e.g.
+`performer:drums (drum set)`. Descriptions that YouTube generated from a
+label's data list one person per line, sometimes with a category before the
+roles, e.g. `Associated Performer, Drums: Roger Taylor`. Any role after
+"Associated Performer" becomes a performer tag, e.g. `performer:theremin`.
+Roles that have no tag, e.g. "Mastering Engineer", are left out.
+
 Purple text indicates that the tag comes from the YouTube description.
 Blue indicates that the tag existed in the metadata since before. Yellow
 indicates that the tag comes from interpreting one of the original tags,

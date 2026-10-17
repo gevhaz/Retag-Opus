@@ -22,6 +22,12 @@
   YouTube descriptions.
 - Programmers are no longer put in `performer:programming`. Programming isn't
   an instrument, and neither Quod Libet nor Picard has a tag for it.
+- Credits in YouTube descriptions are read as a role and a name, instead of
+  with one pattern per role. Roles are recognized when written in other ways,
+  e.g. "Backing Vocals" or "Rhythm Guitar", and any role after "Associated
+  Performer" in auto-generated descriptions is a performer's role, e.g.
+  "Associated Performer, Theremin". A role has to be a known one, so e.g.
+  "Makeup Artist" is no longer read as an artist.
 - The result shown before saving only lists performers that have a value or
   were removed, instead of every performer that can be parsed from YouTube
   descriptions.
@@ -40,6 +46,8 @@
 
 ### Fixed
 
+- "Guitar" in YouTube descriptions is read. "Electric Guitar" is put in
+  `performer:electric guitar`, the name of that instrument on MusicBrainz.
 - Manually entered genres are split on commas and semicolons, and all manually
   entered tags on ` | `, like when modifying tags.
 - Tags deleted because of the configuration are no longer restored when the
