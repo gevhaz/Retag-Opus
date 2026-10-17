@@ -18,12 +18,12 @@ from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrai
 
 Tags = dict[str, list[str]]
 
-MIN_SCORE: Final[int] = 90
-MAX_DURATION_DIFFERENCE: Final[float] = 3.0
+MIN_RELEASE_SEARCH_SCORE: Final[int] = 90
+MAX_DURATION_DIFFERENCE_SECONDS: Final[float] = 3.0
 MAX_RELEASE_LOOKUPS: Final[int] = 3
 
 # Tags that describe the release a song is on, rather than the song
-RELEASE_TAGS: Final[list[str]] = ["album", "albumartist"] + constants.release_tags
+ALBUM_AND_RELEASE_TAGS: Final[list[str]] = ["album", "albumartist"] + constants.release_tags
 
 # Attributes of vocal and instrument relationships that say how the
 # artist took part rather than in what role, e.g. "guest". Like Picard,
@@ -232,7 +232,7 @@ def duration_matches(milliseconds: int | None, duration: float | None) -> bool:
     """Check whether a length from MusicBrainz is the song's duration."""
     if milliseconds is None or duration is None:
         return False
-    return abs(milliseconds / 1000 - duration) <= MAX_DURATION_DIFFERENCE
+    return abs(milliseconds / 1000 - duration) <= MAX_DURATION_DIFFERENCE_SECONDS
 
 
 def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None:
@@ -395,7 +395,7 @@ class MusicBrainzMatcher:
                 song_tags = track_tags(release, medium, track)
                 if tags.manual_album_set:
                     # The release found for the song isn't the album the user set
-                    for tag_name in RELEASE_TAGS:
+                    for tag_name in ALBUM_AND_RELEASE_TAGS:
                         song_tags.pop(tag_name, None)
                 return song_tags
         return {}
@@ -469,7 +469,7 @@ class MusicBrainzMatcher:
 
         candidates = []
         for release in self.client.search_releases(utils.prune_title(album), artist):
-            matches_search = release.get("score", 0) >= MIN_SCORE
+            matches_search = release.get("score", 0) >= MIN_RELEASE_SEARCH_SCORE
             has_room_for_songs = release.get("track-count", 0) >= len(songs)
             if matches_search and has_room_for_songs:
                 candidates.append(release)

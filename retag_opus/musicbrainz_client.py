@@ -18,11 +18,11 @@ JsonDict = dict[str, Any]
 
 API_ROOT: Final[str] = "https://musicbrainz.org/ws/2/"
 USER_AGENT: Final[str] = f"retag-opus/{__version__} ( https://github.com/gevhaz/Retag-Opus )"
-MIN_REQUEST_INTERVAL: Final[float] = 1.0
+MIN_REQUEST_INTERVAL_SECONDS: Final[float] = 1.0
 # The service is often busy, so busy responses are retried with
 # doubling delays: 2, 4, and 8 seconds.
 RETRY_DELAYS: Final[list[float]] = [2.0, 4.0, 8.0]
-TIMEOUT: Final[float] = 15.0
+REQUEST_TIMEOUT_SECONDS: Final[float] = 15.0
 
 
 class MusicBrainzError(Exception):
@@ -54,8 +54,8 @@ class MusicBrainzClient:
         """Sleep until enough time has passed since the last request."""
         if self._last_request is not None:
             elapsed = self._clock() - self._last_request
-            if elapsed < MIN_REQUEST_INTERVAL:
-                self._sleep(MIN_REQUEST_INTERVAL - elapsed)
+            if elapsed < MIN_REQUEST_INTERVAL_SECONDS:
+                self._sleep(MIN_REQUEST_INTERVAL_SECONDS - elapsed)
         self._last_request = self._clock()
 
     def get(self, path: str, params: dict[str, str]) -> JsonDict | None:
@@ -84,7 +84,7 @@ class MusicBrainzClient:
         while True:
             self._wait_for_rate_limit()
             try:
-                with self._opener(request, timeout=TIMEOUT) as response:
+                with self._opener(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
                     result = json.load(response)
                 break
             except urllib.error.HTTPError as e:

@@ -6,27 +6,27 @@ in other parts of the app.
 from typing import Final, TypedDict
 
 INTERPUNCT: Final = "\u00b7"
-# SPACE = "\u00b7"
-SPACE: Final = " "
-SEP: Final = " | "
+# PRINTED_SPACE = "\u00b7"
+PRINTED_SPACE: Final = " "
+VALUE_SEPARATOR: Final = " | "
 
 
 class PrintNameAndPatterns(TypedDict):
     """The name a tag is printed with, and patterns for parsing it from descriptions."""
 
-    print: str
-    pattern: list[str]
+    print_name: str
+    patterns: list[str]
 
 
-tag_parse_patterns: Final[dict[str, str]] = {
+title_parse_patterns: Final[dict[str, str]] = {
     "featuring": r"(?i)(.*?)\s*[\(\[\ ](?:feat|ft|featuring)\.?\s+([^\]\)\(\[]+)[\)\]]*\s*(.*)",
-    "remaster": r"(?i)(.*?)\s*[\(\[](\d{0,4}\s*remaster.*)[\)\]]\s*(.*)",
-    "remaster2": r"(?i)(.*?)\s*-\s*(\d{0,4}.*remaster.*)(.*)",
+    "remaster_in_brackets": r"(?i)(.*?)\s*[\(\[](\d{0,4}\s*remaster.*)[\)\]]\s*(.*)",
+    "remaster_after_dash": r"(?i)(.*?)\s*-\s*(\d{0,4}.*remaster.*)(.*)",
     "live": r"(?i)(.*?)\s*[\(\[](live.*?)[\)\]]\s*(.*)",
-    "instrumental": r"(?i)(.*?)\s*\((.*instrumental.*)\)\s*(.*)",
-    "instrumental2": r"(?i)(.*?)\s*\[(.*instrumental.*)\]\s*(.*)",
-    "remix": r"(?i)(.+)\s*\((.*remix.*?)\)\s*(.*)",
-    "remix2": r"(?i)(.+)\s*-\s*(.*remix.*)\s*(.*)",
+    "instrumental_in_parentheses": r"(?i)(.*?)\s*\((.*instrumental.*)\)\s*(.*)",
+    "instrumental_in_square_brackets": r"(?i)(.*?)\s*\[(.*instrumental.*)\]\s*(.*)",
+    "remix_in_parentheses": r"(?i)(.+)\s*\((.*remix.*?)\)\s*(.*)",
+    "remix_after_dash": r"(?i)(.+)\s*-\s*(.*remix.*)\s*(.*)",
     "albumversion": r"(?i)(.*?)\s*[\(\[](album version.*?)[\)\]]\s*(.*)",
 }
 
@@ -34,27 +34,27 @@ tag_parse_patterns: Final[dict[str, str]] = {
 # from YouTube descriptions. Credits, e.g. "Composer: Name", are parsed
 # by youtube_credits instead.
 tags_printed_for_every_song: Final[dict[str, PrintNameAndPatterns]] = {
-    "title": {"print": "Title", "pattern": [r".*“(.*)” by .* from ‘.*’"]},
-    "album": {"print": "Album", "pattern": [r".*“.*” by .* from ‘(.*)’"]},
-    "albumartist": {"print": "Album Artist", "pattern": []},
+    "title": {"print_name": "Title", "patterns": [r".*“(.*)” by .* from ‘.*’"]},
+    "album": {"print_name": "Album", "patterns": [r".*“.*” by .* from ‘(.*)’"]},
+    "albumartist": {"print_name": "Album Artist", "patterns": []},
     "artist": {
-        "print": "Artist(s)",
-        "pattern": [r".*\([fF]eat. (.+?)\)", r".*“.*” by (.*) from ‘.*’"],
+        "print_name": "Artist(s)",
+        "patterns": [r".*\([fF]eat. (.+?)\)", r".*“.*” by (.*) from ‘.*’"],
     },
-    "date": {"print": "Date", "pattern": [r"Released on:\s*(\d\d\d\d-\d\d-\d\d)"]},
-    "genre": {"print": "Genre", "pattern": []},
-    "version": {"print": "Version", "pattern": []},
-    "performer": {"print": "Performer", "pattern": []},
-    "organization": {"print": "Organization", "pattern": [r"Provided to YouTube by (.+)\s*"]},
-    "copyright": {"print": "Copyright", "pattern": [r"\u2117 (.+)\s*"]},
-    "composer": {"print": "Composer", "pattern": []},
-    "conductor": {"print": "Conductor", "pattern": []},
-    "arranger": {"print": "Arranger", "pattern": []},
-    "author": {"print": "Author", "pattern": []},
-    "producer": {"print": "Producer", "pattern": []},
-    "publisher": {"print": "Publisher", "pattern": []},
-    "lyricist": {"print": "Lyricist", "pattern": []},
-    "writer": {"print": "Writer", "pattern": []},
+    "date": {"print_name": "Date", "patterns": [r"Released on:\s*(\d\d\d\d-\d\d-\d\d)"]},
+    "genre": {"print_name": "Genre", "patterns": []},
+    "version": {"print_name": "Version", "patterns": []},
+    "performer": {"print_name": "Performer", "patterns": []},
+    "organization": {"print_name": "Organization", "patterns": [r"Provided to YouTube by (.+)\s*"]},
+    "copyright": {"print_name": "Copyright", "patterns": [r"\u2117 (.+)\s*"]},
+    "composer": {"print_name": "Composer", "patterns": []},
+    "conductor": {"print_name": "Conductor", "patterns": []},
+    "arranger": {"print_name": "Arranger", "patterns": []},
+    "author": {"print_name": "Author", "patterns": []},
+    "producer": {"print_name": "Producer", "patterns": []},
+    "publisher": {"print_name": "Publisher", "patterns": []},
+    "lyricist": {"print_name": "Lyricist", "patterns": []},
+    "writer": {"print_name": "Writer", "patterns": []},
 }
 
 # Prefix of tags with a performer's role, e.g. "performer:lead vocals".
@@ -93,11 +93,11 @@ MUSICBRAINZ_ID_PREFIX: Final = "musicbrainz_"
 # Tags that are only right if the song was matched to the right track
 # on MusicBrainz, which is announced once. They're set without a message
 # each, but still shown.
-match_tags: Final[list[str]] = ["tracknumber", "totaltracks", "discnumber", "totaldiscs"]
+track_position_tags: Final[list[str]] = ["tracknumber", "totaltracks", "discnumber", "totaldiscs"]
 
 # Tags that describe the release a song was found on, which are only
 # right for the album if it's that release
-release_tags: Final[list[str]] = match_tags + [
+release_tags: Final[list[str]] = track_position_tags + [
     "musicbrainz_albumid",
     "musicbrainz_albumartistid",
     "musicbrainz_releasegroupid",
