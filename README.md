@@ -56,6 +56,13 @@ roles, e.g. `Associated Performer, Drums: Roger Taylor`. Any role after
 "Associated Performer" becomes a performer tag, e.g. `performer:theremin`.
 Roles that have no tag, e.g. "Mastering Engineer", are left out.
 
+The auto-generated part of a description is found even when someone pasted it
+among their own text, and it's read by its layout: the line after "Provided to
+YouTube by" has the title and artists, the next one the album, and so on. In
+text written by whoever uploaded the video, only credits with known roles and a
+few common sentences are read. A pasted copy whose layout was changed, e.g. with
+all lines joined into one, is read like such text.
+
 Purple text indicates that the tag comes from the YouTube description.
 Blue indicates that the tag existed in the metadata since before. Yellow
 indicates that the tag comes from interpreting one of the original tags,

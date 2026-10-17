@@ -15,9 +15,8 @@ from typing import Sequence
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants, messages, styles, utils
+from retag_opus import constants, description_parser, messages, styles, utils
 from retag_opus.cli import Cli
-from retag_opus.description_parser import DescriptionParser
 from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import REMOVED_TAG, MusicTags
 from retag_opus.musicbrainz import MusicBrainzMatcher
@@ -51,9 +50,8 @@ def get_album(file_path: Path) -> str | None:
     description_lines = get_description(original_tags)
     if not description_lines:
         return None
-    description_parser = DescriptionParser()
-    description_parser.parse("\n".join(description_lines))
-    album = description_parser.tags.get("album", [""])[0].strip()
+    description_tags = description_parser.parse("\n".join(description_lines))
+    album = description_tags.get("album", [""])[0].strip()
     return album or None
 
 
@@ -149,10 +147,8 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
 
     # 3. If description exists, send it to be parsed
     if description_lines:
-        description_parser = DescriptionParser(manual_album_set=manual_album_set)
         description = "\n".join(description_lines)
-        description_parser.parse(description)
-        tags.youtube = description_parser.tags
+        tags.youtube = description_parser.parse(description, manual_album_set=manual_album_set)
         tags.add_source_tag()
 
         youtube_tags_parser = TagsParser(tags.youtube)

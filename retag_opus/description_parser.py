@@ -1,151 +1,99 @@
-"""Module for parsing a YouTube descripton into metadata tags."""
+"""Module for parsing a YouTube description into tags.
+
+A description can have a part that YouTube generated from the label's
+data, which has a fixed layout and is parsed by
+auto_generated_description. The rest is written by the uploader in any
+way, so only a few common patterns and credits with known roles, e.g.
+"Composer: Name", are read from it.
+"""
 import re
-from copy import deepcopy
 from typing import Final
 
-from retag_opus import constants, utils, youtube_credits
-
-INTERPUNCT = "\u00b7"
+from retag_opus import auto_generated_description, utils, youtube_credits
 
 Tags = dict[str, list[str]]
 
-# Patterns for parsing tags from lines of YouTube descriptions. The
-# value is the last group of the pattern. Credits, e.g. "Composer:
-# Name", are parsed by youtube_credits instead.
-DESCRIPTION_PATTERNS: Final[dict[str, list[str]]] = {
+# Patterns for tags in text written by uploaders. The value is the last
+# group of the pattern.
+UPLOADER_TEXT_PATTERNS: Final[dict[str, list[str]]] = {
     "title": [r".*“(.*)” by .* from ‘.*’"],
     "album": [r".*“.*” by .* from ‘(.*)’"],
     "artist": [r".*\([fF]eat. (.+?)\)", r".*“.*” by (.*) from ‘.*’"],
-    "date": [r"Released on:\s*(\d\d\d\d-\d\d-\d\d)"],
-    "organization": [r"Provided to YouTube by (.+)\s*"],
-    "copyright": [r"\u2117 (.+)\s*"],
 }
 
 
-class DescriptionParser:
-    """Parse tags from YouTube description."""
+def parse_uploader_text(lines: list[str], manual_album_set: bool) -> Tags:
+    """Parse the text an uploader wrote in a description.
 
-    def __init__(self, manual_album_set: bool = False) -> None:
-        """Create tags dictionary that will hold the parsed tags."""
-        self.tags: Tags = {}
-        self.description_patterns = deepcopy(DESCRIPTION_PATTERNS)
-        self.manual_album_set = manual_album_set
-        if manual_album_set:
-            self.description_patterns["discsubtitle"] = self.description_patterns.pop("album")
+    For example, "“Song” by Singer from ‘Album’" gives the title,
+    artist and album, and "Guitar: Name" gives a guitarist. Lines whose
+    roles aren't known, e.g. "Follow us: https://example.com", are
+    skipped.
 
-    def parse_artist_and_title(self, source_line: str) -> tuple[list[str], str]:
-        """Parse artist and title from a line of an auto-generated description.
+    :param lines: Lines written by the uploader.
+    :param manual_album_set: Whether the user has set the album. Then
+        the album of the song is its disc subtitle.
 
-        An auto-generated YouTube description contains an interpunct
-        character separating title and the artists. This function gets
-        the artist and title of the song for this line.
+    :return: The tags found in the lines.
+    """
+    patterns = dict(UPLOADER_TEXT_PATTERNS)
+    if manual_album_set:
+        patterns["discsubtitle"] = patterns.pop("album")
 
-        :param source_line: A string containing an interpunct character.
+    tags: Tags = {}
+    for line in lines:
+        for tag_name, tag_patterns in patterns.items():
+            for pattern in tag_patterns:
+                pattern_match = re.match(pattern, line)
+                if pattern_match:
+                    utils.add_values(tags, tag_name, [pattern_match.groups()[-1].strip()])
+        if ": " in line:
+            for tag_name, names in youtube_credits.parse_credit_line(line).items():
+                utils.add_values(tags, tag_name, names)
 
-        :return: List or artists and title of song as string.
-        """
-        title_and_artists = source_line.split(" " + constants.INTERPUNCT + " ")
-        title = title_and_artists[0]
-        artists: list[str] = title_and_artists[1:]
+    # A song has one title, so the first one found is used
+    titles = tags.get("title")
+    if titles:
+        tags["title"] = [titles[0]]
+    return tags
 
-        if len(artists) < 2 and ", " in artists[0]:
-            artists = utils.split_tag(artists[0])
 
-        return artists, title
+def parse(description: str, manual_album_set: bool = False) -> Tags:
+    """Parse a YouTube description into tags.
 
-    def add_value_from_line(self, line: str, pattern: str, tag_name: str) -> None:
-        """Add the value that a pattern finds in a line to a tag.
+    Where both the auto-generated part and the uploader's text have a
+    tag, the value from the auto-generated part is used, since its
+    layout is known.
 
-        The value is the last group of the pattern. For example, the
-        pattern for the copyright year finds "2020" in "℗ 2020 Label".
-        Nothing is added if the line doesn't match, or if the tag already
-        has the value.
-        """
-        pattern_match = re.match(pattern, line)
-        if pattern_match:
-            parsed_value = pattern_match.groups()[-1].strip()
-            existing_values = self.tags.get(tag_name, [])
-            self.tags[tag_name] = utils.remove_duplicates(existing_values + [parsed_value])
+    :param description: The whole YouTube description.
+    :param manual_album_set: Whether the user has set the album. Then
+        the album of the song is its disc subtitle.
 
-    def add_credits(self, lines: list[str]) -> None:
-        """Add the tags from lines with roles and a name.
+    :return: The tags found in the description.
+    """
+    lines = []
+    for line in description.splitlines():
+        if line.strip():
+            lines.append(line)
 
-        For example, "Associated Performer, Drums: Roger Taylor" adds
-        "Roger Taylor" to the tag "performer:drums (drum set)". Lines
-        whose roles aren't known, e.g. "Released on: 2020-01-01", are
-        skipped.
+    uploader_lines = lines
+    auto_generated_tags: Tags = {}
+    auto_generated_part = auto_generated_description.find(lines)
+    if auto_generated_part is not None:
+        first_index, last_index = auto_generated_part
+        index_after_last = last_index + 1
+        auto_generated_lines = lines[first_index:index_after_last]
+        auto_generated_tags = auto_generated_description.parse(auto_generated_lines, manual_album_set)
+        uploader_lines = lines[:first_index] + lines[index_after_last:]
 
-        :param lines: Lines of a YouTube description.
-        """
-        for line in lines:
-            if ": " not in line:
-                continue
-            credit_tags = youtube_credits.parse_credit_line(line)
-            for tag_name, contributor_names in credit_tags.items():
-                existing_names = self.tags.get(tag_name, [])
-                self.tags[tag_name] = utils.remove_duplicates(existing_names + contributor_names)
+    tags = parse_uploader_text(uploader_lines, manual_album_set)
+    tags.update(auto_generated_tags)
 
-    def parse(self, description: str) -> None:
-        """Parse the provided youtube description.
-
-        Parses the given description and puts the resulting tags in the
-        internal tags variable of the object.
-
-        :param description: The full YouTube description as a
-            string.
-        """
-        lines_since_title_artist: int = 1000
-
-        description_lines: list[str] = description.splitlines(False)
-
-        for description_line in description_lines:
-            if re.match(r"^\s*$", description_line):
-                continue
-            lines_since_title_artist = lines_since_title_artist + 1
-            # Artist and title
-            if INTERPUNCT in description_line:
-                lines_since_title_artist = 0
-                youtube_artists, youtube_title = self.parse_artist_and_title(description_line)
-                if youtube_artists:
-                    self.tags["artist"] = utils.remove_duplicates(youtube_artists)
-                self.tags["title"] = [youtube_title]
-
-            if lines_since_title_artist == 1:
-                if self.manual_album_set:
-                    self.tags["discsubtitle"] = [description_line.strip()]
-                else:
-                    self.tags["album"] = [description_line.strip()]
-
-            for tag_name, patterns in self.description_patterns.items():
-                for pattern in patterns:
-                    self.add_value_from_line(line=description_line, pattern=pattern, tag_name=tag_name)
-
-            title = self.tags.pop("title", None)
-            if title:
-                self.tags["title"] = [title[0]]
-
-        self.add_credits(description_lines)
-
-        artists = self.tags.get("artist")
-        if artists:
-            self.tags["albumartist"] = [artists[0]]
-            single_artists: list[str] = []
-            for joined_artists in artists:
-                single_artists += utils.split_tag(joined_artists)
-            self.tags["artist"] = utils.remove_duplicates(single_artists)
-
-        # Loop over a copy of the names, since tags can't be deleted from
-        # the dict while looping over it
-        for tag_name in list(self.tags):
-            if not self.tags[tag_name]:
-                del self.tags[tag_name]
-
-        # Without a release date, use the year in the copyright line
-        copyright_year_pattern = r"\u2117 (\d\d\d\d)\s"
-        for description_line in description_lines:
-            self.add_value_from_line(line=description_line, pattern=copyright_year_pattern, tag_name="copyright_year")
-
-        copyright_year = self.tags.pop("copyright_year", None)
-        date = self.tags.get("date")
-        if copyright_year and not date:
-            self.tags["date"] = copyright_year
+    artists = tags.get("artist")
+    if artists:
+        tags["albumartist"] = [artists[0]]
+        single_artists: list[str] = []
+        for joined_artists in artists:
+            single_artists += utils.split_tag(joined_artists)
+        tags["artist"] = utils.remove_duplicates(single_artists)
+    return tags

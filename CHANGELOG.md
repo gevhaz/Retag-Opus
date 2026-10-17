@@ -43,6 +43,11 @@
   channel.
 - Notes about the video, like "(Official Video)", are left out when searching
   MusicBrainz.
+- The auto-generated part of a YouTube description is read by its layout, also
+  when it's pasted among other text, and only there are the organization,
+  copyright and release date read. Copies whose layout was changed, e.g. with
+  all lines joined into one, no longer give a title or organization made of
+  several lines run together. Conflicts are asked about with the title first.
 - Python 3.13 or newer is now required.
 - The short option for `--album` is now `-a` instead of `-b`.
 - Unset tags are shown in gray instead of black, so they are readable on dark

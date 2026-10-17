@@ -15,6 +15,12 @@ def remove_duplicates(values: list[str]) -> list[str]:
     return list(dict.fromkeys(values))
 
 
+def add_values(tags: dict[str, list[str]], tag_name: str, values: list[str]) -> None:
+    """Add values to a tag, leaving out the ones it already has."""
+    existing_values = tags.get(tag_name, [])
+    tags[tag_name] = remove_duplicates(existing_values + values)
+
+
 def prune_title(original_title: str) -> str:
     """Clean up title tag value.
 
