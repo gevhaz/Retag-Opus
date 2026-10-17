@@ -10,9 +10,9 @@ from simple_term_menu import TerminalMenu
 from retag_opus import constants, messages
 
 
-def remove_duplicates(duplicates: list[str]) -> list[str]:
+def remove_duplicates(values: list[str]) -> list[str]:
     """Remove duplicate elemets from given list."""
-    return list(dict.fromkeys(duplicates))
+    return list(dict.fromkeys(values))
 
 
 def prune_title(original_title: str) -> str:
@@ -28,11 +28,11 @@ def prune_title(original_title: str) -> str:
     return pruned.strip()
 
 
-def split_tag(input: str) -> List[str]:
+def split_tag(joined_values: str) -> List[str]:
     """Split the provided tag by pre-defined delimeters."""
-    split_tags = re.split(", | and | & |; ", input)
-    split_pruned_tags = [t.strip() for t in split_tags]
-    return split_pruned_tags
+    split_values = re.split(", | and | & |; ", joined_values)
+    stripped_values = [value.strip() for value in split_values]
+    return stripped_values
 
 
 def split_manual_value(tag_name: str, value: str) -> list[str]:

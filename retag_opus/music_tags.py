@@ -95,23 +95,25 @@ class MusicTags:
 
     def print_metadata_key(
         self,
-        key_type: str,
-        key: str,
+        printed_tag_name: str,
+        tag_name: str,
         style: styles.Style,
-        data: Tags,
+        tags: Tags,
     ) -> None:
         """Print a single metadata key in specified color.
 
-        :param key_type: Printed name of key.
-        :param key: What key to print.
-        :param style: Style to print the data in.
-        :param data: The tags from which to get the given key.
+        :param printed_tag_name: The name the tag is shown with, e.g. "Title".
+        :param tag_name: The tag to print, e.g. "title".
+        :param style: Style to print the value in.
+        :param tags: The tags to get the value of the tag from, e.g. the
+            resolved tags.
         """
-        value = constants.VALUE_SEPARATOR.join(data.get(key, ["Not found"])).replace(" ", constants.PRINTED_SPACE)
-        if self.resolved.get(key) == REMOVED_TAG:
-            key_type = f"{key_type} (Removed)"
-        style = style if data.get(key) else styles.unset
-        print("  " + key_type + ": " + style(value))
+        joined_values = constants.VALUE_SEPARATOR.join(tags.get(tag_name, ["Not found"]))
+        value = joined_values.replace(" ", constants.PRINTED_SPACE)
+        if self.resolved.get(tag_name) == REMOVED_TAG:
+            printed_tag_name = f"{printed_tag_name} (Removed)"
+        style = style if tags.get(tag_name) else styles.unset
+        print("  " + printed_tag_name + ": " + style(value))
 
     def print_metadata(self, metadata: Tags, style: styles.Style) -> None:
         """Print metadata of given set of tags in specifed color.
@@ -169,17 +171,17 @@ class MusicTags:
         there_are_tags = False
         sources = [self.original, self.youtube, self.parsed_from_youtube, self.parsed_from_original, self.musicbrainz]
         for tag_id in self.performer_tags_in_print_order(*sources):
-            tag_all_values = self.get_colored_values_from_all_sources(tag_id)
-            if len(tag_all_values) > 0:
+            colored_values = self.get_colored_values_from_all_sources(tag_id)
+            if len(colored_values) > 0:
                 there_are_tags = True
-                performer_block.append(self.performer_print_name(tag_id) + ": " + " | ".join(tag_all_values))
+                performer_block.append(self.performer_print_name(tag_id) + ": " + " | ".join(colored_values))
 
         main_block = []
         for tag_id, tag_data in self.tags_printed_for_every_song.items():
-            tag_all_values = self.get_colored_values_from_all_sources(tag_id)
-            if len(tag_all_values) > 0:
+            colored_values = self.get_colored_values_from_all_sources(tag_id)
+            if len(colored_values) > 0:
                 there_are_tags = True
-                main_block.append(tag_data["print_name"] + ": " + " | ".join(tag_all_values))
+                main_block.append(tag_data["print_name"] + ": " + " | ".join(colored_values))
             else:
                 main_block.append(tag_data["print_name"] + ": " + styles.unset("Not set"))
 
@@ -232,25 +234,25 @@ class MusicTags:
 
         :param print_all: Print tags even if they haven't been changed.
         """
-        other_tags: list[str] = []
+        other_tag_names: list[str] = []
         for tag_id in self.resolved.keys():
             if tag_id.startswith(constants.MUSICBRAINZ_ID_PREFIX):
                 continue
             if tag_id not in self.tags_printed_for_every_song and not self.is_performer_tag(tag_id):
-                other_tags.append(tag_id)
-        if other_tags:
+                other_tag_names.append(tag_id)
+        if other_tag_names:
             print("  Other tags:")
-            for tag in other_tags:
-                resolved_tag = self.resolved.get(tag, [])
-                joined_tag_items = " | ".join(resolved_tag).replace("\n", " ")
-                if resolved_tag == REMOVED_TAG:
-                    self.print_metadata_key(f"- {tag}", tag, styles.removed, self.original)
-                elif resolved_tag != self.original.get(tag):
-                    self.print_metadata_key(f"- {tag}", tag, styles.changed, self.resolved)
-                elif len(joined_tag_items) > 200:
-                    print(f"  - {tag}: " + styles.original(f"[{joined_tag_items[:65]}...]"))
+            for tag_name in other_tag_names:
+                resolved_values = self.resolved.get(tag_name, [])
+                joined_resolved_values = " | ".join(resolved_values).replace("\n", " ")
+                if resolved_values == REMOVED_TAG:
+                    self.print_metadata_key(f"- {tag_name}", tag_name, styles.removed, self.original)
+                elif resolved_values != self.original.get(tag_name):
+                    self.print_metadata_key(f"- {tag_name}", tag_name, styles.changed, self.resolved)
+                elif len(joined_resolved_values) > 200:
+                    print(f"  - {tag_name}: " + styles.original(f"[{joined_resolved_values[:65]}...]"))
                 else:
-                    self.print_metadata_key(f"- {tag}", tag, styles.original, self.resolved)
+                    self.print_metadata_key(f"- {tag_name}", tag_name, styles.original, self.resolved)
 
         # Only performers with something to show are printed: the resolved
         # ones, which include the file's tags and removed tags, and when
@@ -303,17 +305,17 @@ class MusicTags:
         :param print_all: Whether to show the values from all sources for
             a tag that keeps the value it has now.
         """
-        resolved_tag = self.resolved.get(tag_id)
-        all_sources_tag = self.get_colored_values_from_all_sources(tag_id)
+        resolved_values = self.resolved.get(tag_id)
+        colored_values = self.get_colored_values_from_all_sources(tag_id)
         # If the user chose to remove a tag that existed before
-        if resolved_tag == REMOVED_TAG:
+        if resolved_values == REMOVED_TAG:
             self.print_metadata_key(printed_tag_name, tag_id, styles.removed, self.original)
         # If the resolved tag differs from the original tag
-        elif resolved_tag is not None and resolved_tag != self.original.get(tag_id, []):
+        elif resolved_values is not None and resolved_values != self.original.get(tag_id, []):
             self.print_metadata_key(printed_tag_name, tag_id, styles.changed, self.resolved)
         # original and resolved are equal, but other tags exist
-        elif len(all_sources_tag) > 0 and print_all:
-            print("  " + printed_tag_name + ": " + " | ".join(all_sources_tag))
+        elif len(colored_values) > 0 and print_all:
+            print("  " + printed_tag_name + ": " + " | ".join(colored_values))
         else:
             self.print_metadata_key(printed_tag_name, tag_id, styles.original, self.resolved)
 
@@ -342,9 +344,9 @@ class MusicTags:
             if tag in self.original:
                 self.resolved[tag] = REMOVED_TAG
 
-        for tag_id, tag_data in self.original.items():
-            for bad_word in strings_to_delete_tags_based_on:
-                if any(re.fullmatch(bad_word, item) for item in tag_data):
+        for tag_id, original_values in self.original.items():
+            for removal_pattern in strings_to_delete_tags_based_on:
+                if any(re.fullmatch(removal_pattern, value) for value in original_values):
                     self.resolved[tag_id] = REMOVED_TAG
 
     def add_source_tag(self) -> None:
@@ -375,14 +377,14 @@ class MusicTags:
 
     def modify_resolved_field(self) -> None:
         """Manually add key-value pairs to the set of resolved tags."""
-        key = " "
-        val = " "
-        while key and val:
+        tag_name = " "
+        value = " "
+        while tag_name and value:
             print("Enter key and value (newline cancels, sequence ' | ' splits tag, and for genre also ',' and ';'):")
-            key = input("  Key: ")
-            val = input("  Value: ")
-            if key and val:
-                self.resolved[key] = utils.split_manual_value(key, val)
+            tag_name = input("  Key: ")
+            value = input("  Value: ")
+            if tag_name and value:
+                self.resolved[tag_name] = utils.split_manual_value(tag_name, value)
 
     def delete_tag_item(self) -> None:
         """Present a menu for removing tags and remove selected ones.
@@ -406,9 +408,9 @@ class MusicTags:
             messages.warning("Returning without removing anything")
         else:
             selected_tag = tags_in_resolved[tag_index]
-            items_in_tag = self.resolved.get(selected_tag, []).copy()
+            values_in_tag = self.resolved.get(selected_tag, []).copy()
             item_removal_menu = TerminalMenu(
-                items_in_tag,
+                values_in_tag,
                 title=f"Which field should be removed from the '{selected_tag}' tag?",
                 multi_select=True,
                 show_multi_select_hint=True,
@@ -416,15 +418,15 @@ class MusicTags:
                 multi_select_select_on_accept=False,
             )
 
-            items_to_remove = item_removal_menu.show()
-            if isinstance(items_to_remove, int):
-                items_to_remove = [items_to_remove]
-            elif items_to_remove is None or len(items_to_remove) == 0:
+            indices_to_remove = item_removal_menu.show()
+            if isinstance(indices_to_remove, int):
+                indices_to_remove = [indices_to_remove]
+            elif indices_to_remove is None or len(indices_to_remove) == 0:
                 messages.warning("Returning without removing anything")
                 return
 
-            for item in items_to_remove:
-                self.resolved[selected_tag].remove(items_in_tag[item])
+            for index_to_remove in indices_to_remove:
+                self.resolved[selected_tag].remove(values_in_tag[index_to_remove])
                 if len(self.resolved[selected_tag]) == 0:
                     self.resolved[selected_tag] = REMOVED_TAG
 
@@ -437,17 +439,17 @@ class MusicTags:
         :return: True if there are new values found, otherwise False.
         """
         for tag in self.tags_with_new_data():
-            all_sources = set(self.get_values_from_all_sources(tag))
-            original_tags = set(self.original.get(tag, []))
-            if not original_tags.issuperset(all_sources):
+            values_from_all_sources = set(self.get_values_from_all_sources(tag))
+            original_values = set(self.original.get(tag, []))
+            if not original_values.issuperset(values_from_all_sources):
                 # If there are no new tags, the set of all tags should
                 # not contain anything that is not already in the
                 # original tags.
                 return True
 
         for tag, resolved_values in self.resolved.items():
-            original_tags = set(self.original.get(tag, []))
-            if not original_tags.issuperset(resolved_values):
+            original_values = set(self.original.get(tag, []))
+            if not original_values.issuperset(resolved_values):
                 # There may be some automatically added tags in
                 # resolved. Check that resolved doesn't contain any tag
                 # that doesn't already exist in the original tags.
@@ -471,12 +473,12 @@ class MusicTags:
 
     def changed_tags(self) -> list[str]:
         """Get the names of the tags that would be changed in the file."""
-        changed = []
+        changed_tag_names = []
         for tag_name, value in self.resolved.items():
             # A tag that's removed but not in the file isn't a change
             if value != self.original.get(tag_name, REMOVED_TAG):
-                changed.append(tag_name)
-        return changed
+                changed_tag_names.append(tag_name)
+        return changed_tag_names
 
     def keep_pruned_tags_removed(self, pruned_tags: list[str]) -> None:
         """Remove pruned tags again if they were restored.
@@ -489,8 +491,8 @@ class MusicTags:
             resolving.
         """
         for tag_name in pruned_tags:
-            resolved_value = self.resolved.get(tag_name, [])
-            if utils.is_equal_when_stripped(resolved_value, self.original.get(tag_name, [])):
+            resolved_values = self.resolved.get(tag_name, [])
+            if utils.is_equal_when_stripped(resolved_values, self.original.get(tag_name, [])):
                 self.resolved[tag_name] = REMOVED_TAG
 
     def apply_album_level_tags(self, album_level_tags: Tags) -> None:
@@ -538,19 +540,19 @@ class MusicTags:
 
     def determine_album_artist(self) -> None:
         """Choose value to use for albumartist tag."""
-        all_artists = utils.remove_duplicates(
+        album_artist_candidates = utils.remove_duplicates(
             self.get_values_from_all_sources("albumartist", only_new=True) + self.get_values_from_all_sources("artist")
         )
         resolved_artist = self.resolved.get("artist")
         original_artist = self.original.get("artist")
 
-        if len(all_artists) > 1:
+        if len(album_artist_candidates) > 1:
             print("-----------------------------------------------")
             self.print_resolved(print_all=True)
             messages.info("Select the album artist:")
-            one_artist = utils.select_single_value(all_artists)
-            if len(one_artist) > 0:
-                self.resolved["albumartist"] = one_artist
+            selected_album_artist = utils.select_single_value(album_artist_candidates)
+            if len(selected_album_artist) > 0:
+                self.resolved["albumartist"] = selected_album_artist
         elif not self.original.get("albumartist"):
             if resolved_artist:
                 self.resolved["albumartist"] = resolved_artist
@@ -569,15 +571,15 @@ class MusicTags:
         If the original tag and the youtube tags are identical
         with regards to the artist tag, assume that it is correct.
         """
-        md_artist = self.original.get("artist")
-        yt_artist = self.youtube.get("artist")
-        if md_artist is not None and yt_artist is not None:
+        original_artists = self.original.get("artist")
+        youtube_artists = self.youtube.get("artist")
+        if original_artists is not None and youtube_artists is not None:
             if (
-                len(md_artist) == 1
-                and utils.split_tag(md_artist[0]) == yt_artist
-                or utils.is_equal_when_stripped(md_artist, yt_artist)
+                len(original_artists) == 1
+                and utils.split_tag(original_artists[0]) == youtube_artists
+                or utils.is_equal_when_stripped(original_artists, youtube_artists)
             ):
-                self.resolved["artist"] = yt_artist
+                self.resolved["artist"] = youtube_artists
 
     def manually_adjust_tag_when_resolving(self, tag_name: str) -> bool:
         """Perform a manual action on a tag when no source is right.
@@ -608,9 +610,9 @@ class MusicTags:
 
         match action:
             case "[m] Manually fill in tag":
-                manual_tag = input("Value: ")
-                if manual_tag:
-                    self.resolved[tag_name] = utils.split_manual_value(tag_name, manual_tag)
+                entered_value = input("Value: ")
+                if entered_value:
+                    self.resolved[tag_name] = utils.split_manual_value(tag_name, entered_value)
                 else:
                     print("No input, not changing tag")
                     return True
@@ -620,9 +622,9 @@ class MusicTags:
                 self.print_youtube()
                 return True
             case "[s] Select items from a list":
-                available_tags = self.get_values_from_all_sources(tag_name)
+                values_from_all_sources = self.get_values_from_all_sources(tag_name)
                 tag_selection_menu = TerminalMenu(
-                    available_tags,
+                    values_from_all_sources,
                     title="Select the items you want in this tag",
                     multi_select=True,
                     show_multi_select_hint=True,
@@ -630,16 +632,16 @@ class MusicTags:
                     multi_select_select_on_accept=False,
                 )
 
-                items = tag_selection_menu.show()
-                if isinstance(items, int):
-                    items = [items]
-                elif items is None:
+                selected_indices = tag_selection_menu.show()
+                if isinstance(selected_indices, int):
+                    selected_indices = [selected_indices]
+                elif selected_indices is None:
                     messages.error("Invalid choice, try again")
                     return True
 
                 self.resolved[tag_name] = []
-                for item in items:
-                    self.resolved[tag_name].append(available_tags[item])
+                for selected_index in selected_indices:
+                    self.resolved[tag_name].append(values_from_all_sources[selected_index])
 
                 return False
             case "[r] Remove field":
@@ -682,7 +684,7 @@ class MusicTags:
             parsed_from_youtube_values = self.parsed_from_youtube.get(tag_name, [])
             parsed_from_original_values = self.parsed_from_original.get(tag_name, [])
             musicbrainz_values = self.musicbrainz.get(tag_name, [])
-            all_values = self.get_values_from_all_sources(tag_name, only_new=True)
+            new_values = self.get_values_from_all_sources(tag_name, only_new=True)
 
             # MusicBrainz may have found the song on another release than
             # the album that the other sources say, e.g. on an album rather
@@ -696,7 +698,7 @@ class MusicTags:
 
             if tag_name.startswith(constants.MUSICBRAINZ_ID_PREFIX) and len(musicbrainz_values) > 0:
                 self.resolved[tag_name] = musicbrainz_values
-            elif not original_values and len(all_values) > 0 and not album_differs_from_musicbrainz:
+            elif not original_values and len(new_values) > 0 and not album_differs_from_musicbrainz:
                 # In order of preference
                 sources = {
                     "YouTube description": youtube_values,
@@ -704,12 +706,12 @@ class MusicTags:
                     "tags parsed from YouTube tags": parsed_from_youtube_values,
                     "MusicBrainz": musicbrainz_values,
                 }
-                for source, value in sources.items():
-                    if len(value) > 0:
-                        self.resolved[tag_name] = value
+                for source, source_values in sources.items():
+                    if len(source_values) > 0:
+                        self.resolved[tag_name] = source_values
                         if tag_name not in constants.track_position_tags:
                             messages.warning(
-                                f"{tag_name.title()}: No value exists in metadata. Using {source}: {value}."
+                                f"{tag_name.title()}: No value exists in metadata. Using {source}: {source_values}."
                             )
                         break
             elif can_keep_original_values and utils.is_equal_when_stripped(youtube_values, original_values):

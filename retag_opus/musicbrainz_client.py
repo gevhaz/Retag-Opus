@@ -47,16 +47,16 @@ class MusicBrainzClient:
         self._opener = opener
         self._clock = clock
         self._sleep = sleep
-        self._last_request: float | None = None
+        self._last_request_time: float | None = None
         self._cache: dict[str, JsonDict | None] = {}
 
     def _wait_for_rate_limit(self) -> None:
         """Sleep until enough time has passed since the last request."""
-        if self._last_request is not None:
-            elapsed = self._clock() - self._last_request
+        if self._last_request_time is not None:
+            elapsed = self._clock() - self._last_request_time
             if elapsed < MIN_REQUEST_INTERVAL_SECONDS:
                 self._sleep(MIN_REQUEST_INTERVAL_SECONDS - elapsed)
-        self._last_request = self._clock()
+        self._last_request_time = self._clock()
 
     def get(self, path: str, params: dict[str, str]) -> JsonDict | None:
         """Get a resource from the web service as JSON.

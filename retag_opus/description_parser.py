@@ -33,14 +33,14 @@ class DescriptionParser:
 
         :return: List or artists and title of song as string.
         """
-        artist_and_title = source_line.split(" " + constants.INTERPUNCT + " ")
-        title = artist_and_title[0]
-        artist: list[str] = artist_and_title[1:]
+        title_and_artists = source_line.split(" " + constants.INTERPUNCT + " ")
+        title = title_and_artists[0]
+        artists: list[str] = title_and_artists[1:]
 
-        if len(artist) < 2 and ", " in artist[0]:
-            artist = utils.split_tag(artist[0])
+        if len(artists) < 2 and ", " in artists[0]:
+            artists = utils.split_tag(artists[0])
 
-        return artist, title
+        return artists, title
 
     def add_value_from_line(self, line: str, pattern: str, tag_name: str) -> None:
         """Add the value that a pattern finds in a line to a tag.
@@ -74,29 +74,29 @@ class DescriptionParser:
                 existing_names = self.tags.get(tag_name, [])
                 self.tags[tag_name] = utils.remove_duplicates(existing_names + contributor_names)
 
-    def parse(self, description_tag_full: str) -> None:
+    def parse(self, description: str) -> None:
         """Parse the provided youtube description.
 
         Parses the given description and puts the resulting tags in the
         internal tags variable of the object.
 
-        :param description_tag_full: The full YouTube description as a
+        :param description: The full YouTube description as a
             string.
         """
         lines_since_title_artist: int = 1000
 
-        description_tag_lines: list[str] = description_tag_full.splitlines(False)
+        description_lines: list[str] = description.splitlines(False)
 
-        for description_line in description_tag_lines:
+        for description_line in description_lines:
             if re.match(r"^\s*$", description_line):
                 continue
             lines_since_title_artist = lines_since_title_artist + 1
             # Artist and title
             if INTERPUNCT in description_line:
                 lines_since_title_artist = 0
-                youtube_artist, youtube_title = self.parse_artist_and_title(description_line)
-                if youtube_artist:
-                    self.tags["artist"] = utils.remove_duplicates(youtube_artist)
+                youtube_artists, youtube_title = self.parse_artist_and_title(description_line)
+                if youtube_artists:
+                    self.tags["artist"] = utils.remove_duplicates(youtube_artists)
                 self.tags["title"] = [youtube_title]
 
             if lines_since_title_artist == 1:
@@ -113,13 +113,13 @@ class DescriptionParser:
             if title:
                 self.tags["title"] = [title[0]]
 
-        self.add_credits(description_tag_lines)
+        self.add_credits(description_lines)
 
-        artist = self.tags.get("artist")
-        if artist:
-            self.tags["albumartist"] = [artist[0]]
+        artists = self.tags.get("artist")
+        if artists:
+            self.tags["albumartist"] = [artists[0]]
             single_artists: list[str] = []
-            for joined_artists in artist:
+            for joined_artists in artists:
                 single_artists += utils.split_tag(joined_artists)
             self.tags["artist"] = utils.remove_duplicates(single_artists)
 
@@ -129,12 +129,12 @@ class DescriptionParser:
             if not self.tags[tag_name]:
                 del self.tags[tag_name]
 
-        # Custom patterns
+        # Without a release date, use the year in the copyright line
         copyright_year_pattern = r"\u2117 (\d\d\d\d)\s"
-        for description_line in description_tag_lines:
-            self.add_value_from_line(line=description_line, pattern=copyright_year_pattern, tag_name="copyright_date")
+        for description_line in description_lines:
+            self.add_value_from_line(line=description_line, pattern=copyright_year_pattern, tag_name="copyright_year")
 
-        copyright_date = self.tags.pop("copyright_date", None)
+        copyright_year = self.tags.pop("copyright_year", None)
         date = self.tags.get("date")
-        if copyright_date and not date:
-            self.tags["date"] = copyright_date
+        if copyright_year and not date:
+            self.tags["date"] = copyright_year
