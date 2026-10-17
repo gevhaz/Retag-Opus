@@ -113,6 +113,21 @@ def split_artist_from_title(title: str, artists: list[str]) -> tuple[str, str, s
     return None
 
 
+def remove_video_notes(video_title: str) -> str:
+    """Remove notes about a YouTube video from its title.
+
+    Unlike prune_title(), this keeps everything about the song, like
+    its version and featured artists.
+
+    Example: "Song (Live) (Official Video) #rock" becomes "Song (Live)".
+    """
+    title_without_notes = video_title
+    for pattern_name in ["video_note", "hashtags"]:
+        pattern = constants.title_parse_patterns[pattern_name]
+        title_without_notes = re.sub(pattern, r"\1 \3", title_without_notes)
+    return title_without_notes.strip()
+
+
 def split_tag(joined_values: str) -> List[str]:
     """Split the provided tag by pre-defined delimeters."""
     split_values = re.split(", | and | & |; ", joined_values)
