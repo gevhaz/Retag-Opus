@@ -26,12 +26,12 @@ class MusicTags:
 
     def __init__(self, manual_album_set: bool = False) -> None:
         """Create empty attributes for each source."""
-        self.base_patterns = deepcopy(constants.all_tags)
+        self.tags_printed_for_every_song = deepcopy(constants.tags_printed_for_every_song)
         self.manual_album_set = manual_album_set
         if manual_album_set:
-            self.base_patterns["discsubtitle"] = self.base_patterns["album"].copy()
-            self.base_patterns["discsubtitle"]["print"] = "Disc subtitle"
-            self.base_patterns["album"]["pattern"] = []
+            self.tags_printed_for_every_song["discsubtitle"] = self.tags_printed_for_every_song["album"].copy()
+            self.tags_printed_for_every_song["discsubtitle"]["print"] = "Disc subtitle"
+            self.tags_printed_for_every_song["album"]["pattern"] = []
         self.original: Tags = {}
         self.youtube: Tags = {}
         self.fromtags: Tags = {}
@@ -51,7 +51,7 @@ class MusicTags:
         """Get the performer tags in the sources, in the order to print them.
 
         First come the common performer tags, in the order of
-        constants.performer_tags. Then come the others, e.g.
+        constants.common_performer_tags. Then come the others, e.g.
         "performer:theremin" from MusicBrainz, in alphabetical order.
 
         :param sources: The tags to look for performer tags in.
@@ -64,17 +64,17 @@ class MusicTags:
                 if self.is_performer_tag(tag_id) and tag_id not in performer_tags_in_sources:
                     performer_tags_in_sources.append(tag_id)
 
-        common_performer_tags = []
-        for tag_id in constants.performer_tags:
+        common_performer_tags_in_sources = []
+        for tag_id in constants.common_performer_tags:
             if tag_id in performer_tags_in_sources:
-                common_performer_tags.append(tag_id)
+                common_performer_tags_in_sources.append(tag_id)
 
-        other_performer_tags = []
+        other_performer_tags_in_sources = []
         for tag_id in performer_tags_in_sources:
-            if tag_id not in constants.performer_tags:
-                other_performer_tags.append(tag_id)
+            if tag_id not in constants.common_performer_tags:
+                other_performer_tags_in_sources.append(tag_id)
 
-        return common_performer_tags + sorted(other_performer_tags)
+        return common_performer_tags_in_sources + sorted(other_performer_tags_in_sources)
 
     @staticmethod
     def performer_print_name(tag_id: str) -> str:
@@ -125,7 +125,7 @@ class MusicTags:
             for tag_id in self.performer_tags_in_print_order(metadata):
                 if tag_id in metadata and metadata[tag_id] is not None:
                     self.print_metadata_key(self.performer_print_name(tag_id), tag_id, style, metadata)
-        for tag_id, tag_data in self.base_patterns.items():
+        for tag_id, tag_data in self.tags_printed_for_every_song.items():
             self.print_metadata_key(tag_data["print"], tag_id, style, metadata)
         print("")
 
@@ -176,7 +176,7 @@ class MusicTags:
                 performer_block.append(self.performer_print_name(tag_id) + ": " + " | ".join(tag_all_values))
 
         main_block = []
-        for tag_id, tag_data in self.base_patterns.items():
+        for tag_id, tag_data in self.tags_printed_for_every_song.items():
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
                 there_are_tags = True
@@ -237,7 +237,7 @@ class MusicTags:
         for tag_id in self.resolved.keys():
             if tag_id.startswith(constants.MUSICBRAINZ_ID_PREFIX):
                 continue
-            if tag_id not in self.base_patterns and not self.is_performer_tag(tag_id):
+            if tag_id not in self.tags_printed_for_every_song and not self.is_performer_tag(tag_id):
                 other_tags.append(tag_id)
         if other_tags:
             print("  Other tags:")
@@ -265,7 +265,7 @@ class MusicTags:
             print("  Performers:")
             for tag_id in performer_tags:
                 self.print_resolved_tag(self.performer_print_name(tag_id), tag_id, print_all)
-        for tag_id, tag_data in self.base_patterns.items():
+        for tag_id, tag_data in self.tags_printed_for_every_song.items():
             self.print_resolved_tag(tag_data["print"], tag_id, print_all)
 
         print("")
@@ -387,7 +387,7 @@ class MusicTags:
         """
         tags_in_resolved = []
         for tag_name, tag_values in self.resolved.items():
-            is_known_tag = tag_name in self.base_patterns or self.is_performer_tag(tag_name)
+            is_known_tag = tag_name in self.tags_printed_for_every_song or self.is_performer_tag(tag_name)
             if is_known_tag and tag_values != REMOVED_TAG:
                 tags_in_resolved.append(tag_name)
 
