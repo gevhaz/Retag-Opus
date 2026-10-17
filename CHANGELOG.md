@@ -38,6 +38,9 @@
   descriptions.
 - Notes about the YouTube video, like "(Official Video)" or "[Lyric Video]",
   and hashtags at the end are removed from titles.
+- A song found on MusicBrainz by the words of a video title is only used
+  without asking if one of its artists is among the words or is the YouTube
+  channel.
 - Python 3.13 or newer is now required.
 - The short option for `--album` is now `-a` instead of `-b`.
 - Unset tags are shown in gray instead of black, so they are readable on dark
