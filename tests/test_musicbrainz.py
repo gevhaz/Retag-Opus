@@ -388,6 +388,27 @@ def test_match_song_asks_when_not_confident(menu: MagicMock) -> None:
     assert menu.call_args.kwargs["title"] == f"MusicBrainz: Results for '{VIDEO_TITLE}'. The song is 2:30 long."
 
 
+def test_artist_matches() -> None:
+    """One of the credited artists has to be in the text."""
+    assert musicbrainz.artist_matches(SEARCH_RESULT, "Proper Goodbyes Ben Ivor")
+    assert not musicbrainz.artist_matches(SEARCH_RESULT, "Proper Goodbyes Ben")
+    assert not musicbrainz.artist_matches({"title": "X"}, "X")
+
+
+def test_match_song_by_channel() -> None:
+    """The YouTube channel counts as an artist in the video title."""
+    client = fake_client()
+    tags = MusicBrainzMatcher(client).match_song(song(original={"title": ["Proper Goodbyes"], "artist": ["Ben Ivor"]}))
+    assert tags["title"] == ["Proper Goodbyes"]
+
+
+def test_match_song_asks_when_artist_not_in_text(menu: MagicMock) -> None:
+    """Let the user pick a result by another artist with the searched title."""
+    menu.return_value.show.return_value = 0
+    MusicBrainzMatcher(fake_client()).match_song(song(original={"title": ["Proper Goodbyes - Someone"]}))
+    menu.assert_called_once()
+
+
 def test_match_song_asks_when_title_not_in_text(menu: MagicMock) -> None:
     """Let the user pick a result when its title isn't what was searched for."""
     menu.return_value.show.return_value = 0

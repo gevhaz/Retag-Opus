@@ -4,7 +4,8 @@ Songs from the same album are identified together as a release, when
 there is a release that has all of them. Other songs are identified by
 their MusicBrainz ID if the file has one, and otherwise by searching
 for them. A search result is only used without asking when its title
-is in what was searched for and its length is the song's.
+is in what was searched for and its length is the song's, and, when
+searching by words, one of its artists is in them too.
 """
 import re
 from pathlib import Path
@@ -200,6 +201,21 @@ def title_matches(title: str, text: str) -> bool:
     """
     main_title = words(re.split(r"[(\[:]", title)[0])
     return bool(main_title) and main_title <= words(text)
+
+
+def artist_matches(recording: JsonDict, text: str) -> bool:
+    """Check whether one of the artists of a recording is in the text.
+
+    Searching by words finds recordings of the same title by any
+    artist, often with about the same length. E.g. for Annelie
+    Lockneman's song "Änglasång", it finds another song of that name
+    by Stefan Andersson.
+    """
+    for name in credited_names(recording.get("artist-credit", [])):
+        name_words = words(name)
+        if name_words and name_words <= words(text):
+            return True
+    return False
 
 
 def fit(recording: JsonDict, text: str) -> tuple[int, int]:
@@ -491,7 +507,9 @@ class MusicBrainzMatcher:
         title, since a video title mixes the song title with artists,
         movies, and other words. A result is used without asking if its
         main title is among the words searched for and it's as long as
-        the song. Otherwise the user picks the result.
+        the song. When searching by words, one of its artists also has
+        to be among them, or be the YouTube channel, which is often the
+        artist's own. Otherwise the user picks the result.
 
         :return: The recording, or None if the user skipped the song.
         """
@@ -504,18 +522,23 @@ class MusicBrainzMatcher:
         text = song_text(tags)
         youtube_titles = tags.youtube.get("title", [])
         youtube_artists = tags.youtube.get("artist", [])
+        searched_for_artist = False
         if youtube_titles and youtube_artists:
             results = self.client.search_recordings(utils.prune_title(youtube_titles[0]), youtube_artists[0])
+            searched_for_artist = True
         elif text:
             results = self.client.search_recordings_by_words(text)
         else:
             results = []
         while True:
-            confident_results = [
-                result
-                for result in results
-                if title_matches(result.get("title", ""), text) and length_matches(result.get("length"), tags.length)
-            ]
+            text_with_channel = " ".join([text] + tags.original.get("artist", []))
+            confident_results = []
+            for result in results:
+                same_title = title_matches(result.get("title", ""), text)
+                same_length = length_matches(result.get("length"), tags.length)
+                same_artist = searched_for_artist or artist_matches(result, text_with_channel)
+                if same_title and same_length and same_artist:
+                    confident_results.append(result)
             if confident_results:
                 # The result that fits the song best, see fit()
                 return min(confident_results, key=lambda result: fit(result, text))
@@ -524,6 +547,7 @@ class MusicBrainzMatcher:
                 return choice or None
             text = input(f"Search MusicBrainz for [{text}]: ").strip() or text
             results = self.client.search_recordings_by_words(text) if text else []
+            searched_for_artist = False
 
     @staticmethod
     def ask_for_recording(results: list[JsonDict], text: str, song_seconds: float | None) -> JsonDict | bool:
