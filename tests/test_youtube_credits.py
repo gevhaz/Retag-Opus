@@ -34,6 +34,8 @@ def test_roles_by_category() -> None:
             "Rhythm Guitar, Lead Vocals: Sing Er",
             {"performer:guitar": ["Sing Er"], "performer:lead vocals": ["Sing Er"]},
         ),
+        # Like Picard, mastering and recording engineers aren't put in "engineer"
+        ("Studio  Personnel, Mixer, Mastering  Engineer: Engi Neer", {"mixer": ["Engi Neer"]}),
         # A category applies to the roles after it, up to the next one
         (
             "Producer, Studio  Personnel, Recording  Engineer, Associated  Performer, Piano, Bass: Dan Nigro",

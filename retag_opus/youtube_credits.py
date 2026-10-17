@@ -45,6 +45,10 @@ ROLE_TAGS: Final[dict[str, list[str]]] = {
     "conductor": ["conductor"],
     "producer": ["producer"],
     "additional producer": ["producer"],
+    # Picard leaves out recording and mastering engineers
+    "mixer": ["mixer"],
+    "mixing engineer": ["mixer"],
+    "engineer": ["engineer"],
     "publisher": ["publisher"],
     "music publisher": ["publisher"],
     "vocals": ["performer:lead vocals"],
