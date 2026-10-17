@@ -67,31 +67,31 @@ def group_by_album(files: list[Path], manual_album: str | None) -> dict[Path, st
     :param files: All songs to be retagged.
     :param manual_album: The album set by the user, if any.
 
-    :return: Album name in lower case, which identifies the album, for
-        each song that shares album with another.
+    :return: The album of each song that shares album with another,
+        written as in the description of the first of its songs.
     """
-    album_name_per_song: dict[Path, str | None]
-    if manual_album is not None:
-        album_name_per_song = {file_path: manual_album for file_path in files}
-    else:
-        album_name_per_song = {file_path: get_album(file_path) for file_path in files}
+    album_per_song: dict[Path, str] = {}
+    for file_path in files:
+        album = manual_album if manual_album is not None else get_album(file_path)
+        if album is not None:
+            album_per_song[file_path] = album
 
+    # Albums whose names only differ in case are the same album
     songs_per_album: dict[str, list[Path]] = {}
-    for file_path, album_name in album_name_per_song.items():
-        if album_name is not None:
-            songs_per_album.setdefault(album_name.casefold(), []).append(file_path)
+    for file_path, album in album_per_song.items():
+        songs_per_album.setdefault(album.casefold(), []).append(file_path)
 
-    album_key_per_song: dict[Path, str] = {}
-    for album_key, songs_on_album in songs_per_album.items():
+    shared_album_per_song: dict[Path, str] = {}
+    for songs_on_album in songs_per_album.values():
         if len(songs_on_album) > 1:
-            album_name = album_name_per_song[songs_on_album[0]]
+            album = album_per_song[songs_on_album[0]]
             messages.info(
-                f"{len(songs_on_album)} songs are from the album '{album_name}'. Album artist, date, genre "
+                f"{len(songs_on_album)} songs are from the album '{album}'. Album artist, date, genre "
                 "and album saved for one of them will be saved for all of them."
             )
             for file_path in songs_on_album:
-                album_key_per_song[file_path] = album_key
-    return album_key_per_song
+                shared_album_per_song[file_path] = album
+    return shared_album_per_song
 
 
 def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
@@ -173,31 +173,25 @@ def save_tags(opus_file: OggOpus, tags: Tags) -> None:
 
 
 def match_albums(
-    matcher: MusicBrainzMatcher, album_key_per_song: dict[Path, str], manual_album: str | None
+    matcher: MusicBrainzMatcher, shared_album_per_song: dict[Path, str], manual_album: str | None
 ) -> dict[Path, Tags]:
     """Identify each album on MusicBrainz, with all its songs at once.
 
     :param matcher: Used for finding the albums on MusicBrainz.
-    :param album_key_per_song: Album name in lower case of each song that
-        shares album with another.
+    :param shared_album_per_song: The album of each song that shares
+        album with another.
     :param manual_album: The album set by the user, if any.
 
     :return: Tags from MusicBrainz for each song whose album was found.
     """
     songs_per_album: dict[str, dict[Path, MusicTags]] = {}
-    album_name_per_key: dict[str, str] = {}
-    for file_path, album_key in album_key_per_song.items():
+    for file_path, album in shared_album_per_song.items():
         _, tags = read_song(file_path, manual_album)
-        if album_key not in songs_per_album:
-            songs_per_album[album_key] = {}
-            # Albums are grouped by their name in lower case, so search
-            # for the name as written instead
-            album_name_per_key[album_key] = manual_album or tags.youtube.get("album", [album_key])[0]
-        songs_per_album[album_key][file_path] = tags
+        songs_per_album.setdefault(album, {})[file_path] = tags
 
     musicbrainz_tags_per_song: dict[Path, Tags] = {}
-    for album_key, songs in songs_per_album.items():
-        musicbrainz_tags_per_song.update(matcher.match_album(album_name_per_key[album_key], songs))
+    for album, songs in songs_per_album.items():
+        musicbrainz_tags_per_song.update(matcher.match_album(album, songs))
     return musicbrainz_tags_per_song
 
 
@@ -219,9 +213,9 @@ def run(argv: Sequence[str] | None = None) -> int:
         messages.warning(f"There appears to be no .opus files in the provided directory {args.directory}")
         return 0
 
-    album_key_per_song: dict[Path, str] = {}
+    shared_album_per_song: dict[Path, str] = {}
     if not args.individual:
-        album_key_per_song = group_by_album(opus_files, args.manual_album)
+        shared_album_per_song = group_by_album(opus_files, args.manual_album)
     # Album level tags saved for an earlier song on each album
     saved_album_level_tags: dict[str, Tags] = {}
 
@@ -229,14 +223,14 @@ def run(argv: Sequence[str] | None = None) -> int:
     # One matcher for all songs, so that its cache and rate limit are shared
     matcher = MusicBrainzMatcher() if use_musicbrainz else None
     musicbrainz_tags_per_song = (
-        match_albums(matcher, album_key_per_song, args.manual_album) if matcher is not None else {}
+        match_albums(matcher, shared_album_per_song, args.manual_album) if matcher is not None else {}
     )
     tags_to_delete = config.get("tags_to_delete", [])
     strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
 
     for song_index, file_path in enumerate(opus_files):
         redo = True
-        album_key = album_key_per_song.get(file_path)
+        shared_album = shared_album_per_song.get(file_path)
         song_name = utils.file_path_to_song_name(file_path)
         while redo:
             redo = False
@@ -257,8 +251,8 @@ def run(argv: Sequence[str] | None = None) -> int:
 
             # 4.6 Use the same album level tags as for earlier songs on
             # the same album
-            if album_key is not None and album_key in saved_album_level_tags:
-                tags.apply_album_level_tags(saved_album_level_tags[album_key])
+            if shared_album is not None and shared_album in saved_album_level_tags:
+                tags.apply_album_level_tags(saved_album_level_tags[shared_album])
 
             if not tags.check_any_new_data_exists() and not args.manual_album:
                 messages.warning("No new data exists. Skipping song.")
@@ -317,13 +311,13 @@ def run(argv: Sequence[str] | None = None) -> int:
                     case "[s] save":
                         save_tags(opus_file, tags.resolved)
                         messages.success(f"Metadata saved for file: {song_name}")
-                        if album_key is not None:
-                            saved_album_level_tags[album_key] = tags.get_album_level_tags()
+                        if shared_album is not None:
+                            saved_album_level_tags[shared_album] = tags.get_album_level_tags()
                             other_songs = []
-                            for other_file_path, other_album_key in album_key_per_song.items():
-                                if other_album_key == album_key and other_file_path != file_path:
+                            for other_file_path, other_album in shared_album_per_song.items():
+                                if other_album == shared_album and other_file_path != file_path:
                                     other_songs.append(other_file_path)
-                            update_album_level_tags(other_songs, saved_album_level_tags[album_key])
+                            update_album_level_tags(other_songs, saved_album_level_tags[shared_album])
                     case "[r] reset":
                         print(f"Trying to improve metadata again for file: {song_name}")
                         redo = True
