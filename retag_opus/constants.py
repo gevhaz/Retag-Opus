@@ -28,6 +28,15 @@ title_parse_patterns: Final[dict[str, str]] = {
     "remix_in_parentheses": r"(?i)(.+)\s*\((.*remix.*?)\)\s*(.*)",
     "remix_after_dash": r"(?i)(.+)\s*-\s*(.*remix.*)\s*(.*)",
     "albumversion": r"(?i)(.*?)\s*[\(\[](album version.*?)[\)\]]\s*(.*)",
+    # Notes about a YouTube video rather than the song, e.g. "(Official
+    # Music Video)", "[Audio]" or "(Lyric Video)"
+    "video_note": (
+        r"(?i)(.*?)\s*[\(\[]"
+        r"((?:official\s+)?(?:music\s+|lyrics?\s+)?(?:video|audio|visuali[sz]er|lyrics?)|official)"
+        r"[\)\]]\s*(.*)"
+    ),
+    # Hashtags at the end of a video title, e.g. "#hiphop #india"
+    "hashtags": r"(.*?)\s*((?:#[^\W\d_]\w*\s*)+)()$",
 }
 
 # Tags that are printed for every song, and patterns for parsing them

@@ -100,6 +100,27 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song", utils.prune_title(unpruned_title_3))
         self.assertEqual("A song", utils.prune_title(unpruned_title_4))
 
+    def test_prune_video_notes_from_title(self) -> None:
+        """Test that notes about a YouTube video are pruned from title."""
+        video_titles = [
+            "A song (Official Video)",
+            "A song (official audio)",
+            "A song [Official Music Video]",
+            "A song (Official Lyric Video)",
+            "A song (Official Lyrics Video)",
+            "A song (Lyrics)",
+            "A song [Audio]",
+            "A song (Visualizer)",
+            "A song (Official)",
+            "A song #hiphop #india",
+        ]
+        for video_title in video_titles:
+            self.assertEqual("A song", utils.prune_title(video_title))
+
+        # Versions of the song and numbers in titles are kept
+        self.assertEqual("A song (Video Edit)", utils.prune_title("A song (Video Edit)"))
+        self.assertEqual("Revolution #9", utils.prune_title("Revolution #9"))
+
     def test_prune_featuring_from_title(self) -> None:
         """Test that remix version information is pruned from title."""
         unpruned_title_1 = "A song (featuring artist)"
