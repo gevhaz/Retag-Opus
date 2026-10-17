@@ -20,6 +20,8 @@
   names are left as they are.
 - All `performer:` tags are shown as performers, not only the ones parsed from
   YouTube descriptions.
+- Programmers are no longer put in `performer:programming`. Programming isn't
+  an instrument, and neither Quod Libet nor Picard has a tag for it.
 - The result shown before saving only lists performers that have a value or
   were removed, instead of every performer that can be parsed from YouTube
   descriptions.
