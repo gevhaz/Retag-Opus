@@ -1052,7 +1052,7 @@ class TestMusicTags(unittest.TestCase):
         tags.modify_resolved_field()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
 
-    @patch("retag_opus.utils.Utils.select_single_tag")
+    @patch("retag_opus.utils.select_single_tag")
     def test_determine_album_artist_select_one(self, select_single_tag: MagicMock) -> None:
         """Test that album artist can be picked up normally."""
         expected_artist = ["artist 4"]
@@ -1066,7 +1066,7 @@ class TestMusicTags(unittest.TestCase):
         tags.determine_album_artist()
         self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
 
-    @patch("retag_opus.utils.Utils.select_single_tag")
+    @patch("retag_opus.utils.select_single_tag")
     def test_determine_album_artist_select_two(self, select_single_tag: MagicMock) -> None:
         """Test that two album artists can be selected."""
         expected_artist = ["artist 2", "artist 4"]
@@ -1080,7 +1080,7 @@ class TestMusicTags(unittest.TestCase):
         tags.determine_album_artist()
         self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
 
-    @patch("retag_opus.utils.Utils.select_single_tag")
+    @patch("retag_opus.utils.select_single_tag")
     def test_determine_album_artist_select_zero(self, select_single_tag: MagicMock) -> None:
         """Test that no tag is added when nothing is selected."""
         select_single_tag.return_value = []
@@ -1093,7 +1093,7 @@ class TestMusicTags(unittest.TestCase):
         tags.determine_album_artist()
         self.assertNotIn("albumartist", tags.resolved)
 
-    @patch("retag_opus.utils.Utils.select_single_tag")
+    @patch("retag_opus.utils.select_single_tag")
     def test_determine_album_artist_unsplit_is_candidate(self, select_single_tag: MagicMock) -> None:
         """Test that the unsplit album artist is offered with split artists."""
         select_single_tag.return_value = ["artist 1 & artist 2"]

@@ -12,10 +12,9 @@ from typing import Final
 
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants, messages, styles
+from retag_opus import constants, messages, styles, utils
 from retag_opus.music_tags import MusicTags
 from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrainzError
-from retag_opus.utils import Utils
 
 Tags = dict[str, list[str]]
 
@@ -185,7 +184,7 @@ def song_text(tags: MusicTags) -> str:
 
 def words(text: str) -> set[str]:
     """Get the words in text, regardless of typography and case."""
-    return set(re.findall(r"\w+", Utils.normalize(text)))
+    return set(re.findall(r"\w+", utils.normalize(text)))
 
 
 def title_matches(title: str, text: str) -> bool:
@@ -249,12 +248,12 @@ def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None
     stored_release_ids = tags.original.get("musicbrainz_albumid", [])
     album_names_in_tags = set()
     for album_name in tags.youtube.get("album", []) + tags.original.get("album", []):
-        album_names_in_tags.add(Utils.normalize(Utils.prune_title(album_name)))
+        album_names_in_tags.add(utils.normalize(utils.prune_title(album_name)))
 
     def preference(release: JsonDict) -> tuple[bool, bool, bool, str]:
         """Sort key that puts the preferred releases first."""
         is_stored = release["id"] in stored_release_ids
-        has_album_name = Utils.normalize(Utils.prune_title(release.get("title", ""))) in album_names_in_tags
+        has_album_name = utils.normalize(utils.prune_title(release.get("title", ""))) in album_names_in_tags
         is_official = release.get("status") == "Official"
         date = release.get("date") or "9999"  # Unknown dates last
         # False sorts before True, so releases with a property come first
@@ -469,7 +468,7 @@ class MusicBrainzMatcher:
                 break
 
         candidates = []
-        for release in self.client.search_releases(Utils.prune_title(album), artist):
+        for release in self.client.search_releases(utils.prune_title(album), artist):
             matches_search = release.get("score", 0) >= MIN_SCORE
             has_room_for_songs = release.get("track-count", 0) >= len(songs)
             if matches_search and has_room_for_songs:
@@ -505,7 +504,7 @@ class MusicBrainzMatcher:
         youtube_titles = tags.youtube.get("title", [])
         youtube_artists = tags.youtube.get("artist", [])
         if youtube_titles and youtube_artists:
-            results = self.client.search_recordings(Utils.prune_title(youtube_titles[0]), youtube_artists[0])
+            results = self.client.search_recordings(utils.prune_title(youtube_titles[0]), youtube_artists[0])
         elif text:
             results = self.client.search_recordings_by_words(text)
         else:

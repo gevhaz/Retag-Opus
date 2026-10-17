@@ -2,8 +2,7 @@
 import re
 from copy import deepcopy
 
-from retag_opus import constants, youtube_credits
-from retag_opus.utils import Utils
+from retag_opus import constants, utils, youtube_credits
 
 INTERPUNCT = "\u00b7"
 
@@ -39,7 +38,7 @@ class DescriptionParser:
         artist: list[str] = artist_and_title[1:]
 
         if len(artist) < 2 and ", " in artist[0]:
-            artist = Utils.split_tag(artist[0])
+            artist = utils.split_tag(artist[0])
 
         return artist, title
 
@@ -54,7 +53,7 @@ class DescriptionParser:
         if pattern_match:
             field_value = pattern_match.groups()[-1].strip()
             existing_values = self.tags.get(field_name, [])
-            self.tags[field_name] = Utils.remove_duplicates(existing_values + [field_value])
+            self.tags[field_name] = utils.remove_duplicates(existing_values + [field_value])
 
     def add_credits(self, lines: list[str]) -> None:
         """Add the tags from lines with roles and a name.
@@ -72,7 +71,7 @@ class DescriptionParser:
             credit_tags = youtube_credits.parse_credit_line(line)
             for tag_name, contributor_names in credit_tags.items():
                 existing_names = self.tags.get(tag_name, [])
-                self.tags[tag_name] = Utils.remove_duplicates(existing_names + contributor_names)
+                self.tags[tag_name] = utils.remove_duplicates(existing_names + contributor_names)
 
     def parse(self, description_tag_full: str) -> None:
         """Parse the provided youtube description.
@@ -96,7 +95,7 @@ class DescriptionParser:
                 lines_since_title_artist = 0
                 youtube_artist, youtube_title = self.parse_artist_and_title(description_line)
                 if youtube_artist:
-                    self.tags["artist"] = Utils.remove_duplicates(youtube_artist)
+                    self.tags["artist"] = utils.remove_duplicates(youtube_artist)
                 self.tags["title"] = [youtube_title]
 
             if lines_since_title_artist == 1:
@@ -120,8 +119,8 @@ class DescriptionParser:
             self.tags["albumartist"] = [artist[0]]
             single_artists: list[str] = []
             for joined_artists in artist:
-                single_artists += Utils.split_tag(joined_artists)
-            self.tags["artist"] = Utils.remove_duplicates(single_artists)
+                single_artists += utils.split_tag(joined_artists)
+            self.tags["artist"] = utils.remove_duplicates(single_artists)
 
         # Loop over a copy of the names, since tags can't be deleted from
         # the dict while looping over it
