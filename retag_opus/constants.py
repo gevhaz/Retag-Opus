@@ -96,7 +96,6 @@ performer_tags: Final[dict[str, ParsingReference]] = {
     "performer:violin": {"print": "- Violin", "pattern": [r"(.*, )?[vV]iolin.*:\s*(.+)\s*"]},
     "performer:double bass": {"print": "- Double bass", "pattern": [r".*[dD]ouble\s+[bB]ass.*:\s*(.+)\s*"]},
     "performer:cello": {"print": "- Cello", "pattern": [r"(.*, )?[cC]ello.*:\s*(.+)\s*"]},
-    "performer:programming": {"print": "- Programming", "pattern": [r"(.*, )?[pP]rogramm(er|ing).*:\s*(.+)\s*"]},
     "performer:saxophone": {"print": "- Saxophone", "pattern": [r"(.*, )?[sS]axophone.*:\s*(.+)\s*"]},
     "performer:flute": {"print": "- Flute", "pattern": [r"(.*, )?[fF]lute.*:\s*(.+)\s*"]},
 }

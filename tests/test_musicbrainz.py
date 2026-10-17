@@ -109,6 +109,8 @@ def test_relation_tag_names() -> None:
     assert musicbrainz.relation_tag_names(artist_relation("vocal", "A", ["solo"])) == ["performer:vocals"]
     assert musicbrainz.relation_tag_names(artist_relation("instrument", "A")) == ["performer:instruments"]
     assert musicbrainz.relation_tag_names(artist_relation("mix", "A")) == []
+    # Programming isn't an instrument, and Picard has no tag for it
+    assert musicbrainz.relation_tag_names(artist_relation("programming", "A")) == []
 
 
 def test_release_tracks() -> None:

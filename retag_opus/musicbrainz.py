@@ -44,8 +44,6 @@ RELATION_TAGS: Final[dict[str, str]] = {
     "instrument arranger": "arranger",
     "vocal arranger": "arranger",
     "conductor": "conductor",
-    # Picard has no tag for programming
-    "programming": "performer:programming",
     "composer": "composer",
     "lyricist": "lyricist",
     "writer": "writer",
