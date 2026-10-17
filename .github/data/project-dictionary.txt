@@ -1,5 +1,6 @@
 personal_ws-1.1 en 1000 utf-8
 ContentID
+DDEX
 GitHub
 Libet
 MusicBrainz
@@ -7,6 +8,7 @@ Picard
 PyPI
 Quod
 Retag
+Vorbis
 YouTube
 YouTube's
 changelog

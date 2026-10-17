@@ -10,3 +10,24 @@
 
 - Keep the words in `.github/data/project-dictionary.txt` sorted
   alphabetically, with uppercase before lowercase.
+
+# Commits
+
+- Write the subject in the imperative mood, capitalized, without a full
+  stop and without prefixes like `feat:`, e.g. "Fix parsing of guitar".
+  Keep it short, ideally under 50 characters.
+- In the body, explain what's wrong without the change and why the
+  change fixes it. The diff shows how.
+- Keep commit messages as long as the change needs, and only a little
+  longer than in code written without AI. A small change gets a subject
+  line and at most a few lines of body.
+- Make one commit per logical change, e.g. a refactoring, a bug fix and
+  a new feature are separate commits. One change across many files is
+  still one commit. Each commit should pass the tests on its own.
+- Until a branch is merged, fold review fixes into the commits they fix.
+
+# Standards
+
+- When choosing between conventions, e.g. for tag names, prefer them in
+  this order: the Vorbis comment specification, Quod Libet, MusicBrainz
+  Picard, DDEX.
