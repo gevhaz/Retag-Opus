@@ -5,9 +5,8 @@ from typing import Final
 
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants, messages, styles
+from retag_opus import constants, messages, styles, utils
 from retag_opus.exceptions import UserExitException
-from retag_opus.utils import Utils
 
 Tags = dict[str, list[str]]
 
@@ -363,9 +362,9 @@ class MusicTags:
         musicbrainz_value = self.musicbrainz.get(field, [])
         new_values = yt_value + from_desc_value + from_tags_value + musicbrainz_value
         if only_new:
-            return Utils.remove_duplicates(new_values)
+            return utils.remove_duplicates(new_values)
         else:
-            return Utils.remove_duplicates(old_value + new_values)
+            return utils.remove_duplicates(old_value + new_values)
 
     def modify_resolved_field(self) -> None:
         """Manually add key-value pairs to the set of resolved tags."""
@@ -376,7 +375,7 @@ class MusicTags:
             key = input("  Key: ")
             val = input("  Value: ")
             if key and val:
-                self.resolved[key] = Utils.split_manual_value(key, val)
+                self.resolved[key] = utils.split_manual_value(key, val)
 
     def delete_tag_item(self) -> None:
         """Present a menu for removing tags and remove selected ones.
@@ -461,7 +460,7 @@ class MusicTags:
         tag_names: list[str] = []
         for new_source in [self.youtube, self.fromdesc, self.fromtags, self.musicbrainz]:
             tag_names.extend(new_source.keys())
-        return Utils.remove_duplicates(tag_names)
+        return utils.remove_duplicates(tag_names)
 
     def changed_tags(self) -> list[str]:
         """Get the names of the tags that would be changed in the file."""
@@ -484,7 +483,7 @@ class MusicTags:
         """
         for tag_name in pruned_tags:
             resolved_value = self.resolved.get(tag_name, [])
-            if Utils.is_equal_when_stripped(resolved_value, self.original.get(tag_name, [])):
+            if utils.is_equal_when_stripped(resolved_value, self.original.get(tag_name, [])):
                 self.resolved[tag_name] = REMOVED_TAG
 
     def apply_album_level_tags(self, album_level_tags: Tags) -> None:
@@ -512,9 +511,9 @@ class MusicTags:
     @staticmethod
     def is_same_album(album_1: list[str], album_2: list[str]) -> bool:
         """Check whether albums are the same, ignoring e.g. "(2011 Remaster)"."""
-        pruned_album_1 = [Utils.prune_title(name) for name in album_1]
-        pruned_album_2 = [Utils.prune_title(name) for name in album_2]
-        return Utils.is_equal_when_normalized(pruned_album_1, pruned_album_2)
+        pruned_album_1 = [utils.prune_title(name) for name in album_1]
+        pruned_album_2 = [utils.prune_title(name) for name in album_2]
+        return utils.is_equal_when_normalized(pruned_album_1, pruned_album_2)
 
     def differs_from_musicbrainz_album(self, albums: list[list[str]]) -> bool:
         """Check whether any of the albums isn't the one found on MusicBrainz."""
@@ -532,7 +531,7 @@ class MusicTags:
 
     def determine_album_artist(self) -> None:
         """Choose value to use for albumartist tag."""
-        all_artists = Utils.remove_duplicates(self.get_field("albumartist", only_new=True) + self.get_field("artist"))
+        all_artists = utils.remove_duplicates(self.get_field("albumartist", only_new=True) + self.get_field("artist"))
         resolved_artist = self.resolved.get("artist")
         original_artist = self.original.get("artist")
 
@@ -540,7 +539,7 @@ class MusicTags:
             print("-----------------------------------------------")
             self.print_resolved(print_all=True)
             messages.info("Select the album artist:")
-            one_artist = Utils.select_single_tag(all_artists)
+            one_artist = utils.select_single_tag(all_artists)
             if len(one_artist) > 0:
                 self.resolved["albumartist"] = one_artist
         elif not self.original.get("albumartist"):
@@ -566,8 +565,8 @@ class MusicTags:
         if md_artist is not None and yt_artist is not None:
             if (
                 len(md_artist) == 1
-                and Utils.split_tag(md_artist[0]) == yt_artist
-                or Utils.is_equal_when_stripped(md_artist, yt_artist)
+                and utils.split_tag(md_artist[0]) == yt_artist
+                or utils.is_equal_when_stripped(md_artist, yt_artist)
             ):
                 self.resolved["artist"] = yt_artist
 
@@ -602,7 +601,7 @@ class MusicTags:
             case "[m] Manually fill in tag":
                 manual_tag = input("Value: ")
                 if manual_tag:
-                    self.resolved[tag_name] = Utils.split_manual_value(tag_name, manual_tag)
+                    self.resolved[tag_name] = utils.split_manual_value(tag_name, manual_tag)
                 else:
                     print("No input, not changing tag")
                     return True
@@ -704,16 +703,16 @@ class MusicTags:
                                 f"{tag_name.title()}: No value exists in metadata. Using {source}: {value}."
                             )
                         break
-            elif can_keep_old_value and Utils.is_equal_when_stripped(yt_value, old_value):
+            elif can_keep_old_value and utils.is_equal_when_stripped(yt_value, old_value):
                 messages.success(f"{tag_name.title()}: Metadata matches YouTube description tags.")
                 self.resolved[tag_name] = stripped_old_value
-            elif can_keep_old_value and Utils.is_equal_when_stripped(from_desc_value, old_value):
+            elif can_keep_old_value and utils.is_equal_when_stripped(from_desc_value, old_value):
                 messages.success(f"{tag_name.title()}: Metadata matches tags parsed from YouTube tags.")
                 self.resolved[tag_name] = stripped_old_value
-            elif can_keep_old_value and Utils.is_equal_when_stripped(from_tags_value, old_value):
+            elif can_keep_old_value and utils.is_equal_when_stripped(from_tags_value, old_value):
                 messages.success(f"{tag_name.title()}: Metadata matches tags parsed from original tags.")
                 self.resolved[tag_name] = stripped_old_value
-            elif can_keep_old_value and Utils.is_equal_when_normalized(musicbrainz_value, old_value):
+            elif can_keep_old_value and utils.is_equal_when_normalized(musicbrainz_value, old_value):
                 messages.success(f"{tag_name.title()}: Metadata matches MusicBrainz.")
                 self.resolved[tag_name] = stripped_old_value
             else:
@@ -750,7 +749,7 @@ class MusicTags:
                         print("MusicBrainz: " + styles.musicbrainz(" | ".join(musicbrainz_value)))
                         cursor = len(candidates)  # MusicBrainz itself
                         for index, value in enumerate(candidate_values):
-                            if Utils.is_equal_when_normalized(value, musicbrainz_value):
+                            if utils.is_equal_when_normalized(value, musicbrainz_value):
                                 cursor = index
                                 break
                         candidates.append("MusicBrainz")

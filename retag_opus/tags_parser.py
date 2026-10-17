@@ -6,8 +6,7 @@ that the YouTube description.
 import re
 from typing import Dict, Final, List
 
-from retag_opus import constants
-from retag_opus.utils import Utils
+from retag_opus import constants, utils
 
 INTERPUNCT: Final[str] = "\u00b7"
 
@@ -36,7 +35,7 @@ class TagsParser:
 
         old_artist = self.original_tags.get("artist", [])
         if len(old_artist) == 1:
-            old_artist = Utils.split_tag(old_artist[0])
+            old_artist = utils.split_tag(old_artist[0])
         new_artist = []
 
         old_version = self.original_tags.get("version", [])
@@ -53,7 +52,7 @@ class TagsParser:
             featuring_match = re.match(featuring_regex, title)
             if featuring_match:
                 featured_artists = featuring_match.group(2).strip()
-                new_artist += Utils.split_tag(featured_artists)
+                new_artist += utils.split_tag(featured_artists)
 
             for pattern_name in version_pattern_names:
                 version_regex = constants.tag_parse_patterns[pattern_name]
@@ -67,16 +66,16 @@ class TagsParser:
                     new_genre.append("Instrumental")
 
         if set(new_version) != set(old_version) and len(new_version) > 0:
-            self.tags["version"] = Utils.remove_duplicates(old_version + new_version)
+            self.tags["version"] = utils.remove_duplicates(old_version + new_version)
 
         if set(new_artist) != set(old_artist) and len(new_artist) > 0:
-            self.tags["artist"] = Utils.remove_duplicates(old_artist + new_artist)
+            self.tags["artist"] = utils.remove_duplicates(old_artist + new_artist)
 
         if set(new_genre) != set(old_genre) and len(new_genre) > 0:
-            self.tags["genre"] = Utils.remove_duplicates(old_genre + new_genre)
+            self.tags["genre"] = utils.remove_duplicates(old_genre + new_genre)
 
         if len(old_title) > 0:
-            pruned_title = Utils.prune_title(old_title[0])
+            pruned_title = utils.prune_title(old_title[0])
             if old_title[0] != pruned_title:
                 self.tags["title"] = [pruned_title]
 
@@ -92,6 +91,6 @@ class TagsParser:
         for tag in tags_to_split:
             tags_tag = self.original_tags.get(tag)
             if tags_tag is not None and len(tags_tag) == 1:
-                new_tag = Utils.split_tag(tags_tag[0])
+                new_tag = utils.split_tag(tags_tag[0])
                 if new_tag != tags_tag:
                     self.tags[tag] = new_tag

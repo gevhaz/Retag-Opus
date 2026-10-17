@@ -15,14 +15,13 @@ from typing import Sequence
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants, messages, styles
+from retag_opus import constants, messages, styles, utils
 from retag_opus.cli import Cli
 from retag_opus.description_parser import DescriptionParser
 from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import REMOVED_TAG, MusicTags
 from retag_opus.musicbrainz import MusicBrainzMatcher
 from retag_opus.tags_parser import TagsParser
-from retag_opus.utils import Utils
 
 Tags = dict[str, list[str]]
 
@@ -108,7 +107,7 @@ def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
                 changed = True
         if changed:
             metadata.save()
-            messages.success(f"Album level tags saved for file: {Utils.file_path_to_song_data(file_path)}")
+            messages.success(f"Album level tags saved for file: {utils.file_path_to_song_data(file_path)}")
 
 
 def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, MusicTags]:
@@ -230,7 +229,7 @@ def run(argv: Sequence[str] | None = None) -> int:
     for idx, file_path in enumerate(all_files):
         redo = True
         album = albums.get(file_path)
-        file_name = Utils.file_path_to_song_data(file_path)
+        file_name = utils.file_path_to_song_data(file_path)
         while redo:
             redo = False
             # Print info about file and progress
