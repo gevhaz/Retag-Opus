@@ -10,6 +10,9 @@
   `musicbrainz = true` in the configuration file. MusicBrainz is used as one
   more source of tags, including track numbers, credits and MusicBrainz IDs.
   Songs from the same album are looked up together.
+- Video titles like "Artist - Title" are split into the artist and the title,
+  when one side is the existing artist, which `yt-dlp` sets to the YouTube
+  channel.
 - Mixers and engineers are put in the `mixer` and `engineer` tags, from YouTube
   descriptions and from MusicBrainz, as in Picard.
 

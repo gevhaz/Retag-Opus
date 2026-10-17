@@ -105,6 +105,24 @@ class TestTagsParser(unittest.TestCase):
         self.assertEqual(["First Artist", "Second Artist", "Third Artist"], tags_parser.tags.get("artist"))
         self.assertEqual(["Song name"], tags_parser.tags.get("title"))
 
+    def test_parse_tags_artist_in_title(self) -> None:
+        """Test splitting the artist from a video title."""
+        tags_parser = TagsParser({"title": ["Ellen Allien - Love (Official Video)"], "artist": ["Ellen Allien UFO"]})
+        tags_parser.parse_tags()
+        self.assertEqual(["Love"], tags_parser.tags.get("title"))
+        self.assertEqual(["Ellen Allien"], tags_parser.tags.get("artist"))
+
+        tags_parser = TagsParser(
+            {"title": ["B.o.B - Airplanes (feat. Hayley Williams) [Official Video]"], "artist": ["B.o.B"]}
+        )
+        tags_parser.parse_tags()
+        self.assertEqual(["Airplanes"], tags_parser.tags.get("title"))
+        self.assertEqual(["B.o.B", "Hayley Williams"], tags_parser.tags.get("artist"))
+
+        tags_parser = TagsParser({"title": ["Lucia - Karlfeldt & Hazelius"], "artist": ["Annelie Lockneman"]})
+        tags_parser.parse_tags()
+        self.assertEqual({}, tags_parser.tags)
+
     def test_parse_tags_albumversion(self) -> None:
         """Test parsing "Album version" data."""
         titles = [

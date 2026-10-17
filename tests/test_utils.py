@@ -121,6 +121,37 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song (Video Edit)", utils.prune_title("A song (Video Edit)"))
         self.assertEqual("Revolution #9", utils.prune_title("Revolution #9"))
 
+    def test_split_artist_from_title(self) -> None:
+        """Test that video titles are split where one side is the artist."""
+        self.assertEqual(
+            ("James Blunt", "James Blunt", "Bonfire Heart"),
+            utils.split_artist_from_title("James Blunt - Bonfire Heart", ["James Blunt"]),
+        )
+        self.assertEqual(
+            ("Annelie Lockneman", "Annelie Lockneman", "Änglasång"),
+            utils.split_artist_from_title("Änglasång - Annelie Lockneman", ["Annelie Lockneman"]),
+        )
+        self.assertEqual(
+            ("yeule", "yeule", "softscars"),
+            utils.split_artist_from_title("yeule - 'softscars'", ["yeule"]),
+        )
+        self.assertEqual(
+            ("Ellen Allien UFO", "Ellen Allien", "Love"),
+            utils.split_artist_from_title("Ellen Allien - Love", ["Ellen Allien UFO"]),
+        )
+        self.assertEqual(
+            ("Jay-Z", "Jay-Z", "Song (Song - 2021)"),
+            utils.split_artist_from_title("Jay-Z – Song (Song - 2021)", ["Jay-Z"]),
+        )
+
+    def test_split_artist_from_title_without_artist(self) -> None:
+        """Test that video titles where no side is the artist aren't split."""
+        # The lyricist and the composer of a song Annelie Lockneman sings
+        self.assertIsNone(utils.split_artist_from_title("Lucia - Karlfeldt & Hazelius", ["Annelie Lockneman"]))
+        self.assertIsNone(utils.split_artist_from_title("Naanum Rowdy Dhaan - Thangamey", ["Wunderbar Films"]))
+        self.assertIsNone(utils.split_artist_from_title("Love - Live", ["Love Bites"]))
+        self.assertIsNone(utils.split_artist_from_title("Song", ["Song"]))
+
     def test_prune_featuring_from_title(self) -> None:
         """Test that remix version information is pruned from title."""
         unpruned_title_1 = "A song (featuring artist)"
