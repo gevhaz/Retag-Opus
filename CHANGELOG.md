@@ -33,6 +33,8 @@
 - The result shown before saving only lists performers that have a value or
   were removed, instead of every performer that can be parsed from YouTube
   descriptions.
+- Notes about the YouTube video, like "(Official Video)" or "[Lyric Video]",
+  and hashtags at the end are removed from titles.
 - Python 3.13 or newer is now required.
 - The short option for `--album` is now `-a` instead of `-b`.
 - Unset tags are shown in gray instead of black, so they are readable on dark
