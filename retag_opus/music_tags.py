@@ -27,7 +27,6 @@ class MusicTags:
     def __init__(self, manual_album_set: bool = False) -> None:
         """Create empty attributes for each source."""
         self.base_patterns = deepcopy(constants.all_tags)
-        self.performer_patterns = deepcopy(constants.performer_tags)
         self.manual_album_set = manual_album_set
         if manual_album_set:
             self.base_patterns["discsubtitle"] = self.base_patterns["album"].copy()
@@ -51,10 +50,9 @@ class MusicTags:
     def performer_tags_in_print_order(self, *sources: Tags) -> list[str]:
         """Get the performer tags in the sources, in the order to print them.
 
-        First come the performer tags that can be parsed from YouTube
-        descriptions, in the order of constants.performer_tags. Then come
-        the ones that can't, e.g. "performer:theremin" from MusicBrainz,
-        in alphabetical order.
+        First come the common performer tags, in the order of
+        constants.performer_tags. Then come the others, e.g.
+        "performer:theremin" from MusicBrainz, in alphabetical order.
 
         :param sources: The tags to look for performer tags in.
 
@@ -66,19 +64,20 @@ class MusicTags:
                 if self.is_performer_tag(tag_id) and tag_id not in performer_tags_in_sources:
                     performer_tags_in_sources.append(tag_id)
 
-        performer_tags_with_pattern = []
-        for tag_id in self.performer_patterns.keys():
+        common_performer_tags = []
+        for tag_id in constants.performer_tags:
             if tag_id in performer_tags_in_sources:
-                performer_tags_with_pattern.append(tag_id)
+                common_performer_tags.append(tag_id)
 
-        performer_tags_without_pattern = []
+        other_performer_tags = []
         for tag_id in performer_tags_in_sources:
-            if tag_id not in self.performer_patterns:
-                performer_tags_without_pattern.append(tag_id)
+            if tag_id not in constants.performer_tags:
+                other_performer_tags.append(tag_id)
 
-        return performer_tags_with_pattern + sorted(performer_tags_without_pattern)
+        return common_performer_tags + sorted(other_performer_tags)
 
-    def performer_print_name(self, tag_id: str) -> str:
+    @staticmethod
+    def performer_print_name(tag_id: str) -> str:
         """Get the name to print before the values of a performer tag.
 
         Performers are printed as a list, e.g.:
@@ -91,9 +90,6 @@ class MusicTags:
 
         :return: The name to print, e.g. "- Timpani".
         """
-        # Tags that can be parsed from YouTube descriptions have a name
-        if tag_id in self.performer_patterns:
-            return self.performer_patterns[tag_id]["print"]
         role = tag_id.removeprefix(constants.PERFORMER_PREFIX)
         role_with_capital = role[:1].upper() + role[1:]
         return "- " + role_with_capital

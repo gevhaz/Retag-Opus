@@ -30,75 +30,61 @@ tag_parse_patterns: Final[dict[str, str]] = {
     "albumversion": r"(?i)(.*?)\s*[\(\[](album version.*?)[\)\]]\s*(.*)",
 }
 
+# Tags that are printed for every song, and patterns for parsing them
+# from YouTube descriptions. Credits, e.g. "Composer: Name", are parsed
+# by youtube_credits instead.
 all_tags: Final[dict[str, ParsingReference]] = {
     "title": {"print": "Title", "pattern": [r".*“(.*)” by .* from ‘.*’"]},
     "album": {"print": "Album", "pattern": [r".*“.*” by .* from ‘(.*)’"]},
     "albumartist": {"print": "Album Artist", "pattern": []},
     "artist": {
         "print": "Artist(s)",
-        "pattern": [
-            r"^(?!.*(https?|[mM]akeup|[fF]inishing)).*[aA]rtist.*:\s*(.+)\s*",
-            r".*\([fF]eat. (.+?)\)",
-            r".*“.*” by (.*) from ‘.*’",
-        ],
+        "pattern": [r".*\([fF]eat. (.+?)\)", r".*“.*” by (.*) from ‘.*’"],
     },
     "date": {"print": "Date", "pattern": [r"Released on:\s*(\d\d\d\d-\d\d-\d\d)"]},
     "genre": {"print": "Genre", "pattern": []},
     "version": {"print": "Version", "pattern": []},
-    "performer": {"print": "Performer", "pattern": [r".*[pP]erformer.*:\s*(.+)\s*"]},
+    "performer": {"print": "Performer", "pattern": []},
     "organization": {"print": "Organization", "pattern": [r"Provided to YouTube by (.+)\s*"]},
     "copyright": {"print": "Copyright", "pattern": [r"\u2117 (.+)\s*"]},
-    "composer": {"print": "Composer", "pattern": [r".*?[cC]omposer.*:\s*(.+)\s*"]},
-    "conductor": {"print": "Conductor", "pattern": [r".*[cC]onductor.*:\s*(.+)\s*"]},
-    "arranger": {
-        "print": "Arranger",
-        "pattern": [r".*?[aA]rranged\s+[bB]y.*:\s*(.+)\s*", r".*?[aA]rranger.*:\s*(.+)\s*"],
-    },
-    "author": {"print": "Author", "pattern": [r"(.*, )?[aA]uthor.*:\s*(.+)\s*"]},
-    "producer": {"print": "Producer", "pattern": [r"(.*, )?[pP]roducer.*:\s*(.+)\s*"]},
-    "publisher": {"print": "Publisher", "pattern": [r"(.*, )?[pP]ublisher.*:\s*(.+)\s*"]},
-    "lyricist": {"print": "Lyricist", "pattern": [r".*[lL]yricist.*:\s*(.+)\s*"]},
-    "writer": {
-        "print": "Writer",
-        "pattern": [r"(.*, )?[wW]riter.*:\s*(.+)\s*", r"(.*, )?[wW]ritten\s+[bB]y.*:\s*(.+)\s*"],
-    },
+    "composer": {"print": "Composer", "pattern": []},
+    "conductor": {"print": "Conductor", "pattern": []},
+    "arranger": {"print": "Arranger", "pattern": []},
+    "author": {"print": "Author", "pattern": []},
+    "producer": {"print": "Producer", "pattern": []},
+    "publisher": {"print": "Publisher", "pattern": []},
+    "lyricist": {"print": "Lyricist", "pattern": []},
+    "writer": {"print": "Writer", "pattern": []},
 }
 
 # Prefix of tags with a performer's role, e.g. "performer:lead vocals".
 # Quod Libet uses the same tags, and Picard reads them.
 PERFORMER_PREFIX: Final = "performer:"
 
-# Performer tags that are parsed from YouTube descriptions. The roles
-# are named as on MusicBrainz, so that values from MusicBrainz and from
-# YouTube end up in the same tag and can be compared.
-performer_tags: Final[dict[str, ParsingReference]] = {
-    "performer:lead vocals": {
-        "print": "- Lead vocals",
-        "pattern": [r"(.*, )?(Lead\s+)?[vV]ocal(?!.*[eE]ngineer).*:\s*(.+)\s*"],
-    },
-    "performer:background vocals": {
-        "print": "- Background Vocals",
-        "pattern": [r"(.*, )?[bB]ackground\s+[vV]ocal.*:\s*(.+)\s*"],
-    },
-    "performer:drums (drum set)": {"print": "- Drums (drum set)", "pattern": [r"(.*, )?[dD]rum.*:\s*(.+)\s*"]},
-    "performer:percussion": {"print": "- Percussion", "pattern": [r".*[pP]ercussion.*:\s*(.+)\s*"]},
-    "performer:keyboard": {"print": "- Keyboard", "pattern": [r"(.*, )?[kK]eyboard.*:\s*(.+)\s*"]},
-    "performer:piano": {"print": "- Piano", "pattern": [r"(.*, )?[pP]iano.*:\s*(.+)\s*"]},
-    "performer:synthesizer": {"print": "- Synthesizer", "pattern": [r".*[sS]ynth.*:\s*(.+)\s*"]},
-    "performer:guitar": {
-        "print": "- Guitar",
-        "pattern": [r"(.*, )?[gG]uitar.*:\s*(.+)\s*" r".*[eE]lectric\s+[gG]uitar.*:\s*(.+)\s*"],
-    },
-    "performer:electric guitar": {"print": "- Electric guitar", "pattern": []},
-    "performer:bass guitar": {"print": "- Bass guitar", "pattern": [r".*[bB]ass\s+[gG]uitar.*:\s*(.+)\s*"]},
-    "performer:acoustic guitar": {"print": "- Acoustic guitar", "pattern": [r".*[aA]coustic\s+[gG]uitar.*:\s*(.+)\s*"]},
-    "performer:ukulele": {"print": "- Ukulele", "pattern": [r".*[uU]kulele.*:\s*(.+)\s*"]},
-    "performer:violin": {"print": "- Violin", "pattern": [r"(.*, )?[vV]iolin.*:\s*(.+)\s*"]},
-    "performer:double bass": {"print": "- Double bass", "pattern": [r".*[dD]ouble\s+[bB]ass.*:\s*(.+)\s*"]},
-    "performer:cello": {"print": "- Cello", "pattern": [r"(.*, )?[cC]ello.*:\s*(.+)\s*"]},
-    "performer:saxophone": {"print": "- Saxophone", "pattern": [r"(.*, )?[sS]axophone.*:\s*(.+)\s*"]},
-    "performer:flute": {"print": "- Flute", "pattern": [r"(.*, )?[fF]lute.*:\s*(.+)\s*"]},
-}
+# Common performer tags, which are printed first, in this order. Their
+# roles are recognized in YouTube credits on their own, e.g. "Piano:
+# Name", while other roles have to come after "Associated Performer".
+# The roles are named as on MusicBrainz, so that values from MusicBrainz
+# and from YouTube end up in the same tag and can be compared.
+performer_tags: Final[list[str]] = [
+    "performer:lead vocals",
+    "performer:background vocals",
+    "performer:drums (drum set)",
+    "performer:percussion",
+    "performer:keyboard",
+    "performer:piano",
+    "performer:synthesizer",
+    "performer:guitar",
+    "performer:electric guitar",
+    "performer:bass guitar",
+    "performer:acoustic guitar",
+    "performer:ukulele",
+    "performer:violin",
+    "performer:double bass",
+    "performer:cello",
+    "performer:saxophone",
+    "performer:flute",
+]
 
 # Prefix of tags with MusicBrainz identifiers. The user can't judge
 # identifiers, only the MusicBrainz match they come from.

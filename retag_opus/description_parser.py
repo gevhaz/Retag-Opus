@@ -2,7 +2,7 @@
 import re
 from copy import deepcopy
 
-from retag_opus import constants
+from retag_opus import constants, youtube_credits
 from retag_opus.utils import Utils
 
 INTERPUNCT = "\u00b7"
@@ -17,7 +17,6 @@ class DescriptionParser:
         """Create tags dictionary that will hold the parsed tags."""
         self.tags: Tags = {}
         self.base_patterns = deepcopy(constants.all_tags)
-        self.performer_patterns = deepcopy(constants.performer_tags)
         self.manual_album_set = manual_album_set
         if manual_album_set:
             self.base_patterns["discsubtitle"] = self.base_patterns["album"].copy()
@@ -57,6 +56,24 @@ class DescriptionParser:
             existing_values = self.tags.get(field_name, [])
             self.tags[field_name] = Utils.remove_duplicates(existing_values + [field_value])
 
+    def add_credits(self, lines: list[str]) -> None:
+        """Add the tags from lines with roles and a name.
+
+        For example, "Associated Performer, Drums: Roger Taylor" adds
+        "Roger Taylor" to the tag "performer:drums (drum set)". Lines
+        whose roles aren't known, e.g. "Released on: 2020-01-01", are
+        skipped.
+
+        :param lines: Lines of a YouTube description.
+        """
+        for line in lines:
+            if ": " not in line:
+                continue
+            credit_tags = youtube_credits.parse_credit_line(line)
+            for tag_name, contributor_names in credit_tags.items():
+                existing_names = self.tags.get(tag_name, [])
+                self.tags[tag_name] = Utils.remove_duplicates(existing_names + contributor_names)
+
     def parse(self, description_tag_full: str) -> None:
         """Parse the provided youtube description.
 
@@ -92,13 +109,11 @@ class DescriptionParser:
                 for pattern in tag_data["pattern"]:
                     self.standard_pattern(tag_id, pattern, description_line)
 
-            for tag_id, tag_data in self.performer_patterns.items():
-                for pattern in tag_data["pattern"]:
-                    self.standard_pattern(tag_id, pattern, description_line)
-
             title = self.tags.pop("title", None)
             if title:
                 self.tags["title"] = [title[0]]
+
+        self.add_credits(description_tag_lines)
 
         artist = self.tags.get("artist")
         if artist:
@@ -113,9 +128,6 @@ class DescriptionParser:
         for tag_name in list(self.tags):
             if not self.tags[tag_name]:
                 del self.tags[tag_name]
-
-        # Basic pattern:
-        # r".*[ ]   .*:\s*(.*)\s*"
 
         # Custom patterns
         for description_line in description_tag_lines:
