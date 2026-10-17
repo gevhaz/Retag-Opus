@@ -33,8 +33,8 @@ class MusicTags:
             self.tags_printed_for_every_song["album"]["pattern"] = []
         self.original: Tags = {}
         self.youtube: Tags = {}
-        self.fromtags: Tags = {}
-        self.fromdesc: Tags = {}
+        self.parsed_from_original: Tags = {}
+        self.parsed_from_youtube: Tags = {}
         self.resolved: Tags = {}
         self.musicbrainz: Tags = {}
         self.album_level_tags: Tags = {}
@@ -144,15 +144,15 @@ class MusicTags:
         print_data: list[str] = []
         original = self.original.get(tag_id)
         youtube = self.youtube.get(tag_id)
-        fromdesc = self.fromdesc.get(tag_id)
-        fromtags = self.fromtags.get(tag_id)
+        parsed_from_youtube = self.parsed_from_youtube.get(tag_id)
+        parsed_from_original = self.parsed_from_original.get(tag_id)
         musicbrainz = self.musicbrainz.get(tag_id)
-        if fromtags and fromtags != original:
-            print_data.append(styles.from_tags(" | ".join(fromtags)))
-        if fromdesc and fromdesc != original:
-            print_data.append(styles.from_desc(" | ".join(fromdesc)))
+        if parsed_from_original and parsed_from_original != original:
+            print_data.append(styles.parsed_from_original(" | ".join(parsed_from_original)))
+        if parsed_from_youtube and parsed_from_youtube != original:
+            print_data.append(styles.parsed_from_youtube(" | ".join(parsed_from_youtube)))
         if original:
-            print_data.append(styles.metadata(" | ".join(original)))
+            print_data.append(styles.original(" | ".join(original)))
         if youtube and original != youtube:
             print_data.append(styles.youtube(" | ".join(youtube)))
         if musicbrainz and original != musicbrainz:
@@ -167,7 +167,7 @@ class MusicTags:
         """
         performer_block = []
         there_are_tags = False
-        sources = [self.original, self.youtube, self.fromdesc, self.fromtags, self.musicbrainz]
+        sources = [self.original, self.youtube, self.parsed_from_youtube, self.parsed_from_original, self.musicbrainz]
         for tag_id in self.performer_tags_in_print_order(*sources):
             tag_all_values = self.get_tag_data(tag_id)
             if len(tag_all_values) > 0:
@@ -205,21 +205,21 @@ class MusicTags:
         set of tags.
         """
         if self.original:
-            self.print_metadata(self.original, styles.metadata)
+            self.print_metadata(self.original, styles.original)
         else:
             messages.error("There were no pre-existing tags for this file")
 
-    def print_from_tags(self) -> None:
+    def print_parsed_from_original(self) -> None:
         """Print all tags parsed from original tags."""
-        if self.fromtags:
-            self.print_metadata(self.fromtags, styles.from_tags)
+        if self.parsed_from_original:
+            self.print_metadata(self.parsed_from_original, styles.parsed_from_original)
         else:
             messages.error("No new data parsed from tags")
 
-    def print_from_desc(self) -> None:
+    def print_parsed_from_youtube(self) -> None:
         """Print all tags parsed from YouTube description tags."""
-        if self.fromdesc:
-            self.print_metadata(self.fromdesc, styles.from_desc)
+        if self.parsed_from_youtube:
+            self.print_metadata(self.parsed_from_youtube, styles.parsed_from_youtube)
         else:
             messages.error("No new data parsed from tags parsed from description")
 
@@ -248,15 +248,22 @@ class MusicTags:
                 elif resolved_tag != self.original.get(tag):
                     self.print_metadata_key(f"- {tag}", tag, styles.changed, self.resolved)
                 elif len(joined_tag_items) > 200:
-                    print(f"  - {tag}: " + styles.metadata(f"[{joined_tag_items[:65]}...]"))
+                    print(f"  - {tag}: " + styles.original(f"[{joined_tag_items[:65]}...]"))
                 else:
-                    self.print_metadata_key(f"- {tag}", tag, styles.metadata, self.resolved)
+                    self.print_metadata_key(f"- {tag}", tag, styles.original, self.resolved)
 
         # Only performers with something to show are printed: the resolved
         # ones, which include the file's tags and removed tags, and when
         # printing all, the ones in the other sources too
         if print_all:
-            sources = [self.resolved, self.original, self.youtube, self.fromdesc, self.fromtags, self.musicbrainz]
+            sources = [
+                self.resolved,
+                self.original,
+                self.youtube,
+                self.parsed_from_youtube,
+                self.parsed_from_original,
+                self.musicbrainz,
+            ]
             performer_tags = self.performer_tags_in_print_order(*sources)
         else:
             performer_tags = self.performer_tags_in_print_order(self.resolved)
@@ -280,7 +287,7 @@ class MusicTags:
           will be removed from the file. The value shown is the one the
           file has now.
         - Green (styles.changed): the tag will get the value shown.
-        - Cyan (styles.metadata): the tag keeps the value it has now.
+        - Cyan (styles.original): the tag keeps the value it has now.
           If print_all is set, the values found in all sources are shown
           instead, each in the color of its source, so that they can be
           compared before choosing a value.
@@ -308,7 +315,7 @@ class MusicTags:
         elif len(all_sources_tag) > 0 and print_all:
             print("  " + printed_tag_name + ": " + " | ".join(all_sources_tag))
         else:
-            self.print_metadata_key(printed_tag_name, tag_id, styles.metadata, self.resolved)
+            self.print_metadata_key(printed_tag_name, tag_id, styles.original, self.resolved)
 
     def switch_album_to_disc_subtitle(self, manual_album_name: str) -> None:
         """Move album tag to discsubtitle tag.
@@ -355,16 +362,16 @@ class MusicTags:
         :param only_new: Whether to include the value of the field in
             the original music file.
         """
-        old_value = self.original.get(field, [])
-        yt_value = self.youtube.get(field, [])
-        from_desc_value = self.fromdesc.get(field, [])
-        from_tags_value = self.fromtags.get(field, [])
-        musicbrainz_value = self.musicbrainz.get(field, [])
-        new_values = yt_value + from_desc_value + from_tags_value + musicbrainz_value
+        original_values = self.original.get(field, [])
+        youtube_values = self.youtube.get(field, [])
+        parsed_from_youtube_values = self.parsed_from_youtube.get(field, [])
+        parsed_from_original_values = self.parsed_from_original.get(field, [])
+        musicbrainz_values = self.musicbrainz.get(field, [])
+        new_values = youtube_values + parsed_from_youtube_values + parsed_from_original_values + musicbrainz_values
         if only_new:
             return utils.remove_duplicates(new_values)
         else:
-            return utils.remove_duplicates(old_value + new_values)
+            return utils.remove_duplicates(original_values + new_values)
 
     def modify_resolved_field(self) -> None:
         """Manually add key-value pairs to the set of resolved tags."""
@@ -458,7 +465,7 @@ class MusicTags:
         value for.
         """
         tag_names: list[str] = []
-        for new_source in [self.youtube, self.fromdesc, self.fromtags, self.musicbrainz]:
+        for new_source in [self.youtube, self.parsed_from_youtube, self.parsed_from_original, self.musicbrainz]:
             tag_names.extend(new_source.keys())
         return utils.remove_duplicates(tag_names)
 
@@ -668,32 +675,32 @@ class MusicTags:
                 # E.g. a single on YouTube may only be on an album on
                 # MusicBrainz, and then its track number would be wrong
                 continue
-            old_value = self.original.get(tag_name, [])
-            yt_value = self.youtube.get(tag_name, [])
-            from_desc_value = self.fromdesc.get(tag_name, [])
-            from_tags_value = self.fromtags.get(tag_name, [])
-            musicbrainz_value = self.musicbrainz.get(tag_name, [])
+            original_values = self.original.get(tag_name, [])
+            youtube_values = self.youtube.get(tag_name, [])
+            parsed_from_youtube_values = self.parsed_from_youtube.get(tag_name, [])
+            parsed_from_original_values = self.parsed_from_original.get(tag_name, [])
+            musicbrainz_values = self.musicbrainz.get(tag_name, [])
             all_values = self.get_field(tag_name, only_new=True)
 
             # MusicBrainz may have found the song on another release than
             # the album that the other sources say, e.g. on an album rather
             # than a single, and then the user chooses which is right
             album_differs_from_musicbrainz = tag_name == "album" and self.differs_from_musicbrainz_album(
-                [old_value, yt_value, from_tags_value, from_desc_value]
+                [original_values, youtube_values, parsed_from_original_values, parsed_from_youtube_values]
             )
             # The existing value can be kept if a source agrees with it
-            can_keep_old_value = len(old_value) > 0 and not album_differs_from_musicbrainz
-            stripped_old_value = [v.strip() for v in old_value]
+            can_keep_original_values = len(original_values) > 0 and not album_differs_from_musicbrainz
+            stripped_original_values = [v.strip() for v in original_values]
 
-            if tag_name.startswith(constants.MUSICBRAINZ_ID_PREFIX) and len(musicbrainz_value) > 0:
-                self.resolved[tag_name] = musicbrainz_value
-            elif not old_value and len(all_values) > 0 and not album_differs_from_musicbrainz:
+            if tag_name.startswith(constants.MUSICBRAINZ_ID_PREFIX) and len(musicbrainz_values) > 0:
+                self.resolved[tag_name] = musicbrainz_values
+            elif not original_values and len(all_values) > 0 and not album_differs_from_musicbrainz:
                 # In order of preference
                 sources = {
-                    "YouTube description": yt_value,
-                    "tags parsed from original tags": from_tags_value,
-                    "tags parsed from YouTube tags": from_desc_value,
-                    "MusicBrainz": musicbrainz_value,
+                    "YouTube description": youtube_values,
+                    "tags parsed from original tags": parsed_from_original_values,
+                    "tags parsed from YouTube tags": parsed_from_youtube_values,
+                    "MusicBrainz": musicbrainz_values,
                 }
                 for source, value in sources.items():
                     if len(value) > 0:
@@ -703,18 +710,20 @@ class MusicTags:
                                 f"{tag_name.title()}: No value exists in metadata. Using {source}: {value}."
                             )
                         break
-            elif can_keep_old_value and utils.is_equal_when_stripped(yt_value, old_value):
+            elif can_keep_original_values and utils.is_equal_when_stripped(youtube_values, original_values):
                 messages.success(f"{tag_name.title()}: Metadata matches YouTube description tags.")
-                self.resolved[tag_name] = stripped_old_value
-            elif can_keep_old_value and utils.is_equal_when_stripped(from_desc_value, old_value):
+                self.resolved[tag_name] = stripped_original_values
+            elif can_keep_original_values and utils.is_equal_when_stripped(parsed_from_youtube_values, original_values):
                 messages.success(f"{tag_name.title()}: Metadata matches tags parsed from YouTube tags.")
-                self.resolved[tag_name] = stripped_old_value
-            elif can_keep_old_value and utils.is_equal_when_stripped(from_tags_value, old_value):
+                self.resolved[tag_name] = stripped_original_values
+            elif can_keep_original_values and utils.is_equal_when_stripped(
+                parsed_from_original_values, original_values
+            ):
                 messages.success(f"{tag_name.title()}: Metadata matches tags parsed from original tags.")
-                self.resolved[tag_name] = stripped_old_value
-            elif can_keep_old_value and utils.is_equal_when_normalized(musicbrainz_value, old_value):
+                self.resolved[tag_name] = stripped_original_values
+            elif can_keep_original_values and utils.is_equal_when_normalized(musicbrainz_values, original_values):
                 messages.success(f"{tag_name.title()}: Metadata matches MusicBrainz.")
-                self.resolved[tag_name] = stripped_old_value
+                self.resolved[tag_name] = stripped_original_values
             else:
                 redo = True
                 print("-----------------------------------------------")
@@ -724,32 +733,38 @@ class MusicTags:
                     candidates = []
                     candidate_values: list[list[str]] = []
                     messages.conflict(f"{tag_name.title()}: Mismatch between values in description and metadata:")
-                    if len(yt_value) > 0:
-                        print("YouTube description: " + styles.youtube(" | ".join(yt_value)))
+                    if len(youtube_values) > 0:
+                        print("YouTube description: " + styles.youtube(" | ".join(youtube_values)))
                         candidates.append("YouTube description")
-                        candidate_values.append(yt_value)
-                    if len(from_tags_value) > 0:
-                        print("Parsed from original tags: " + styles.from_tags(" | ".join(from_tags_value)))
+                        candidate_values.append(youtube_values)
+                    if len(parsed_from_original_values) > 0:
+                        print(
+                            "Parsed from original tags: "
+                            + styles.parsed_from_original(" | ".join(parsed_from_original_values))
+                        )
                         candidates.append("Parsed from original tags")
-                        candidate_values.append(from_tags_value)
+                        candidate_values.append(parsed_from_original_values)
 
-                    print("Existing metadata:  " + styles.metadata(" | ".join(old_value)))
+                    print("Existing metadata:  " + styles.original(" | ".join(original_values)))
                     candidates.append("Existing metadata")
-                    candidate_values.append(old_value)
+                    candidate_values.append(original_values)
 
-                    if len(from_desc_value) > 0:
-                        print("Parsed from YouTube tags: " + styles.from_desc(" | ".join(from_desc_value)))
+                    if len(parsed_from_youtube_values) > 0:
+                        print(
+                            "Parsed from YouTube tags: "
+                            + styles.parsed_from_youtube(" | ".join(parsed_from_youtube_values))
+                        )
                         candidates.append("Parsed from Youtube tags")
-                        candidate_values.append(from_desc_value)
+                        candidate_values.append(parsed_from_youtube_values)
 
                     # Start on the value MusicBrainz agrees with, or on
                     # MusicBrainz if it agrees with none of them
                     cursor = 0
-                    if len(musicbrainz_value) > 0:
-                        print("MusicBrainz: " + styles.musicbrainz(" | ".join(musicbrainz_value)))
+                    if len(musicbrainz_values) > 0:
+                        print("MusicBrainz: " + styles.musicbrainz(" | ".join(musicbrainz_values)))
                         cursor = len(candidates)  # MusicBrainz itself
                         for index, value in enumerate(candidate_values):
-                            if utils.is_equal_when_normalized(value, musicbrainz_value):
+                            if utils.is_equal_when_normalized(value, musicbrainz_values):
                                 cursor = index
                                 break
                         candidates.append("MusicBrainz")
@@ -768,19 +783,19 @@ class MusicTags:
                             redo = self.manually_adjust_tag_when_resolving(tag_name)
 
                         case "Existing metadata":
-                            self.resolved[tag_name] = old_value
+                            self.resolved[tag_name] = original_values
 
                         case "YouTube description":
-                            self.resolved[tag_name] = yt_value
+                            self.resolved[tag_name] = youtube_values
 
                         case "Parsed from original tags":
-                            self.resolved[tag_name] = from_tags_value
+                            self.resolved[tag_name] = parsed_from_original_values
 
                         case "Parsed from Youtube tags":
-                            self.resolved[tag_name] = from_desc_value
+                            self.resolved[tag_name] = parsed_from_youtube_values
 
                         case "MusicBrainz":
-                            self.resolved[tag_name] = musicbrainz_value
+                            self.resolved[tag_name] = musicbrainz_values
 
                         case _:
                             raise UserExitException("Skipping this and all later songs")

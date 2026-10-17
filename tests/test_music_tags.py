@@ -26,14 +26,14 @@ class TestMusicTags(unittest.TestCase):
     def test_print_metadata_key(self) -> None:
         """Test printing of a single metadata key."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "title": ["title 1", "title 2"]}
-        MusicTags().print_metadata_key("Artist", "artist", styles.metadata, tags)
+        MusicTags().print_metadata_key("Artist", "artist", styles.original, tags)
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual("  Artist: artist 1 | artist 2\n", captured.out)
 
     def test_print_metadata(self) -> None:
         """Test printing of metadata."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "title": ["title 1", "title 2"]}
-        MusicTags().print_metadata(tags, styles.metadata)
+        MusicTags().print_metadata(tags, styles.original)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Title: title 1 | title 2\n"
@@ -61,7 +61,7 @@ class TestMusicTags(unittest.TestCase):
     def test_print_metadata_with_performers(self) -> None:
         """Test printing of metadata where there are performer tags."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "performer:lead vocals": ["bassist 1"]}
-        MusicTags().print_metadata(tags, styles.metadata)
+        MusicTags().print_metadata(tags, styles.original)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
@@ -99,7 +99,7 @@ class TestMusicTags(unittest.TestCase):
             "performer:accordion": ["person 2"],
             "performer:violin": ["person 3"],
         }
-        MusicTags().print_metadata(tags, styles.metadata)
+        MusicTags().print_metadata(tags, styles.original)
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
@@ -166,8 +166,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 4"]}
         actual = tags.get_tag_data("artist")
         expected = [
             "artist 3",
@@ -182,8 +182,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 4"]}
         tags.print_all()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
@@ -213,8 +213,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
         tags.print_all()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
@@ -254,8 +254,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
         tags.print_youtube()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
@@ -286,8 +286,8 @@ class TestMusicTags(unittest.TestCase):
         """Test printing data from youtube tags when there are none."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
         tags.print_youtube()
         captured = self.capsys.readouterr()  # type: ignore
         expected = "No new data parsed from description\n"
@@ -298,8 +298,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
         tags.print_original()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
@@ -330,21 +330,21 @@ class TestMusicTags(unittest.TestCase):
         """Test printing original tags when there are none."""
         tags = MusicTags()
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
         tags.print_original()
         captured = self.capsys.readouterr()  # type: ignore
         expected = "There were no pre-existing tags for this file\n"
         self.assertEqual(expected, captured.out)
 
-    def test_print_from_tags(self) -> None:
+    def test_print_parsed_from_original(self) -> None:
         """Test printing tags parsed from original tags."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 3"]}
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromtags = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
-        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
-        tags.print_from_tags()
+        tags.parsed_from_original = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
+        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
+        tags.print_parsed_from_original()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
@@ -370,25 +370,25 @@ class TestMusicTags(unittest.TestCase):
         )
         self.assertEqual(expected, captured.out)
 
-    def test_print_from_tags_no_data(self) -> None:
+    def test_print_parsed_from_original_no_data(self) -> None:
         """Test print tags parsed from original tags when none exist."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 3"]}
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromdesc = {"performer:lead vocals": ["artist 4"]}
-        tags.print_from_tags()
+        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
+        tags.print_parsed_from_original()
         captured = self.capsys.readouterr()  # type: ignore
         expected = "No new data parsed from tags\n"
         self.assertEqual(expected, captured.out)
 
-    def test_print_from_descripton(self) -> None:
+    def test_print_parsed_from_youtube(self) -> None:
         """Test print tags parsed from description, with performers."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 3"]}
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromtags = {"performer:lead vocals": ["artist 4"]}
-        tags.fromdesc = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
-        tags.print_from_desc()
+        tags.parsed_from_original = {"performer:lead vocals": ["artist 4"]}
+        tags.parsed_from_youtube = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
+        tags.print_parsed_from_youtube()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
             "  Performers:\n"
@@ -414,13 +414,13 @@ class TestMusicTags(unittest.TestCase):
         )
         self.assertEqual(expected, captured.out)
 
-    def test_print_from_descripton_from_tags(self) -> None:
+    def test_print_parsed_from_youtube_from_tags(self) -> None:
         """Test print tags parsed from description, with no data."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 3"]}
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromtags = {"performer:lead vocals": ["artist 4"]}
-        tags.print_from_desc()
+        tags.parsed_from_original = {"performer:lead vocals": ["artist 4"]}
+        tags.print_parsed_from_youtube()
         captured = self.capsys.readouterr()  # type: ignore
         expected = "No new data parsed from tags parsed from description\n"
         self.assertEqual(expected, captured.out)
@@ -808,8 +808,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"artist": ["artist 2"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 2"]}
         actual_tags = tags.get_field("artist", only_new=True)
         self.assertEqual(2, len(actual_tags))
         self.assertNotIn("artist 1", actual_tags)
@@ -821,8 +821,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"artist": ["artist 2"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 2"]}
         actual_tags = tags.get_field("artist", only_new=False)
         self.assertEqual(3, len(actual_tags))
         self.assertIn("artist 1", actual_tags)
@@ -834,8 +834,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"artist": ["artist 2"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 2"]}
         actual_tags = tags.get_field("title", only_new=False)
         self.assertEqual(0, len(actual_tags))
         self.assertNotIn("artist 1", actual_tags)
@@ -855,16 +855,16 @@ class TestMusicTags(unittest.TestCase):
 
         # Other sources have same value for tag as original
         tags.youtube = {"artist": ["artist 1"]}
-        tags.fromtags = {"artist": ["artist 1"]}
-        tags.fromdesc = {"artist": ["artist 1"]}
+        tags.parsed_from_original = {"artist": ["artist 1"]}
+        tags.parsed_from_youtube = {"artist": ["artist 1"]}
         self.assertFalse(tags.check_any_new_data_exists())
 
         # There actually are new values for the tag
         tags.youtube = {"artist": ["artist 2"]}
         self.assertTrue(tags.check_any_new_data_exists())
-        tags.fromtags = {"artist": ["artist 3"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
         self.assertTrue(tags.check_any_new_data_exists())
-        tags.fromdesc = {"artist": ["artist 2"]}
+        tags.parsed_from_youtube = {"artist": ["artist 2"]}
         self.assertTrue(tags.check_any_new_data_exists())
 
     def test_check_any_new_data_exists_resolved(self) -> None:
@@ -1061,8 +1061,8 @@ class TestMusicTags(unittest.TestCase):
 
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 4"]}
         tags.determine_album_artist()
         self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
 
@@ -1075,8 +1075,8 @@ class TestMusicTags(unittest.TestCase):
 
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 4"]}
         tags.determine_album_artist()
         self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
 
@@ -1088,8 +1088,8 @@ class TestMusicTags(unittest.TestCase):
 
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 4"]}
         tags.determine_album_artist()
         self.assertNotIn("albumartist", tags.resolved)
 
@@ -1145,7 +1145,7 @@ class TestMusicTags(unittest.TestCase):
         """
         tags = MusicTags()
 
-        tags.fromtags = {"artist": ["artist 1"]}
+        tags.parsed_from_original = {"artist": ["artist 1"]}
         tags.original = {"albumartist": ["artist 2"]}
         tags.determine_album_artist()
         self.assertEqual(None, tags.resolved.get("albumartist"))
@@ -1405,7 +1405,7 @@ class TestMusicTags(unittest.TestCase):
 
         # Parsed from description tags
         tags = MusicTags()
-        tags.fromdesc = {"artist": ["artist 1"]}
+        tags.parsed_from_youtube = {"artist": ["artist 1"]}
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1431,7 +1431,7 @@ class TestMusicTags(unittest.TestCase):
         # Parsed from original tags
         tags = MusicTags()
 
-        tags.fromtags = {"artist": ["artist 1"]}
+        tags.parsed_from_original = {"artist": ["artist 1"]}
         tags.resolve_metadata()
         self.assertEqual({"artist": ["artist 1"], "albumartist": ["artist 1"]}, tags.resolved)
 
@@ -1511,7 +1511,7 @@ class TestMusicTags(unittest.TestCase):
         # Parsed from description
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
-        tags.fromdesc = {"artist": ["artist 1 "]}
+        tags.parsed_from_youtube = {"artist": ["artist 1 "]}
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1524,7 +1524,7 @@ class TestMusicTags(unittest.TestCase):
         # Parsed from original tags
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
-        tags.fromtags = {"artist": ["artist 1 "]}
+        tags.parsed_from_original = {"artist": ["artist 1 "]}
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1551,8 +1551,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromdesc = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 2"]}
+        tags.parsed_from_youtube = {"artist": ["artist 2"]}
+        tags.parsed_from_original = {"artist": ["artist 2"]}
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1636,11 +1636,11 @@ class TestMusicTags(unittest.TestCase):
         )
 
         # With only from youtube tags
-        tags_only_from_desc = MusicTags()
-        tags_only_from_desc.original = {"artist": ["artist 1"]}
-        tags_only_from_desc.fromdesc = {"artist": ["artist 2"]}
+        tags_only_parsed_from_youtube = MusicTags()
+        tags_only_parsed_from_youtube.original = {"artist": ["artist 1"]}
+        tags_only_parsed_from_youtube.parsed_from_youtube = {"artist": ["artist 2"]}
 
-        tags_only_from_desc.resolve_metadata()
+        tags_only_parsed_from_youtube.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(
             (
@@ -1691,8 +1691,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromdesc = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 2"]}
+        tags.parsed_from_youtube = {"artist": ["artist 2"]}
+        tags.parsed_from_original = {"artist": ["artist 2"]}
 
         with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
             tags.resolve_metadata()
@@ -1785,8 +1785,8 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromdesc = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 2"]}
+        tags.parsed_from_youtube = {"artist": ["artist 2"]}
+        tags.parsed_from_original = {"artist": ["artist 2"]}
 
         tags.resolve_metadata()
 
@@ -1808,8 +1808,8 @@ class TestMusicTags(unittest.TestCase):
         tags_youtube = MusicTags()
         tags_youtube.original = {"artist": ["artist 1"]}
         tags_youtube.youtube = {"artist": ["artist 2"]}
-        tags_youtube.fromdesc = {"artist": ["artist 3"]}
-        tags_youtube.fromtags = {"artist": ["artist 4"]}
+        tags_youtube.parsed_from_youtube = {"artist": ["artist 3"]}
+        tags_youtube.parsed_from_original = {"artist": ["artist 4"]}
 
         mock_show.return_value = 0  # Youtube is first in list
         tags_youtube.resolve_metadata()
@@ -1818,8 +1818,8 @@ class TestMusicTags(unittest.TestCase):
         tags_fromtags = MusicTags()
         tags_fromtags.original = {"artist": ["artist 1"]}
         tags_fromtags.youtube = {"artist": ["artist 2"]}
-        tags_fromtags.fromdesc = {"artist": ["artist 3"]}
-        tags_fromtags.fromtags = {"artist": ["artist 4"]}
+        tags_fromtags.parsed_from_youtube = {"artist": ["artist 3"]}
+        tags_fromtags.parsed_from_original = {"artist": ["artist 4"]}
 
         mock_show.return_value = 1  # From tagsription is second in list
         tags_fromtags.resolve_metadata()
@@ -1828,8 +1828,8 @@ class TestMusicTags(unittest.TestCase):
         tags_original = MusicTags()
         tags_original.original = {"artist": ["artist 1"]}
         tags_original.youtube = {"artist": ["artist 2"]}
-        tags_original.fromdesc = {"artist": ["artist 3"]}
-        tags_original.fromtags = {"artist": ["artist 4"]}
+        tags_original.parsed_from_youtube = {"artist": ["artist 3"]}
+        tags_original.parsed_from_original = {"artist": ["artist 4"]}
 
         mock_show.return_value = 2  # From tagsription is second in list
         tags_original.resolve_metadata()
@@ -1838,8 +1838,8 @@ class TestMusicTags(unittest.TestCase):
         tags_fromdesc = MusicTags()
         tags_fromdesc.original = {"artist": ["artist 1"]}
         tags_fromdesc.youtube = {"artist": ["artist 2"]}
-        tags_fromdesc.fromdesc = {"artist": ["artist 3"]}
-        tags_fromdesc.fromtags = {"artist": ["artist 4"]}
+        tags_fromdesc.parsed_from_youtube = {"artist": ["artist 3"]}
+        tags_fromdesc.parsed_from_original = {"artist": ["artist 4"]}
 
         mock_show.return_value = 3  # From description is second in list
         tags_fromdesc.resolve_metadata()
@@ -1865,7 +1865,7 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromdesc = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 3"]}
 
         tags.resolve_metadata()
 
@@ -1891,7 +1891,7 @@ class TestMusicTags(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"], "genre": ["genre 1"]}
         tags.youtube = {"artist": ["artist 2", "artist 3"], "album": ["album 1"], "date": ["2020-01-01"]}
-        tags.fromtags = {"genre": ["genre 1", "Instrumental"]}
+        tags.parsed_from_original = {"genre": ["genre 1", "Instrumental"]}
         tags.resolved = deepcopy(tags.original)
         tags.apply_album_level_tags(
             {"albumartist": ["artist 3"], "genre": ["genre 2"], "album": ["Album 1"], "date": ["2019-01-01"]}
@@ -2160,7 +2160,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(["Don’t Go"], tags.resolved["title"])
 
         tags.youtube = {"title": ["Do Go"]}
-        tags.fromdesc = {"title": ["Don't Go"]}
+        tags.parsed_from_youtube = {"title": ["Don't Go"]}
         tags.resolve_metadata()
         self.assertEqual(2, mock_menu.call_args.kwargs["cursor_index"])
 
@@ -2284,13 +2284,13 @@ class TestMusicTagsColors(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        tags.fromtags = {"artist": ["artist 3"]}
-        tags.fromdesc = {"artist": ["artist 4"]}
+        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.parsed_from_youtube = {"artist": ["artist 4"]}
         tags.musicbrainz = {"artist": ["artist 5"]}
         expected = [
-            styles.from_tags("artist 3"),
-            styles.from_desc("artist 4"),
-            styles.metadata("artist 1"),
+            styles.parsed_from_original("artist 3"),
+            styles.parsed_from_youtube("artist 4"),
+            styles.original("artist 1"),
             styles.youtube("artist 2"),
             styles.musicbrainz("artist 5"),
         ]
@@ -2304,7 +2304,7 @@ class TestMusicTagsColors(unittest.TestCase):
         tags.print_resolved(print_all=False)
         lines = self.capsys.readouterr().out.split("\n")  # type: ignore
         self.assertIn("  Title: " + styles.changed("title 2"), lines)
-        self.assertIn("  Artist(s): " + styles.metadata("artist 1"), lines)
+        self.assertIn("  Artist(s): " + styles.original("artist 1"), lines)
         self.assertIn("  Producer (Removed): " + styles.removed("someone"), lines)
         self.assertIn("  Album: " + styles.unset("Not found"), lines)
 
@@ -2314,5 +2314,5 @@ class TestMusicTagsColors(unittest.TestCase):
         tags.original = {"artist": ["artist 1"]}
         tags.print_all()
         lines = self.capsys.readouterr().out.split("\n")  # type: ignore
-        self.assertIn("Artist(s): " + styles.metadata("artist 1"), lines)
+        self.assertIn("Artist(s): " + styles.original("artist 1"), lines)
         self.assertIn("Title: " + styles.unset("Not set"), lines)

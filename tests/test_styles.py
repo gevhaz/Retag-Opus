@@ -49,12 +49,19 @@ def test_ansi_without_color() -> None:
 @pytest.mark.usefixtures("force_color")
 def test_sources_have_different_colors() -> None:
     """Test that the source of a tag can be told from its color."""
-    sources = [styles.metadata, styles.youtube, styles.from_desc, styles.from_tags, styles.musicbrainz, styles.unset]
+    sources = [
+        styles.original,
+        styles.youtube,
+        styles.parsed_from_youtube,
+        styles.parsed_from_original,
+        styles.musicbrainz,
+        styles.unset,
+    ]
     assert len({source("text") for source in sources}) == len(sources)
 
 
 @pytest.mark.usefixtures("force_color")
 def test_changes_have_different_colors() -> None:
     """Test that changed, removed, unchanged and unset tags look different."""
-    changes = [styles.changed, styles.removed, styles.metadata, styles.unset]
+    changes = [styles.changed, styles.removed, styles.original, styles.unset]
     assert len({change("text") for change in changes}) == len(changes)
