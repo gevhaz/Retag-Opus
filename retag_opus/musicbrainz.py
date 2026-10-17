@@ -532,12 +532,12 @@ class MusicBrainzMatcher:
         :return: The chosen recording, True if the user wants to search
             for something else, or False if the user skips the song.
         """
-        length = format_length(round(duration * 1000)) if duration is not None else "?:??"
-        found = "Results" if results else "Nothing found"
-        title = f"MusicBrainz: {found} for '{text}'. The song is {length} long."
+        song_length = format_length(round(duration * 1000)) if duration is not None else "?:??"
+        result_summary = "Results" if results else "Nothing found"
+        menu_title = f"MusicBrainz: {result_summary} for '{text}'. The song is {song_length} long."
         entries = [search_result_entry(recording) for recording in results]
         entries += ["[e] Edit search", "[s] Skip MusicBrainz for this song"]
-        choice = TerminalMenu(entries, title=title).show()
+        choice = TerminalMenu(entries, title=menu_title).show()
         if not isinstance(choice, int) or choice == len(results) + 1:
             return False
         return True if choice == len(results) else results[choice]

@@ -47,13 +47,13 @@ def get_album(file_path: Path) -> str | None:
 
     :return: The album, or None if the description doesn't have one.
     """
-    old_tags: Tags = dict(OggOpus(file_path).items())  # type: ignore
-    description_lines = get_description(old_tags)
+    original_tags: Tags = dict(OggOpus(file_path).items())  # type: ignore
+    description_lines = get_description(original_tags)
     if not description_lines:
         return None
-    desc_parser = DescriptionParser()
-    desc_parser.parse("\n".join(description_lines))
-    album = desc_parser.tags.get("album", [""])[0].strip()
+    description_parser = DescriptionParser()
+    description_parser.parse("\n".join(description_lines))
+    album = description_parser.tags.get("album", [""])[0].strip()
     return album or None
 
 
@@ -67,29 +67,31 @@ def group_by_album(files: list[Path], manual_album: str | None) -> dict[Path, st
     :param files: All songs to be retagged.
     :param manual_album: The album set by the user, if any.
 
-    :return: Album name for each song that shares album with another.
+    :return: Album name in lower case, which identifies the album, for
+        each song that shares album with another.
     """
-    albums: dict[Path, str | None]
+    album_name_per_song: dict[Path, str | None]
     if manual_album is not None:
-        albums = {file_path: manual_album for file_path in files}
+        album_name_per_song = {file_path: manual_album for file_path in files}
     else:
-        albums = {file_path: get_album(file_path) for file_path in files}
+        album_name_per_song = {file_path: get_album(file_path) for file_path in files}
 
     songs_per_album: dict[str, list[Path]] = {}
-    for file_path, album in albums.items():
-        if album is not None:
-            songs_per_album.setdefault(album.casefold(), []).append(file_path)
+    for file_path, album_name in album_name_per_song.items():
+        if album_name is not None:
+            songs_per_album.setdefault(album_name.casefold(), []).append(file_path)
 
-    groups: dict[Path, str] = {}
-    for album_key, songs in songs_per_album.items():
-        if len(songs) > 1:
+    album_key_per_song: dict[Path, str] = {}
+    for album_key, songs_on_album in songs_per_album.items():
+        if len(songs_on_album) > 1:
+            album_name = album_name_per_song[songs_on_album[0]]
             messages.info(
-                f"{len(songs)} songs are from the album '{albums[songs[0]]}'. Album artist, date, genre "
+                f"{len(songs_on_album)} songs are from the album '{album_name}'. Album artist, date, genre "
                 "and album saved for one of them will be saved for all of them."
             )
-            for file_path in songs:
-                groups[file_path] = album_key
-    return groups
+            for file_path in songs_on_album:
+                album_key_per_song[file_path] = album_key
+    return album_key_per_song
 
 
 def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
@@ -99,14 +101,14 @@ def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
     :param album_level_tags: The album level tags to set.
     """
     for file_path in files:
-        metadata: OggOpus = OggOpus(file_path)  # type: ignore
-        changed = False
-        for tag, value in album_level_tags.items():
-            if metadata.get(tag) != value:  # type: ignore
-                metadata[tag] = value
-                changed = True
-        if changed:
-            metadata.save()
+        opus_file: OggOpus = OggOpus(file_path)  # type: ignore
+        any_tag_changed = False
+        for tag_name, values in album_level_tags.items():
+            if opus_file.get(tag_name) != values:  # type: ignore
+                opus_file[tag_name] = values
+                any_tag_changed = True
+        if any_tag_changed:
+            opus_file.save()
             messages.success(f"Album level tags saved for file: {utils.file_path_to_song_name(file_path)}")
 
 
@@ -116,83 +118,86 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
     :param file_path: The song to read.
     :param manual_album: The album set by the user, if any.
 
-    :return: The metadata of the song, for saving changes to it, and
+    :return: The song's file, for saving changes to it, and
         its tags from all sources.
     """
     # 1. Read the data and make basic improvements
     manual_album_set = manual_album is not None
-    metadata: OggOpus = OggOpus(file_path)  # type: ignore
-    old_tags: Tags = dict(metadata.items())  # type: ignore
+    opus_file: OggOpus = OggOpus(file_path)  # type: ignore
+    original_tags: Tags = dict(opus_file.items())  # type: ignore
     tags = MusicTags(manual_album_set=manual_album_set)
-    tags.duration = getattr(getattr(metadata, "info", None), "length", None)
+    tags.duration = getattr(getattr(opus_file, "info", None), "length", None)
 
-    tags.original = old_tags
+    tags.original = original_tags
     tags.discard_upload_date()
     if manual_album is not None:
         tags.switch_album_to_disc_subtitle(manual_album)
 
-    tags.resolved = deepcopy(old_tags)
+    tags.resolved = deepcopy(original_tags)
 
-    old_tags_parser = TagsParser(tags.original)
-    old_tags_parser.parse_tags()
-    old_tags_parser.split_select_original_tags()
-    tags.parsed_from_original = old_tags_parser.tags
+    original_tags_parser = TagsParser(tags.original)
+    original_tags_parser.parse_tags()
+    original_tags_parser.split_select_original_tags()
+    tags.parsed_from_original = original_tags_parser.tags
 
     # 1.1 Manually set album
     if manual_album is not None:
         tags.resolved["album"] = [manual_album]
 
     # 2. Get description
-    description_lines = get_description(old_tags)
+    description_lines = get_description(original_tags)
 
     # 3. If description exists, send it to be parsed
     if description_lines:
-        desc_parser = DescriptionParser(manual_album_set=manual_album_set)
+        description_parser = DescriptionParser(manual_album_set=manual_album_set)
         description = "\n".join(description_lines)
-        desc_parser.parse(description)
-        tags.youtube = desc_parser.tags
+        description_parser.parse(description)
+        tags.youtube = description_parser.tags
         tags.add_source_tag()
 
-        new_tags_parser = TagsParser(tags.youtube)
-        new_tags_parser.parse_tags()
-        tags.parsed_from_youtube = new_tags_parser.tags
+        youtube_tags_parser = TagsParser(tags.youtube)
+        youtube_tags_parser.parse_tags()
+        tags.parsed_from_youtube = youtube_tags_parser.tags
 
-    return metadata, tags
+    return opus_file, tags
 
 
-def save_tags(metadata: OggOpus, tags: Tags) -> None:
+def save_tags(opus_file: OggOpus, tags: Tags) -> None:
     """Write tags to a song's file, and delete the ones marked as removed."""
-    for tag, data in tags.items():
-        if data == REMOVED_TAG:
-            metadata.pop(tag, None)  # type: ignore
+    for tag_name, values in tags.items():
+        if values == REMOVED_TAG:
+            opus_file.pop(tag_name, None)  # type: ignore
         else:
-            metadata[tag] = data
-    metadata.save()
+            opus_file[tag_name] = values
+    opus_file.save()
 
 
-def match_albums(matcher: MusicBrainzMatcher, albums: dict[Path, str], manual_album: str | None) -> dict[Path, Tags]:
+def match_albums(
+    matcher: MusicBrainzMatcher, album_key_per_song: dict[Path, str], manual_album: str | None
+) -> dict[Path, Tags]:
     """Identify each album on MusicBrainz, with all its songs at once.
 
     :param matcher: Used for finding the albums on MusicBrainz.
-    :param albums: Album of each song that shares album with another.
+    :param album_key_per_song: Album name in lower case of each song that
+        shares album with another.
     :param manual_album: The album set by the user, if any.
 
     :return: Tags from MusicBrainz for each song whose album was found.
     """
     songs_per_album: dict[str, dict[Path, MusicTags]] = {}
-    album_names: dict[str, str] = {}
-    for file_path, album in albums.items():
+    album_name_per_key: dict[str, str] = {}
+    for file_path, album_key in album_key_per_song.items():
         _, tags = read_song(file_path, manual_album)
-        if album not in songs_per_album:
-            songs_per_album[album] = {}
+        if album_key not in songs_per_album:
+            songs_per_album[album_key] = {}
             # Albums are grouped by their name in lower case, so search
             # for the name as written instead
-            album_names[album] = manual_album or tags.youtube.get("album", [album])[0]
-        songs_per_album[album][file_path] = tags
+            album_name_per_key[album_key] = manual_album or tags.youtube.get("album", [album_key])[0]
+        songs_per_album[album_key][file_path] = tags
 
     musicbrainz_tags_per_song: dict[Path, Tags] = {}
-    for album, songs in songs_per_album.items():
-        musicbrainz_tags_per_song.update(matcher.match_album(album_names[album], songs))
+    for album_key, songs in songs_per_album.items():
+        musicbrainz_tags_per_song.update(matcher.match_album(album_name_per_key[album_key], songs))
     return musicbrainz_tags_per_song
 
 
@@ -201,43 +206,46 @@ def run(argv: Sequence[str] | None = None) -> int:
     args = Cli.parse_arguments(argv)
     music_dir = Path(args.directory).resolve()
     try:
-        with open(get_config_path(), "rb") as f:
-            config = tomllib.load(f)
+        with open(get_config_path(), "rb") as config_file:
+            config = tomllib.load(config_file)
     except FileNotFoundError:
         config = {}
     if not music_dir.is_dir():
         messages.error(f"{args.directory} is not a directory!")
         return 1
 
-    all_files = list(filter(Path.is_file, music_dir.glob("*.opus")))
-    if not all_files:
+    opus_files = list(filter(Path.is_file, music_dir.glob("*.opus")))
+    if not opus_files:
         messages.warning(f"There appears to be no .opus files in the provided directory {args.directory}")
         return 0
 
-    albums: dict[Path, str] = {}
+    album_key_per_song: dict[Path, str] = {}
     if not args.individual:
-        albums = group_by_album(all_files, args.manual_album)
-    album_level_tags: dict[str, Tags] = {}
+        album_key_per_song = group_by_album(opus_files, args.manual_album)
+    # Album level tags saved for an earlier song on each album
+    saved_album_level_tags: dict[str, Tags] = {}
 
     use_musicbrainz = args.musicbrainz if args.musicbrainz is not None else config.get("musicbrainz", False)
     # One matcher for all songs, so that its cache and rate limit are shared
     matcher = MusicBrainzMatcher() if use_musicbrainz else None
-    musicbrainz_tags_per_song = match_albums(matcher, albums, args.manual_album) if matcher is not None else {}
+    musicbrainz_tags_per_song = (
+        match_albums(matcher, album_key_per_song, args.manual_album) if matcher is not None else {}
+    )
     tags_to_delete = config.get("tags_to_delete", [])
     strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
 
-    for idx, file_path in enumerate(all_files):
+    for song_index, file_path in enumerate(opus_files):
         redo = True
-        album = albums.get(file_path)
-        file_name = utils.file_path_to_song_name(file_path)
+        album_key = album_key_per_song.get(file_path)
+        song_name = utils.file_path_to_song_name(file_path)
         while redo:
             redo = False
             # Print info about file and progress
             print()
-            messages.info(f"Song {idx + 1} of {len(all_files)}")
-            messages.info(f"----- Song: {file_name} -----")
+            messages.info(f"Song {song_index + 1} of {len(opus_files)}")
+            messages.info(f"----- Song: {song_name} -----")
 
-            old_metadata, tags = read_song(file_path, args.manual_album)
+            opus_file, tags = read_song(file_path, args.manual_album)
             description_lines = get_description(tags.original)
             if matcher is not None:
                 if file_path not in musicbrainz_tags_per_song:
@@ -249,8 +257,8 @@ def run(argv: Sequence[str] | None = None) -> int:
 
             # 4.6 Use the same album level tags as for earlier songs on
             # the same album
-            if album is not None and album in album_level_tags:
-                tags.apply_album_level_tags(album_level_tags[album])
+            if album_key is not None and album_key in saved_album_level_tags:
+                tags.apply_album_level_tags(saved_album_level_tags[album_key])
 
             if not tags.check_any_new_data_exists() and not args.manual_album:
                 messages.warning("No new data exists. Skipping song.")
@@ -266,11 +274,11 @@ def run(argv: Sequence[str] | None = None) -> int:
             # 4.7 Don't ask about saving when nothing that the user can
             # check would change, but save new MusicBrainz IDs, which the
             # user can only check by the MusicBrainz match
-            changed = tags.changed_tags()
-            if all(tag.startswith(constants.MUSICBRAINZ_ID_PREFIX) for tag in changed):
-                if changed:
-                    save_tags(old_metadata, tags.resolved)
-                    messages.success(f"MusicBrainz IDs saved for file: {file_name}")
+            changed_tag_names = tags.changed_tags()
+            if all(tag.startswith(constants.MUSICBRAINZ_ID_PREFIX) for tag in changed_tag_names):
+                if changed_tag_names:
+                    save_tags(opus_file, tags.resolved)
+                    messages.success(f"MusicBrainz IDs saved for file: {song_name}")
                 else:
                     messages.warning("Nothing to change. Skipping song.")
                 break
@@ -307,14 +315,17 @@ def run(argv: Sequence[str] | None = None) -> int:
                         print("RetagOpus exited successfully: Skipping this and all later songs")
                         return 0
                     case "[s] save":
-                        save_tags(old_metadata, tags.resolved)
-                        messages.success(f"Metadata saved for file: {file_name}")
-                        if album is not None:
-                            album_level_tags[album] = tags.get_album_level_tags()
-                            other_songs = [f for f, a in albums.items() if a == album and f != file_path]
-                            update_album_level_tags(other_songs, album_level_tags[album])
+                        save_tags(opus_file, tags.resolved)
+                        messages.success(f"Metadata saved for file: {song_name}")
+                        if album_key is not None:
+                            saved_album_level_tags[album_key] = tags.get_album_level_tags()
+                            other_songs = []
+                            for other_file_path, other_album_key in album_key_per_song.items():
+                                if other_album_key == album_key and other_file_path != file_path:
+                                    other_songs.append(other_file_path)
+                            update_album_level_tags(other_songs, saved_album_level_tags[album_key])
                     case "[r] reset":
-                        print(f"Trying to improve metadata again for file: {file_name}")
+                        print(f"Trying to improve metadata again for file: {song_name}")
                         redo = True
                     case "[m] modify tag":
                         tags.modify_resolved_field()
@@ -325,7 +336,7 @@ def run(argv: Sequence[str] | None = None) -> int:
                         tags.delete_tag_item()
                         reshow_choices = True
                     case "[p] pass":
-                        messages.warning(f"Pass. Skipping song: {file_name}")
+                        messages.warning(f"Pass. Skipping song: {song_name}")
                     case "[y] youtube description":
                         if description_lines:
                             messages.info("Original YouTube description:")

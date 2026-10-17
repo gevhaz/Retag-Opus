@@ -31,18 +31,18 @@ class TagsParser:
         Go through some of the existing tags and see if they contain
         information that should go into another tag.
         """
-        old_title = self.original_tags.get("title", [])
+        original_titles = self.original_tags.get("title", [])
 
-        old_artist = self.original_tags.get("artist", [])
-        if len(old_artist) == 1:
-            old_artist = utils.split_tag(old_artist[0])
-        new_artist = []
+        original_artists = self.original_tags.get("artist", [])
+        if len(original_artists) == 1:
+            original_artists = utils.split_tag(original_artists[0])
+        featured_artists = []
 
-        old_version = self.original_tags.get("version", [])
-        new_version = []
+        original_versions = self.original_tags.get("version", [])
+        versions_from_titles = []
 
-        old_genre = self.original_tags.get("genre", [])
-        new_genre = []
+        original_genres = self.original_tags.get("genre", [])
+        genres_from_titles = []
 
         version_pattern_names = [
             "live",
@@ -54,36 +54,36 @@ class TagsParser:
         ]
         instrumental_pattern_names = ["instrumental_in_parentheses", "instrumental_in_square_brackets"]
 
-        for title in old_title:
+        for title in original_titles:
             featuring_regex = constants.title_parse_patterns["featuring"]
             featuring_match = re.match(featuring_regex, title)
             if featuring_match:
-                featured_artists = featuring_match.group(2).strip()
-                new_artist += utils.split_tag(featured_artists)
+                featured_artists_text = featuring_match.group(2).strip()
+                featured_artists += utils.split_tag(featured_artists_text)
 
             for pattern_name in version_pattern_names:
                 version_regex = constants.title_parse_patterns[pattern_name]
                 version_match = re.match(version_regex, title)
                 if version_match:
-                    new_version.append(version_match.group(2).strip())
+                    versions_from_titles.append(version_match.group(2).strip())
 
             for pattern_name in instrumental_pattern_names:
                 instrumental_regex = constants.title_parse_patterns[pattern_name]
                 if re.match(instrumental_regex, title):
-                    new_genre.append("Instrumental")
+                    genres_from_titles.append("Instrumental")
 
-        if set(new_version) != set(old_version) and len(new_version) > 0:
-            self.tags["version"] = utils.remove_duplicates(old_version + new_version)
+        if set(versions_from_titles) != set(original_versions) and len(versions_from_titles) > 0:
+            self.tags["version"] = utils.remove_duplicates(original_versions + versions_from_titles)
 
-        if set(new_artist) != set(old_artist) and len(new_artist) > 0:
-            self.tags["artist"] = utils.remove_duplicates(old_artist + new_artist)
+        if set(featured_artists) != set(original_artists) and len(featured_artists) > 0:
+            self.tags["artist"] = utils.remove_duplicates(original_artists + featured_artists)
 
-        if set(new_genre) != set(old_genre) and len(new_genre) > 0:
-            self.tags["genre"] = utils.remove_duplicates(old_genre + new_genre)
+        if set(genres_from_titles) != set(original_genres) and len(genres_from_titles) > 0:
+            self.tags["genre"] = utils.remove_duplicates(original_genres + genres_from_titles)
 
-        if len(old_title) > 0:
-            pruned_title = utils.prune_title(old_title[0])
-            if old_title[0] != pruned_title:
+        if len(original_titles) > 0:
+            pruned_title = utils.prune_title(original_titles[0])
+            if original_titles[0] != pruned_title:
                 self.tags["title"] = [pruned_title]
 
     def split_select_original_tags(self) -> None:
@@ -96,8 +96,8 @@ class TagsParser:
         tags_to_split = ["genre", "artist"]
 
         for tag in tags_to_split:
-            tags_tag = self.original_tags.get(tag)
-            if tags_tag is not None and len(tags_tag) == 1:
-                new_tag = utils.split_tag(tags_tag[0])
-                if new_tag != tags_tag:
-                    self.tags[tag] = new_tag
+            original_values = self.original_tags.get(tag)
+            if original_values is not None and len(original_values) == 1:
+                split_values = utils.split_tag(original_values[0])
+                if split_values != original_values:
+                    self.tags[tag] = split_values
