@@ -10,6 +10,8 @@
   `musicbrainz = true` in the configuration file. MusicBrainz is used as one
   more source of tags, including track numbers, credits and MusicBrainz IDs.
   Songs from the same album are looked up together.
+- Mixers and engineers are put in the `mixer` and `engineer` tags, from YouTube
+  descriptions and from MusicBrainz, as in Picard.
 
 ### Changed
 

@@ -92,6 +92,7 @@ def test_credits_from_relations() -> None:
         "performer:theremin": ["Gus Tar"],
         "performer:drums (drum set)": ["Drum Mer"],
         "producer": ["Pro Ducer", "P. Ducer"],
+        "mixer": ["Mix Er"],
         "composer": ["Com Poser"],
         "writer": ["Wri Ter"],
     }
@@ -108,7 +109,8 @@ def test_relation_tag_names() -> None:
     ]
     assert musicbrainz.relation_tag_names(artist_relation("vocal", "A", ["solo"])) == ["performer:vocals"]
     assert musicbrainz.relation_tag_names(artist_relation("instrument", "A")) == ["performer:instruments"]
-    assert musicbrainz.relation_tag_names(artist_relation("mix", "A")) == []
+    assert musicbrainz.relation_tag_names(artist_relation("mix", "A")) == ["mixer"]
+    assert musicbrainz.relation_tag_names(artist_relation("photography", "A")) == []
     # Programming isn't an instrument, and Picard has no tag for it
     assert musicbrainz.relation_tag_names(artist_relation("programming", "A")) == []
 
@@ -144,6 +146,7 @@ def test_track_tags() -> None:
         "performer:theremin": ["Gus Tar"],
         "performer:drums (drum set)": ["Drum Mer"],
         "producer": ["Pro Ducer", "P. Ducer"],
+        "mixer": ["Mix Er"],
         "composer": ["Com Poser"],
         "writer": ["Wri Ter"],
     }

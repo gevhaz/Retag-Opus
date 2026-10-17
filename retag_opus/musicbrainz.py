@@ -43,9 +43,16 @@ RELATION_TAGS: Final[dict[str, str]] = {
     "arranger": "arranger",
     "instrument arranger": "arranger",
     "vocal arranger": "arranger",
+    "orchestrator": "arranger",
     "conductor": "conductor",
+    "mix": "mixer",
+    "engineer": "engineer",
+    "audio": "engineer",
+    "sound": "engineer",
+    "live sound": "engineer",
     "composer": "composer",
     "lyricist": "lyricist",
+    "librettist": "lyricist",
     "writer": "writer",
 }
 
