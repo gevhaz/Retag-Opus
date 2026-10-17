@@ -636,8 +636,8 @@ def test_group_by_album(capsys):
         groups = app.group_by_album([first, second, single, no_description_1, no_description_2], None)
         manual_groups = app.group_by_album([first, single, no_description_1], "Manual")
 
-    assert groups == {first: "the album", second: "the album"}
-    assert manual_groups == {first: "manual", single: "manual", no_description_1: "manual"}
+    assert groups == {first: "The Album", second: "The Album"}
+    assert manual_groups == {first: "Manual", single: "Manual", no_description_1: "Manual"}
     out, _ = capsys.readouterr()
     assert out == (
         "2 songs are from the album 'The Album'. Album artist, date, genre and album saved for "
@@ -823,7 +823,7 @@ def test_match_albums():
         write_opus_file(first, album_song_metadata("Song 1", "The Album", "Pop"))
         write_opus_file(second, album_song_metadata("Song 2", "The Album", "Pop"))
 
-        matched = app.match_albums(matcher, {first: "the album", second: "the album"}, None)
+        matched = app.match_albums(matcher, {first: "The Album", second: "The Album"}, None)
 
         songs = matcher.match_album.call_args.args[1]
     assert matched == {first: {"album": ["The Album"]}, second: {"album": ["The Album"]}}
