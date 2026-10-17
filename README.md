@@ -1,10 +1,10 @@
 # Retag Opus
 
 Say you have a music file in opus format, with a tag called
-`description` that holds data about the music in the format used by
-YouTube's ContentID. This script will help you parse that tag and put
-the relevant data into the tags where it actually belongs, such as
-`title`, `artist`, and `album`.
+`description` that holds data about the music in the format of YouTube's
+auto-generated descriptions. This script will help you parse that tag
+and put the relevant data into the tags where it actually belongs, such
+as `title`, `artist`, and `album`.
 
 # Dependencies
 

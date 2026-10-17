@@ -828,7 +828,7 @@ def test_match_albums():
         songs = matcher.match_album.call_args.args[1]
     assert matched == {first: {"album": ["The Album"]}, second: {"album": ["The Album"]}}
     assert [tags.youtube["title"] for tags in songs.values()] == [["Song 1"], ["Song 2"]]
-    assert all(tags.duration is not None for tags in songs.values())
+    assert all(tags.length is not None for tags in songs.values())
 
 
 @pytest.mark.parametrize(
