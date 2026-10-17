@@ -136,7 +136,7 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
     old_tags_parser = TagsParser(tags.original)
     old_tags_parser.parse_tags()
     old_tags_parser.split_select_original_tags()
-    tags.fromtags = old_tags_parser.tags
+    tags.parsed_from_original = old_tags_parser.tags
 
     # 1.1 Manually set album
     if manual_album is not None:
@@ -155,7 +155,7 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
 
         new_tags_parser = TagsParser(tags.youtube)
         new_tags_parser.parse_tags()
-        tags.fromdesc = new_tags_parser.tags
+        tags.parsed_from_youtube = new_tags_parser.tags
 
     return metadata, tags
 

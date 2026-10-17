@@ -33,10 +33,10 @@ def ansi(code: str) -> Style:
 
 
 # Sources of tags
-metadata = ansi("36")
+original = ansi("36")
 youtube = ansi("35")
-from_desc = ansi("32")
-from_tags = ansi("33")
+parsed_from_youtube = ansi("32")
+parsed_from_original = ansi("33")
 # Orange, MusicBrainz' color, since green means resolved. It's the code
 # of orange among the 256 terminal colors.
 musicbrainz = ansi("38;5;208")
