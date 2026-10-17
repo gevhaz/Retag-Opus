@@ -25,12 +25,10 @@ class MusicTags:
 
     def __init__(self, manual_album_set: bool = False) -> None:
         """Create empty attributes for each source."""
-        self.tags_printed_for_every_song = deepcopy(constants.tags_printed_for_every_song)
+        self.tags_printed_for_every_song = dict(constants.tags_printed_for_every_song)
         self.manual_album_set = manual_album_set
         if manual_album_set:
-            self.tags_printed_for_every_song["discsubtitle"] = self.tags_printed_for_every_song["album"].copy()
-            self.tags_printed_for_every_song["discsubtitle"]["print_name"] = "Disc subtitle"
-            self.tags_printed_for_every_song["album"]["patterns"] = []
+            self.tags_printed_for_every_song["discsubtitle"] = "Disc subtitle"
         self.original: Tags = {}
         self.youtube: Tags = {}
         self.parsed_from_original: Tags = {}
@@ -126,8 +124,8 @@ class MusicTags:
             for tag_name in self.performer_tags_in_print_order(metadata):
                 if tag_name in metadata and metadata[tag_name] is not None:
                     self.print_metadata_key(self.performer_print_name(tag_name), tag_name, style, metadata)
-        for tag_name, tag_data in self.tags_printed_for_every_song.items():
-            self.print_metadata_key(tag_data["print_name"], tag_name, style, metadata)
+        for tag_name, print_name in self.tags_printed_for_every_song.items():
+            self.print_metadata_key(print_name, tag_name, style, metadata)
         print("")
 
     def get_colored_values_from_all_sources(self, tag_name: str) -> list[str]:
@@ -177,13 +175,13 @@ class MusicTags:
                 performer_block.append(self.performer_print_name(tag_name) + ": " + " | ".join(colored_values))
 
         main_block = []
-        for tag_name, tag_data in self.tags_printed_for_every_song.items():
+        for tag_name, print_name in self.tags_printed_for_every_song.items():
             colored_values = self.get_colored_values_from_all_sources(tag_name)
             if len(colored_values) > 0:
                 there_are_tags = True
-                main_block.append(tag_data["print_name"] + ": " + " | ".join(colored_values))
+                main_block.append(print_name + ": " + " | ".join(colored_values))
             else:
-                main_block.append(tag_data["print_name"] + ": " + styles.unset("Not set"))
+                main_block.append(print_name + ": " + styles.unset("Not set"))
 
         if there_are_tags:
             if len(performer_block) > 0:
@@ -273,8 +271,8 @@ class MusicTags:
             print("  Performers:")
             for tag_name in performer_tags:
                 self.print_resolved_tag(self.performer_print_name(tag_name), tag_name, print_all)
-        for tag_name, tag_data in self.tags_printed_for_every_song.items():
-            self.print_resolved_tag(tag_data["print_name"], tag_name, print_all)
+        for tag_name, print_name in self.tags_printed_for_every_song.items():
+            self.print_resolved_tag(print_name, tag_name, print_all)
 
         print("")
 

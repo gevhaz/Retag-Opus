@@ -1,12 +1,25 @@
 """Module for parsing a YouTube descripton into metadata tags."""
 import re
 from copy import deepcopy
+from typing import Final
 
 from retag_opus import constants, utils, youtube_credits
 
 INTERPUNCT = "\u00b7"
 
 Tags = dict[str, list[str]]
+
+# Patterns for parsing tags from lines of YouTube descriptions. The
+# value is the last group of the pattern. Credits, e.g. "Composer:
+# Name", are parsed by youtube_credits instead.
+DESCRIPTION_PATTERNS: Final[dict[str, list[str]]] = {
+    "title": [r".*“(.*)” by .* from ‘.*’"],
+    "album": [r".*“.*” by .* from ‘(.*)’"],
+    "artist": [r".*\([fF]eat. (.+?)\)", r".*“.*” by (.*) from ‘.*’"],
+    "date": [r"Released on:\s*(\d\d\d\d-\d\d-\d\d)"],
+    "organization": [r"Provided to YouTube by (.+)\s*"],
+    "copyright": [r"\u2117 (.+)\s*"],
+}
 
 
 class DescriptionParser:
@@ -15,12 +28,10 @@ class DescriptionParser:
     def __init__(self, manual_album_set: bool = False) -> None:
         """Create tags dictionary that will hold the parsed tags."""
         self.tags: Tags = {}
-        self.description_patterns = deepcopy(constants.tags_printed_for_every_song)
+        self.description_patterns = deepcopy(DESCRIPTION_PATTERNS)
         self.manual_album_set = manual_album_set
         if manual_album_set:
-            self.description_patterns["discsubtitle"] = self.description_patterns["album"].copy()
-            self.description_patterns["discsubtitle"]["print_name"] = "Disc subtitle"
-            self.description_patterns["album"]["patterns"] = []
+            self.description_patterns["discsubtitle"] = self.description_patterns.pop("album")
 
     def parse_artist_and_title(self, source_line: str) -> tuple[list[str], str]:
         """Parse artist and title from a line of an auto-generated description.
@@ -105,8 +116,8 @@ class DescriptionParser:
                 else:
                     self.tags["album"] = [description_line.strip()]
 
-            for tag_name, tag_data in self.description_patterns.items():
-                for pattern in tag_data["patterns"]:
+            for tag_name, patterns in self.description_patterns.items():
+                for pattern in patterns:
                     self.add_value_from_line(line=description_line, pattern=pattern, tag_name=tag_name)
 
             title = self.tags.pop("title", None)
