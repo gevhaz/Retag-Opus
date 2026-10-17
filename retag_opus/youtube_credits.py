@@ -21,7 +21,7 @@ Tags = dict[str, list[str]]
 # Roles that say what kind of contributor someone is, and that come
 # before their actual roles, e.g. "Associated Performer, Drums"
 PERFORMER_CATEGORIES: Final[set[str]] = {"associated performer", "performer"}
-OTHER_CATEGORIES: Final[set[str]] = {"studio personnel"}
+NON_PERFORMER_CATEGORIES: Final[set[str]] = {"studio personnel"}
 
 # Roles and the tags their contributors are put in. Tags are named as in
 # the Vorbis comment specification, or else as in Quod Libet, or else as
@@ -101,7 +101,7 @@ def role_tag_names(role: str, is_performer_role: bool) -> list[str]:
     if role in ROLE_TAGS:
         return ROLE_TAGS[role]
     performer_tag = constants.PERFORMER_PREFIX + role
-    if performer_tag in constants.performer_tags or is_performer_role:
+    if performer_tag in constants.common_performer_tags or is_performer_role:
         return [performer_tag]
     return []
 
@@ -129,7 +129,7 @@ def roles_by_category(roles_text: str) -> list[tuple[str | None, list[str]]]:
         normalized_role = normalize_role(role)
         if not normalized_role:
             continue
-        if normalized_role in PERFORMER_CATEGORIES or normalized_role in OTHER_CATEGORIES:
+        if normalized_role in PERFORMER_CATEGORIES or normalized_role in NON_PERFORMER_CATEGORIES:
             groups.append((normalized_role, []))
         else:
             roles_in_last_group = groups[-1][1]

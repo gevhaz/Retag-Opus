@@ -11,8 +11,8 @@ SPACE: Final = " "
 SEP: Final = " | "
 
 
-class ParsingReference(TypedDict):
-    """This is dictionary with a tag name and regex for parsing it."""
+class PrintNameAndPatterns(TypedDict):
+    """The name a tag is printed with, and patterns for parsing it from descriptions."""
 
     print: str
     pattern: list[str]
@@ -33,7 +33,7 @@ tag_parse_patterns: Final[dict[str, str]] = {
 # Tags that are printed for every song, and patterns for parsing them
 # from YouTube descriptions. Credits, e.g. "Composer: Name", are parsed
 # by youtube_credits instead.
-all_tags: Final[dict[str, ParsingReference]] = {
+tags_printed_for_every_song: Final[dict[str, PrintNameAndPatterns]] = {
     "title": {"print": "Title", "pattern": [r".*“(.*)” by .* from ‘.*’"]},
     "album": {"print": "Album", "pattern": [r".*“.*” by .* from ‘(.*)’"]},
     "albumartist": {"print": "Album Artist", "pattern": []},
@@ -66,7 +66,7 @@ PERFORMER_PREFIX: Final = "performer:"
 # Name", while other roles have to come after "Associated Performer".
 # The roles are named as on MusicBrainz, so that values from MusicBrainz
 # and from YouTube end up in the same tag and can be compared.
-performer_tags: Final[list[str]] = [
+common_performer_tags: Final[list[str]] = [
     "performer:lead vocals",
     "performer:background vocals",
     "performer:drums (drum set)",

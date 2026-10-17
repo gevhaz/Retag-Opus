@@ -16,12 +16,12 @@ class DescriptionParser:
     def __init__(self, manual_album_set: bool = False) -> None:
         """Create tags dictionary that will hold the parsed tags."""
         self.tags: Tags = {}
-        self.base_patterns = deepcopy(constants.all_tags)
+        self.description_patterns = deepcopy(constants.tags_printed_for_every_song)
         self.manual_album_set = manual_album_set
         if manual_album_set:
-            self.base_patterns["discsubtitle"] = self.base_patterns["album"].copy()
-            self.base_patterns["discsubtitle"]["print"] = "Disc subtitle"
-            self.base_patterns["album"]["pattern"] = []
+            self.description_patterns["discsubtitle"] = self.description_patterns["album"].copy()
+            self.description_patterns["discsubtitle"]["print"] = "Disc subtitle"
+            self.description_patterns["album"]["pattern"] = []
 
     def parse_artist_and_title(self, source_line: str) -> tuple[list[str], str]:
         """Parse artist and title from standard ContentID line.
@@ -105,7 +105,7 @@ class DescriptionParser:
                 else:
                     self.tags["album"] = [description_line.strip()]
 
-            for tag_id, tag_data in self.base_patterns.items():
+            for tag_id, tag_data in self.description_patterns.items():
                 for pattern in tag_data["pattern"]:
                     self.standard_pattern(tag_id, pattern, description_line)
 
