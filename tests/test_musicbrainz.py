@@ -189,14 +189,14 @@ VIDEO_TITLE = "PROPER GOODBYES Full  Video | The Global -THE MOVIE |Ben Ivor|Som
 def song(
     original: Tags | None = None,
     youtube: Tags | None = None,
-    duration: float | None = 201.0,
+    length: float | None = 201.0,
     manual_album_set: bool = False,
 ) -> MusicTags:
     """Create tags for a song from the given sources."""
     tags = MusicTags(manual_album_set)
     tags.original = original or {}
     tags.youtube = youtube or {}
-    tags.duration = duration
+    tags.length = length
     return tags
 
 
@@ -258,12 +258,12 @@ def test_format_length() -> None:
     assert musicbrainz.format_length(None) == "?:??"
 
 
-def test_duration_matches() -> None:
+def test_length_matches() -> None:
     """Lengths match within three seconds."""
-    assert musicbrainz.duration_matches(200_000, 202.5)
-    assert not musicbrainz.duration_matches(200_000, 204.0)
-    assert not musicbrainz.duration_matches(200_000, None)
-    assert not musicbrainz.duration_matches(None, 200.0)
+    assert musicbrainz.length_matches(200_000, 202.5)
+    assert not musicbrainz.length_matches(200_000, 204.0)
+    assert not musicbrainz.length_matches(200_000, None)
+    assert not musicbrainz.length_matches(None, 200.0)
 
 
 def test_choose_release() -> None:
@@ -382,7 +382,7 @@ def test_match_song_not_on_release() -> None:
 def test_match_song_asks_when_not_confident(menu: MagicMock) -> None:
     """Let the user pick a result when the length doesn't match."""
     menu.return_value.show.return_value = 0
-    tags = MusicBrainzMatcher(fake_client()).match_song(song(original={"title": [VIDEO_TITLE]}, duration=150))
+    tags = MusicBrainzMatcher(fake_client()).match_song(song(original={"title": [VIDEO_TITLE]}, length=150))
     assert tags["title"] == ["Proper Goodbyes"]
     assert menu.call_args.args[0][-2:] == ["[e] Edit search", "[s] Skip MusicBrainz for this song"]
     assert menu.call_args.kwargs["title"] == f"MusicBrainz: Results for '{VIDEO_TITLE}'. The song is 2:30 long."
@@ -400,7 +400,7 @@ def test_match_song_user_skips(menu: MagicMock, choice: int | None) -> None:
     """Skipping or escaping the results menu gives no tags."""
     menu.return_value.show.return_value = choice
     client = fake_client()
-    assert MusicBrainzMatcher(client).match_song(song(original={"title": ["X"]}, duration=None)) == {}
+    assert MusicBrainzMatcher(client).match_song(song(original={"title": ["X"]}, length=None)) == {}
     client.lookup_release.assert_not_called()
 
 
@@ -451,18 +451,16 @@ RELEASE_RESULTS: list[JsonDict] = [
 ]
 
 
-def album_songs(goodbyes_duration: float | None = 201.0, hello_duration: float | None = 180.0) -> dict[Path, MusicTags]:
+def album_songs(goodbyes_length: float | None = 201.0, hello_length: float | None = 180.0) -> dict[Path, MusicTags]:
     """Create two songs from the test release."""
     return {
-        Path("2.opus"): song(original={"title": ["Hello Again (Official Audio)"]}, duration=hello_duration),
-        Path("1.opus"): song(
-            youtube={"title": ["Proper Goodbyes"], "artist": ["The Global"]}, duration=goodbyes_duration
-        ),
+        Path("2.opus"): song(original={"title": ["Hello Again (Official Audio)"]}, length=hello_length),
+        Path("1.opus"): song(youtube={"title": ["Proper Goodbyes"], "artist": ["The Global"]}, length=goodbyes_length),
     }
 
 
 def test_match_tracks() -> None:
-    """Match each song to a track by title and duration."""
+    """Match each song to a track by title and length."""
     matched = musicbrainz.match_tracks(RELEASE, album_songs())
     assert {path: tags["tracknumber"] for path, tags in matched.items()} == {
         Path("1.opus"): ["1"],
@@ -474,8 +472,8 @@ def test_match_tracks() -> None:
 def test_match_tracks_needs_every_song() -> None:
     """A release without all songs matches none of them."""
     assert musicbrainz.match_tracks(RELEASE, {**album_songs(), Path("3.opus"): song(original={"title": ["X"]})}) == {}
-    assert musicbrainz.match_tracks(RELEASE, album_songs(goodbyes_duration=100)) == {}
-    same_song_twice = {Path(name): song(original={"title": ["Bonus"]}, duration=None) for name in ["a", "b"]}
+    assert musicbrainz.match_tracks(RELEASE, album_songs(goodbyes_length=100)) == {}
+    same_song_twice = {Path(name): song(original={"title": ["Bonus"]}, length=None) for name in ["a", "b"]}
     assert musicbrainz.match_tracks(RELEASE, same_song_twice) == {}
 
 

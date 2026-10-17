@@ -23,9 +23,9 @@ class DescriptionParser:
             self.description_patterns["album"]["patterns"] = []
 
     def parse_artist_and_title(self, source_line: str) -> tuple[list[str], str]:
-        """Parse artist and title from standard ContentID line.
+        """Parse artist and title from a line of an auto-generated description.
 
-        The standard ContentID description contains an interpunct
+        An auto-generated YouTube description contains an interpunct
         character separating title and the artists. This function gets
         the artist and title of the song for this line.
 
@@ -105,9 +105,9 @@ class DescriptionParser:
                 else:
                     self.tags["album"] = [description_line.strip()]
 
-            for tag_id, tag_data in self.description_patterns.items():
+            for tag_name, tag_data in self.description_patterns.items():
                 for pattern in tag_data["patterns"]:
-                    self.add_value_from_line(line=description_line, pattern=pattern, tag_name=tag_id)
+                    self.add_value_from_line(line=description_line, pattern=pattern, tag_name=tag_name)
 
             title = self.tags.pop("title", None)
             if title:

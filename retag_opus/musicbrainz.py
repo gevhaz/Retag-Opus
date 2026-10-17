@@ -19,7 +19,7 @@ from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrai
 Tags = dict[str, list[str]]
 
 MIN_RELEASE_SEARCH_SCORE: Final[int] = 90
-MAX_DURATION_DIFFERENCE_SECONDS: Final[float] = 3.0
+MAX_LENGTH_DIFFERENCE_SECONDS: Final[float] = 3.0
 MAX_RELEASE_LOOKUPS: Final[int] = 3
 
 # Tags that describe the release a song is on, rather than the song
@@ -228,11 +228,11 @@ def format_length(milliseconds: int | None) -> str:
     return f"{seconds // 60}:{seconds % 60:02d}"
 
 
-def duration_matches(milliseconds: int | None, duration: float | None) -> bool:
-    """Check whether a length from MusicBrainz is the song's duration."""
-    if milliseconds is None or duration is None:
+def length_matches(milliseconds: int | None, seconds: float | None) -> bool:
+    """Check whether a length in milliseconds from MusicBrainz is the song's length in seconds."""
+    if milliseconds is None or seconds is None:
         return False
-    return abs(milliseconds / 1000 - duration) <= MAX_DURATION_DIFFERENCE_SECONDS
+    return abs(milliseconds / 1000 - seconds) <= MAX_LENGTH_DIFFERENCE_SECONDS
 
 
 def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None:
@@ -273,7 +273,7 @@ def matching_track_index(tracks: list[tuple[JsonDict, JsonDict]], tags: MusicTag
     text = song_text(tags)
     for index, (_, track) in enumerate(tracks):
         same_title = title_matches(track["title"], text)
-        same_length = tags.duration is None or duration_matches(track.get("length"), tags.duration)
+        same_length = tags.length is None or length_matches(track.get("length"), tags.length)
         if same_title and same_length:
             return index
     return None
@@ -326,13 +326,14 @@ def match_message(track: JsonDict, release: JsonDict) -> str:
     """Get the message saying which track a song was matched to.
 
     E.g. "MusicBrainz: Found 'Love of My Life' (live, 1981-11-24:
-    Montreal Forum) on 'Rock Montreal' (2007, CA)." The version of the
-    recording and the release make a wrong match stand out.
+    Montreal Forum) on 'Rock Montreal' (2007, CA)." The recording's
+    disambiguation, which usually says which version it is, and the
+    release make a wrong match stand out.
     """
-    version = track["recording"].get("disambiguation")
+    disambiguation = track["recording"].get("disambiguation")
     title = f"'{track['title']}'"
-    if version:
-        title += f" ({version})"
+    if disambiguation:
+        title += f" ({disambiguation})"
     return f"MusicBrainz: Found {title} on {format_release(release)}."
 
 
@@ -343,12 +344,12 @@ def search_result_entry(recording: JsonDict) -> str:
     The menu treats "|" as the start of preview data, and "[" as the
     start of a shortcut key, so they're replaced.
     """
-    recording_version = recording.get("disambiguation")
+    disambiguation = recording.get("disambiguation")
     releases_with_recording = recording.get("releases")
     entry = f"{recording.get('title', '')} - {joined_credit(recording.get('artist-credit', []))}"
     entry += f" ({format_length(recording.get('length'))}"
-    if recording_version:
-        entry += f", {recording_version}"
+    if disambiguation:
+        entry += f", {disambiguation}"
     if releases_with_recording:
         entry += f", on '{releases_with_recording[0].get('title', '')}'"
     return entry.replace("|", "/").replace("[", "(").replace("]", ")") + ")"
@@ -513,26 +514,25 @@ class MusicBrainzMatcher:
             confident_results = [
                 result
                 for result in results
-                if title_matches(result.get("title", ""), text)
-                and duration_matches(result.get("length"), tags.duration)
+                if title_matches(result.get("title", ""), text) and length_matches(result.get("length"), tags.length)
             ]
             if confident_results:
                 # The result that fits the song best, see fit()
                 return min(confident_results, key=lambda result: fit(result, text))
-            choice = self.ask_for_recording(results, text, tags.duration)
+            choice = self.ask_for_recording(results, text, tags.length)
             if choice is not True:
                 return choice or None
             text = input(f"Search MusicBrainz for [{text}]: ").strip() or text
             results = self.client.search_recordings_by_words(text) if text else []
 
     @staticmethod
-    def ask_for_recording(results: list[JsonDict], text: str, duration: float | None) -> JsonDict | bool:
+    def ask_for_recording(results: list[JsonDict], text: str, song_seconds: float | None) -> JsonDict | bool:
         """Let the user pick a recording from search results.
 
         :return: The chosen recording, True if the user wants to search
             for something else, or False if the user skips the song.
         """
-        song_length = format_length(round(duration * 1000)) if duration is not None else "?:??"
+        song_length = format_length(round(song_seconds * 1000)) if song_seconds is not None else "?:??"
         result_summary = "Results" if results else "Nothing found"
         menu_title = f"MusicBrainz: {result_summary} for '{text}'. The song is {song_length} long."
         entries = [search_result_entry(recording) for recording in results]

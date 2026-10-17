@@ -126,7 +126,7 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
     opus_file: OggOpus = OggOpus(file_path)  # type: ignore
     original_tags: Tags = dict(opus_file.items())  # type: ignore
     tags = MusicTags(manual_album_set=manual_album_set)
-    tags.duration = getattr(getattr(opus_file, "info", None), "length", None)
+    tags.length = getattr(getattr(opus_file, "info", None), "length", None)
 
     tags.original = original_tags
     tags.discard_upload_date()
