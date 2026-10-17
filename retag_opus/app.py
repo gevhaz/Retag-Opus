@@ -107,7 +107,7 @@ def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
                 changed = True
         if changed:
             metadata.save()
-            messages.success(f"Album level tags saved for file: {utils.file_path_to_song_data(file_path)}")
+            messages.success(f"Album level tags saved for file: {utils.file_path_to_song_name(file_path)}")
 
 
 def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, MusicTags]:
@@ -199,19 +199,19 @@ def match_albums(matcher: MusicBrainzMatcher, albums: dict[Path, str], manual_al
 def run(argv: Sequence[str] | None = None) -> int:
     """Run all the functionality of the app."""
     args = Cli.parse_arguments(argv)
-    music_dir = Path(args.dir).resolve()
+    music_dir = Path(args.directory).resolve()
     try:
         with open(get_config_path(), "rb") as f:
             config = tomllib.load(f)
     except FileNotFoundError:
         config = {}
     if not music_dir.is_dir():
-        messages.error(f"{args.dir} is not a directory!")
+        messages.error(f"{args.directory} is not a directory!")
         return 1
 
     all_files = list(filter(Path.is_file, music_dir.glob("*.opus")))
     if not all_files:
-        messages.warning(f"There appears to be no .opus files in the provided directory {args.dir}")
+        messages.warning(f"There appears to be no .opus files in the provided directory {args.directory}")
         return 0
 
     albums: dict[Path, str] = {}
@@ -229,7 +229,7 @@ def run(argv: Sequence[str] | None = None) -> int:
     for idx, file_path in enumerate(all_files):
         redo = True
         album = albums.get(file_path)
-        file_name = utils.file_path_to_song_data(file_path)
+        file_name = utils.file_path_to_song_name(file_path)
         while redo:
             redo = False
             # Print info about file and progress

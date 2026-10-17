@@ -128,47 +128,47 @@ class TestMusicTags(unittest.TestCase):
 
         self.assertEqual(expected, captured.out)
 
-    def test_get_tag_data_one_source(self) -> None:
+    def test_get_colored_values_from_all_sources_one_source(self) -> None:
         """Test getting tags from one source."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
-        actual = tags.get_tag_data("artist")
+        actual = tags.get_colored_values_from_all_sources("artist")
         expected = ["artist 1"]
         self.assertListEqual(expected, actual)
 
-    def test_get_tag_data_two_sources(self) -> None:
+    def test_get_colored_values_from_all_sources_two_sources(self) -> None:
         """Test getting tags from two source."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
-        actual = tags.get_tag_data("artist")
+        actual = tags.get_colored_values_from_all_sources("artist")
         expected = ["artist 1", "artist 2"]
         self.assertListEqual(expected, actual)
 
-    def test_get_tag_data_two_overlapping_sources(self) -> None:
+    def test_get_colored_values_from_all_sources_two_overlapping_sources(self) -> None:
         """Test get tags from two sources where a value is in both."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 1", "artist 2"]}
-        actual = tags.get_tag_data("artist")
+        actual = tags.get_colored_values_from_all_sources("artist")
         expected = ["artist 1", "artist 1 | artist 2"]
         self.assertListEqual(expected, actual)
 
-    def test_get_tag_data_no_values(self) -> None:
+    def test_get_colored_values_from_all_sources_no_values(self) -> None:
         """Test getting tags from one source."""
         tags = MusicTags()
-        actual = tags.get_tag_data("artist")
+        actual = tags.get_colored_values_from_all_sources("artist")
         expected: list[str] = []
         self.assertListEqual(expected, actual)
 
-    def test_get_tag_data_all_sources(self) -> None:
+    def test_get_colored_values_from_all_sources_all_sources(self) -> None:
         """Test getting tags from two source."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
         tags.parsed_from_original = {"artist": ["artist 3"]}
         tags.parsed_from_youtube = {"artist": ["artist 4"]}
-        actual = tags.get_tag_data("artist")
+        actual = tags.get_colored_values_from_all_sources("artist")
         expected = [
             "artist 3",
             "artist 4",
@@ -803,40 +803,40 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(2, len(tags.resolved))
         self.assertEqual(["test", "youtube-dl"], tags.resolved.get("comment"))
 
-    def test_get_field_only_new(self) -> None:
+    def test_get_values_from_all_sources_only_new(self) -> None:
         """Test getting data from all new sources for a given tag."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
         tags.parsed_from_original = {"artist": ["artist 3"]}
         tags.parsed_from_youtube = {"artist": ["artist 2"]}
-        actual_tags = tags.get_field("artist", only_new=True)
+        actual_tags = tags.get_values_from_all_sources("artist", only_new=True)
         self.assertEqual(2, len(actual_tags))
         self.assertNotIn("artist 1", actual_tags)
         self.assertIn("artist 2", actual_tags)
         self.assertIn("artist 3", actual_tags)
 
-    def test_get_field_include_original(self) -> None:
+    def test_get_values_from_all_sources_include_original(self) -> None:
         """Test getting data from all sources for a given tag."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
         tags.parsed_from_original = {"artist": ["artist 3"]}
         tags.parsed_from_youtube = {"artist": ["artist 2"]}
-        actual_tags = tags.get_field("artist", only_new=False)
+        actual_tags = tags.get_values_from_all_sources("artist", only_new=False)
         self.assertEqual(3, len(actual_tags))
         self.assertIn("artist 1", actual_tags)
         self.assertIn("artist 2", actual_tags)
         self.assertIn("artist 3", actual_tags)
 
-    def test_get_field_that_does_not_exist(self) -> None:
+    def test_get_values_from_all_sources_that_does_not_exist(self) -> None:
         """Test getting data from all sources for a non-existent tag."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
         tags.parsed_from_original = {"artist": ["artist 3"]}
         tags.parsed_from_youtube = {"artist": ["artist 2"]}
-        actual_tags = tags.get_field("title", only_new=False)
+        actual_tags = tags.get_values_from_all_sources("title", only_new=False)
         self.assertEqual(0, len(actual_tags))
         self.assertNotIn("artist 1", actual_tags)
         self.assertNotIn("artist 2", actual_tags)
@@ -1052,11 +1052,11 @@ class TestMusicTags(unittest.TestCase):
         tags.modify_resolved_field()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
 
-    @patch("retag_opus.utils.select_single_tag")
-    def test_determine_album_artist_select_one(self, select_single_tag: MagicMock) -> None:
+    @patch("retag_opus.utils.select_single_value")
+    def test_determine_album_artist_select_one(self, select_single_value: MagicMock) -> None:
         """Test that album artist can be picked up normally."""
         expected_artist = ["artist 4"]
-        select_single_tag.return_value = expected_artist
+        select_single_value.return_value = expected_artist
         tags = MusicTags()
 
         tags.original = {"artist": ["artist 1"]}
@@ -1066,11 +1066,11 @@ class TestMusicTags(unittest.TestCase):
         tags.determine_album_artist()
         self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
 
-    @patch("retag_opus.utils.select_single_tag")
-    def test_determine_album_artist_select_two(self, select_single_tag: MagicMock) -> None:
+    @patch("retag_opus.utils.select_single_value")
+    def test_determine_album_artist_select_two(self, select_single_value: MagicMock) -> None:
         """Test that two album artists can be selected."""
         expected_artist = ["artist 2", "artist 4"]
-        select_single_tag.return_value = expected_artist
+        select_single_value.return_value = expected_artist
         tags = MusicTags()
 
         tags.original = {"artist": ["artist 1"]}
@@ -1080,10 +1080,10 @@ class TestMusicTags(unittest.TestCase):
         tags.determine_album_artist()
         self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
 
-    @patch("retag_opus.utils.select_single_tag")
-    def test_determine_album_artist_select_zero(self, select_single_tag: MagicMock) -> None:
+    @patch("retag_opus.utils.select_single_value")
+    def test_determine_album_artist_select_zero(self, select_single_value: MagicMock) -> None:
         """Test that no tag is added when nothing is selected."""
-        select_single_tag.return_value = []
+        select_single_value.return_value = []
         tags = MusicTags()
 
         tags.original = {"artist": ["artist 1"]}
@@ -1093,15 +1093,15 @@ class TestMusicTags(unittest.TestCase):
         tags.determine_album_artist()
         self.assertNotIn("albumartist", tags.resolved)
 
-    @patch("retag_opus.utils.select_single_tag")
-    def test_determine_album_artist_unsplit_is_candidate(self, select_single_tag: MagicMock) -> None:
+    @patch("retag_opus.utils.select_single_value")
+    def test_determine_album_artist_unsplit_is_candidate(self, select_single_value: MagicMock) -> None:
         """Test that the unsplit album artist is offered with split artists."""
-        select_single_tag.return_value = ["artist 1 & artist 2"]
+        select_single_value.return_value = ["artist 1 & artist 2"]
         tags = MusicTags()
 
         tags.youtube = {"artist": ["artist 1", "artist 2"], "albumartist": ["artist 1 & artist 2"]}
         tags.determine_album_artist()
-        select_single_tag.assert_called_once_with(["artist 1 & artist 2", "artist 1", "artist 2"])
+        select_single_value.assert_called_once_with(["artist 1 & artist 2", "artist 1", "artist 2"])
         self.assertEqual(["artist 1 & artist 2"], tags.resolved.get("albumartist"))
 
     def test_determine_album_artist_only_old_exist(self) -> None:
@@ -2086,24 +2086,24 @@ class TestMusicBrainzSource(unittest.TestCase):
         """Fixture for capturing system output."""
         self.capsys = capsys  # type: ignore
 
-    def test_get_tag_data_includes_musicbrainz(self) -> None:
+    def test_get_colored_values_from_all_sources_includes_musicbrainz(self) -> None:
         """Test that MusicBrainz values are shown when they're new."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"], "title": ["title 1"]}
         tags.musicbrainz = {"artist": ["artist 2"], "title": ["title 1"]}
         self.assertEqual(
             ["artist 1", "artist 2"],
-            tags.get_tag_data("artist"),
+            tags.get_colored_values_from_all_sources("artist"),
         )
-        self.assertEqual(["title 1"], tags.get_tag_data("title"))
+        self.assertEqual(["title 1"], tags.get_colored_values_from_all_sources("title"))
 
-    def test_get_field_includes_musicbrainz(self) -> None:
+    def test_get_values_from_all_sources_includes_musicbrainz(self) -> None:
         """Test that MusicBrainz values can be selected."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.musicbrainz = {"artist": ["artist 2"]}
-        self.assertEqual(["artist 1", "artist 2"], tags.get_field("artist"))
-        self.assertEqual(["artist 2"], tags.get_field("artist", only_new=True))
+        self.assertEqual(["artist 1", "artist 2"], tags.get_values_from_all_sources("artist"))
+        self.assertEqual(["artist 2"], tags.get_values_from_all_sources("artist", only_new=True))
 
     def test_check_any_new_data_exists_in_musicbrainz(self) -> None:
         """Test that tags only MusicBrainz has are new data."""
@@ -2279,7 +2279,7 @@ class TestMusicTagsColors(unittest.TestCase):
         """Fixture for capturing system output."""
         self.capsys = capsys  # type: ignore
 
-    def test_get_tag_data_styles_sources(self) -> None:
+    def test_get_colored_values_from_all_sources_styles_sources(self) -> None:
         """Test that each source of a tag has its own style."""
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
@@ -2294,7 +2294,7 @@ class TestMusicTagsColors(unittest.TestCase):
             styles.youtube("artist 2"),
             styles.musicbrainz("artist 5"),
         ]
-        self.assertListEqual(expected, tags.get_tag_data("artist"))
+        self.assertListEqual(expected, tags.get_colored_values_from_all_sources("artist"))
 
     def test_print_resolved_styles_changes(self) -> None:
         """Test that changed, removed, unchanged and unset tags are styled."""

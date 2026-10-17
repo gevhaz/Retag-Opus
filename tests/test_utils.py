@@ -162,16 +162,16 @@ class TestUtils(unittest.TestCase):
         playlist = Path("<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
         playlist_nested = Path("path/to/<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
 
-        self.assertEqual("Artist - Title of Song", utils.file_path_to_song_data(playlist))
-        self.assertEqual("Artist - Title of Song", utils.file_path_to_song_data(playlist_nested))
+        self.assertEqual("Artist - Title of Song", utils.file_path_to_song_name(playlist))
+        self.assertEqual("Artist - Title of Song", utils.file_path_to_song_name(playlist_nested))
 
     def test_title_only_file_path_to_song_title(self) -> None:
         """Test paths on title only format can be converted to title."""
         only_title = Path("<a song title>.opus")
         no_angle_brackets = Path("a song title.opus")
 
-        self.assertEqual("a song title", utils.file_path_to_song_data(only_title))
-        self.assertEqual("a song title", utils.file_path_to_song_data(no_angle_brackets))
+        self.assertEqual("a song title", utils.file_path_to_song_name(only_title))
+        self.assertEqual("a song title", utils.file_path_to_song_name(no_angle_brackets))
 
     def test_artist_title_file_path_to_song_title(self) -> None:
         """Test paths on artist-title format converts to a title."""
@@ -179,15 +179,15 @@ class TestUtils(unittest.TestCase):
         song_nested = Path("path/to/<artist> - <title>.opus")
         song_topic = Path("<artist - Topic> - <title>.opus")
 
-        self.assertEqual("artist - title", utils.file_path_to_song_data(song))
-        self.assertEqual("artist - title", utils.file_path_to_song_data(song_nested))
-        self.assertEqual("artist - title", utils.file_path_to_song_data(song_topic))
+        self.assertEqual("artist - title", utils.file_path_to_song_name(song))
+        self.assertEqual("artist - title", utils.file_path_to_song_name(song_nested))
+        self.assertEqual("artist - title", utils.file_path_to_song_name(song_topic))
 
     def test_basename_not_found(self) -> None:
         """Test that path is returned when no basename can be found."""
         song = Path("test/<artist> - <title>.mp3")
 
-        self.assertEqual("test/<artist> - <title>.mp3", utils.file_path_to_song_data(song))
+        self.assertEqual("test/<artist> - <title>.mp3", utils.file_path_to_song_name(song))
 
     @patch("retag_opus.utils.TerminalMenu")
     def test_select_single_tag(self, mock_menu: MagicMock) -> None:
@@ -195,7 +195,7 @@ class TestUtils(unittest.TestCase):
         candidates = ["candidate 1", "candidate 2", "candidate 3"]
         menu = SimpleNamespace(show=(lambda: 1))  # second option
         mock_menu.return_value = menu
-        actual_outcome = utils.select_single_tag(candidates)
+        actual_outcome = utils.select_single_value(candidates)
         self.assertListEqual(["candidate 2"], actual_outcome)
 
     @patch("retag_opus.utils.TerminalMenu")
@@ -204,7 +204,7 @@ class TestUtils(unittest.TestCase):
         candidates = ["candidate 1", "candidate 2", "candidate 3"]
         menu = SimpleNamespace(show=(lambda: None))  # no option selected
         mock_menu.return_value = menu
-        actual_outcome = utils.select_single_tag(candidates)
+        actual_outcome = utils.select_single_value(candidates)
         self.assertEqual(0, len(actual_outcome))
 
     @patch("retag_opus.utils.TerminalMenu")
@@ -213,7 +213,7 @@ class TestUtils(unittest.TestCase):
         candidates = ["candidate 1", "candidate 2", "candidate 3"]
         menu = SimpleNamespace(show=(lambda: [1, 2]))  # second and third option
         mock_menu.return_value = menu
-        actual_outcome = utils.select_single_tag(candidates)
+        actual_outcome = utils.select_single_value(candidates)
         self.assertEqual(0, len(actual_outcome))
 
     @patch("retag_opus.utils.TerminalMenu")
@@ -222,7 +222,7 @@ class TestUtils(unittest.TestCase):
         candidates = ["candidate 1", "candidate 2", "candidate 3"]
         menu = SimpleNamespace(show=(lambda: 3))  # "no choice" option
         mock_menu.return_value = menu
-        actual_outcome = utils.select_single_tag(candidates)
+        actual_outcome = utils.select_single_value(candidates)
         self.assertEqual(0, len(actual_outcome))
 
     def test_exit_now(self) -> None:

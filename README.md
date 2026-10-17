@@ -24,7 +24,7 @@ There is also a help (`-h`) flag:
 
 ```console
 $ retag -h
-usage: main.py [-h] [-d DIR] [-v] [-V]
+usage: main.py [-h] [-d DIRECTORY] [-v] [-V]
 
 options:
 -h, --help            show this help message and exit
@@ -32,7 +32,7 @@ options:
                       print shell completion script
 -a MANUAL_ALBUM, --album MANUAL_ALBUM
                       Manually sets the album tag to the given value and puts any parsed album in the discsubtitle tag
--d DIR, --directory DIR
+-d DIRECTORY, --directory DIRECTORY
                       directory in which the files to be retagged are located
 -i, --individual      Choose album level tags separately for each song, even for songs that are from the same album
 -m, --musicbrainz, --no-musicbrainz
