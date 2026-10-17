@@ -121,6 +121,11 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song (Video Edit)", utils.prune_title("A song (Video Edit)"))
         self.assertEqual("Revolution #9", utils.prune_title("Revolution #9"))
 
+    def test_remove_video_notes(self) -> None:
+        """Test that only notes about the video are removed from a video title."""
+        self.assertEqual("Song (Live)", utils.remove_video_notes("Song (Live) (Official Video) #rock"))
+        self.assertEqual("Song ft. Artist", utils.remove_video_notes("Song ft. Artist [Lyric Video]"))
+
     def test_split_artist_from_title(self) -> None:
         """Test that video titles are split where one side is the artist."""
         self.assertEqual(

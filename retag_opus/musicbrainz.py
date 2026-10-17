@@ -171,6 +171,8 @@ def song_text(tags: MusicTags) -> str:
     the existing title, which is then usually a YouTube video title that
     also names e.g. the artists and the movie the song is from, like
     "KAUN TUJHE Full Video | M.S. DHONI -THE UNTOLD STORY |Amaal Mallik".
+    Notes about the video, like "(Official Video)", are left out, so
+    that they aren't taken for the title of a song.
     """
     # Tags are lists of values, but a song only has one title
     youtube_titles = tags.youtube.get("title", [])
@@ -179,7 +181,7 @@ def song_text(tags: MusicTags) -> str:
         return " ".join([youtube_titles[0]] + youtube_artists)
     existing_titles = tags.original.get("title", [])
     if existing_titles:
-        return existing_titles[0]
+        return utils.remove_video_notes(existing_titles[0])
     return ""
 
 

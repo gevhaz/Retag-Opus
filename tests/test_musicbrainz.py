@@ -231,6 +231,9 @@ def test_song_text() -> None:
     youtube = {"title": ["Song"], "artist": ["A", "B"]}
     assert musicbrainz.song_text(song(original={"title": ["Video"]}, youtube=youtube)) == "Song A B"
     assert musicbrainz.song_text(song(original={"title": ["Video"], "artist": ["Channel"]})) == "Video"
+    assert musicbrainz.song_text(song(original={"title": ["Artist - Song (Live) (Official Video)"]})) == (
+        "Artist - Song (Live)"
+    )
     assert musicbrainz.song_text(song()) == ""
 
 
