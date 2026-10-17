@@ -3,19 +3,12 @@
 This module holds variables that should be constant and can be accessed
 in other parts of the app.
 """
-from typing import Final, TypedDict
+from typing import Final
 
 INTERPUNCT: Final = "\u00b7"
 # PRINTED_SPACE = "\u00b7"
 PRINTED_SPACE: Final = " "
 VALUE_SEPARATOR: Final = " | "
-
-
-class PrintNameAndPatterns(TypedDict):
-    """The name a tag is printed with, and patterns for parsing it from descriptions."""
-
-    print_name: str
-    patterns: list[str]
 
 
 title_parse_patterns: Final[dict[str, str]] = {
@@ -39,31 +32,27 @@ title_parse_patterns: Final[dict[str, str]] = {
     "hashtags": r"(.*?)\s*((?:#[^\W\d_]\w*\s*)+)()$",
 }
 
-# Tags that are printed for every song, and patterns for parsing them
-# from YouTube descriptions. Credits, e.g. "Composer: Name", are parsed
-# by youtube_credits instead.
-tags_printed_for_every_song: Final[dict[str, PrintNameAndPatterns]] = {
-    "title": {"print_name": "Title", "patterns": [r".*“(.*)” by .* from ‘.*’"]},
-    "album": {"print_name": "Album", "patterns": [r".*“.*” by .* from ‘(.*)’"]},
-    "albumartist": {"print_name": "Album Artist", "patterns": []},
-    "artist": {
-        "print_name": "Artist(s)",
-        "patterns": [r".*\([fF]eat. (.+?)\)", r".*“.*” by (.*) from ‘.*’"],
-    },
-    "date": {"print_name": "Date", "patterns": [r"Released on:\s*(\d\d\d\d-\d\d-\d\d)"]},
-    "genre": {"print_name": "Genre", "patterns": []},
-    "version": {"print_name": "Version", "patterns": []},
-    "performer": {"print_name": "Performer", "patterns": []},
-    "organization": {"print_name": "Organization", "patterns": [r"Provided to YouTube by (.+)\s*"]},
-    "copyright": {"print_name": "Copyright", "patterns": [r"\u2117 (.+)\s*"]},
-    "composer": {"print_name": "Composer", "patterns": []},
-    "conductor": {"print_name": "Conductor", "patterns": []},
-    "arranger": {"print_name": "Arranger", "patterns": []},
-    "author": {"print_name": "Author", "patterns": []},
-    "producer": {"print_name": "Producer", "patterns": []},
-    "publisher": {"print_name": "Publisher", "patterns": []},
-    "lyricist": {"print_name": "Lyricist", "patterns": []},
-    "writer": {"print_name": "Writer", "patterns": []},
+# Tags that are printed for every song, and the names they're printed
+# with
+tags_printed_for_every_song: Final[dict[str, str]] = {
+    "title": "Title",
+    "album": "Album",
+    "albumartist": "Album Artist",
+    "artist": "Artist(s)",
+    "date": "Date",
+    "genre": "Genre",
+    "version": "Version",
+    "performer": "Performer",
+    "organization": "Organization",
+    "copyright": "Copyright",
+    "composer": "Composer",
+    "conductor": "Conductor",
+    "arranger": "Arranger",
+    "author": "Author",
+    "producer": "Producer",
+    "publisher": "Publisher",
+    "lyricist": "Lyricist",
+    "writer": "Writer",
 }
 
 # Prefix of tags with a performer's role, e.g. "performer:lead vocals".
