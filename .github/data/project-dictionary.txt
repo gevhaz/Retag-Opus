@@ -4,6 +4,7 @@ DDEX
 GitHub
 Libet
 MusicBrainz
+PEP
 Picard
 PyPI
 Quod

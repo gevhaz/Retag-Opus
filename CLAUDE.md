@@ -5,6 +5,9 @@
   variable over a dense comprehension or a long expression.
 - Write docstrings that can be understood without reading the code
   around them. Add an example when it helps.
+- Follow PEP 8 and PEP 257 and write idiomatic Python, e.g. plain
+  functions in a module rather than a class of static methods. Where
+  the rules here differ from them, the rules here win.
 
 # Spellcheck
 
