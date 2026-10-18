@@ -1,11 +1,10 @@
 """Tests for description_parser.py."""
-from retag_opus.description_parser import DescriptionParser
+from retag_opus import description_parser
 
 
 def test_parse_credits() -> None:
     """Credits are put in tags named as on MusicBrainz."""
-    parser = DescriptionParser()
-    parser.parse(
+    tags = description_parser.parse(
         "Provided to YouTube by Label\n"
         "\n"
         "Song · Singer\n"
@@ -18,11 +17,11 @@ def test_parse_credits() -> None:
         "Lyricist: Poet\n"
         "Writer: Song Smith\n"
     )
-    assert parser.tags["performer:lead vocals"] == ["Singer"]
-    assert parser.tags["performer:background vocals"] == ["Choir"]
-    assert parser.tags["performer:drums (drum set)"] == ["Drummer"]
-    assert parser.tags["lyricist"] == ["Poet"]
-    assert parser.tags["writer"] == ["Song Smith"]
+    assert tags["performer:lead vocals"] == ["Singer"]
+    assert tags["performer:background vocals"] == ["Choir"]
+    assert tags["performer:drums (drum set)"] == ["Drummer"]
+    assert tags["lyricist"] == ["Poet"]
+    assert tags["writer"] == ["Song Smith"]
 
 
 AUTO_GENERATED_DESCRIPTION = (
@@ -50,31 +49,29 @@ AUTO_GENERATED_DESCRIPTION = (
 
 def test_parse_auto_generated_credits() -> None:
     """Credits of auto-generated descriptions are read by their roles."""
-    parser = DescriptionParser()
-    parser.parse(AUTO_GENERATED_DESCRIPTION)
-    assert parser.tags["title"] == ["Song"]
-    assert parser.tags["album"] == ["Album"]
-    assert parser.tags["date"] == ["2020-01-01"]
-    assert parser.tags["performer:lead vocals"] == ["Singer"]
-    assert parser.tags["performer:background vocals"] == ["Choir"]
-    assert parser.tags["composer"] == ["Song Smith"]
-    assert parser.tags["lyricist"] == ["Song Smith"]
+    tags = description_parser.parse(AUTO_GENERATED_DESCRIPTION)
+    assert tags["title"] == ["Song"]
+    assert tags["album"] == ["Album"]
+    assert tags["date"] == ["2020-01-01"]
+    assert tags["performer:lead vocals"] == ["Singer"]
+    assert tags["performer:background vocals"] == ["Choir"]
+    assert tags["composer"] == ["Song Smith"]
+    assert tags["lyricist"] == ["Song Smith"]
     # Programming isn't an instrument
-    assert "performer:programming" not in parser.tags
+    assert "performer:programming" not in tags
     # An associated performer with a role isn't also a plain performer
-    assert "performer" not in parser.tags
+    assert "performer" not in tags
     # Roles with no tag are left out
-    assert "engineer" not in parser.tags
+    assert "engineer" not in tags
 
 
 def test_parse_credits_in_other_descriptions() -> None:
     """Lines with known roles are read in descriptions that aren't auto-generated."""
-    parser = DescriptionParser()
-    parser.parse(
+    tags = description_parser.parse(
         "Guitar: Gui Tarist\n"
         "Electric Guitar: Elec Tric\n"
         "Drum Programming: Program Mer\n"
         "Makeup Artist: Make Up\n"
         "Follow us: https://example.com\n"
     )
-    assert parser.tags == {"performer:guitar": ["Gui Tarist"], "performer:electric guitar": ["Elec Tric"]}
+    assert tags == {"performer:guitar": ["Gui Tarist"], "performer:electric guitar": ["Elec Tric"]}
