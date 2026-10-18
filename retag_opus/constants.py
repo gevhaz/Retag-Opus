@@ -5,7 +5,6 @@ in other parts of the app.
 """
 from typing import Final
 
-INTERPUNCT: Final = "\u00b7"
 # PRINTED_SPACE = "\u00b7"
 PRINTED_SPACE: Final = " "
 VALUE_SEPARATOR: Final = " | "
