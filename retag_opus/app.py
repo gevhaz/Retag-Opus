@@ -18,7 +18,15 @@ from simple_term_menu import TerminalMenu
 from retag_opus import constants, description_parser, messages, styles, utils
 from retag_opus.cli import Cli
 from retag_opus.exceptions import UserExitException
-from retag_opus.music_tags import REMOVED_TAG, MusicTags
+from retag_opus.music_tags import (
+    MUSICBRAINZ,
+    ORIGINAL,
+    PARSED_FROM_ORIGINAL,
+    PARSED_FROM_YOUTUBE,
+    REMOVED_TAG,
+    YOUTUBE,
+    MusicTags,
+)
 from retag_opus.musicbrainz import MusicBrainzMatcher
 from retag_opus.tags_parser import TagsParser
 
@@ -126,17 +134,17 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
     tags = MusicTags(manual_album_set=manual_album_set)
     tags.length = getattr(getattr(opus_file, "info", None), "length", None)
 
-    tags.original = original_tags
+    tags.set_tags(ORIGINAL, original_tags)
     tags.discard_upload_date()
     if manual_album is not None:
         tags.switch_album_to_disc_subtitle(manual_album)
 
     tags.resolved = deepcopy(original_tags)
 
-    original_tags_parser = TagsParser(tags.original)
+    original_tags_parser = TagsParser(original_tags)
     original_tags_parser.parse_tags()
     original_tags_parser.split_select_original_tags()
-    tags.parsed_from_original = original_tags_parser.tags
+    tags.set_tags(PARSED_FROM_ORIGINAL, original_tags_parser.tags)
 
     # 1.1 Manually set album
     if manual_album is not None:
@@ -148,12 +156,13 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
     # 3. If description exists, send it to be parsed
     if description_lines:
         description = "\n".join(description_lines)
-        tags.youtube = description_parser.parse(description, manual_album_set=manual_album_set)
+        youtube_tags = description_parser.parse(description, manual_album_set=manual_album_set)
+        tags.set_tags(YOUTUBE, youtube_tags)
         tags.add_source_tag()
 
-        youtube_tags_parser = TagsParser(tags.youtube)
+        youtube_tags_parser = TagsParser(youtube_tags)
         youtube_tags_parser.parse_tags()
-        tags.parsed_from_youtube = youtube_tags_parser.tags
+        tags.set_tags(PARSED_FROM_YOUTUBE, youtube_tags_parser.tags)
 
     return opus_file, tags
 
@@ -236,11 +245,11 @@ def run(argv: Sequence[str] | None = None) -> int:
             messages.info(f"----- Song: {song_name} -----")
 
             opus_file, tags = read_song(file_path, args.manual_album)
-            description_lines = get_description(tags.original)
+            description_lines = get_description(tags.tags_from(ORIGINAL))
             if matcher is not None:
                 if file_path not in musicbrainz_tags_per_song:
                     musicbrainz_tags_per_song[file_path] = matcher.match_song(tags)
-                tags.musicbrainz = musicbrainz_tags_per_song[file_path]
+                tags.set_tags(MUSICBRAINZ, musicbrainz_tags_per_song[file_path])
 
             # 4.5 Get rid of shady tags
             tags.prune_resolved_tags(tags_to_delete, strings_to_delete_tags_based_on)
