@@ -10,7 +10,7 @@ from mock import patch
 
 from retag_opus import styles
 from retag_opus.exceptions import UserExitException
-from retag_opus.music_tags import MusicTags
+from retag_opus.music_tags import MUSICBRAINZ, ORIGINAL, PARSED_FROM_ORIGINAL, PARSED_FROM_YOUTUBE, YOUTUBE, MusicTags
 
 Tags = dict[str, list[str]]
 
@@ -131,7 +131,7 @@ class TestMusicTags(unittest.TestCase):
     def test_get_colored_values_from_all_sources_one_source(self) -> None:
         """Test getting tags from one source."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
         actual = tags.get_colored_values_from_all_sources("artist")
         expected = ["artist 1"]
         self.assertListEqual(expected, actual)
@@ -139,8 +139,8 @@ class TestMusicTags(unittest.TestCase):
     def test_get_colored_values_from_all_sources_two_sources(self) -> None:
         """Test getting tags from two source."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
         actual = tags.get_colored_values_from_all_sources("artist")
         expected = ["artist 2", "artist 1"]
         self.assertListEqual(expected, actual)
@@ -148,8 +148,8 @@ class TestMusicTags(unittest.TestCase):
     def test_get_colored_values_from_all_sources_two_overlapping_sources(self) -> None:
         """Test get tags from two sources where a value is in both."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 1", "artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 1", "artist 2"]})
         actual = tags.get_colored_values_from_all_sources("artist")
         expected = ["artist 1 | artist 2", "artist 1"]
         self.assertListEqual(expected, actual)
@@ -164,10 +164,10 @@ class TestMusicTags(unittest.TestCase):
     def test_get_colored_values_from_all_sources_all_sources(self) -> None:
         """Test getting tags from two source."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"artist": ["artist 4"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
         actual = tags.get_colored_values_from_all_sources("artist")
         expected = [
             "artist 2",
@@ -180,10 +180,10 @@ class TestMusicTags(unittest.TestCase):
     def test_print_all(self) -> None:
         """Test printing the combined metadata of all sources."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"artist": ["artist 4"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
         tags.print_all()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
@@ -211,10 +211,10 @@ class TestMusicTags(unittest.TestCase):
     def test_print_all_with_performers(self) -> None:
         """Test printing combined data when there are performer tags."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"performer:lead vocals": ["artist 4"]})
         tags.print_all()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
@@ -252,10 +252,10 @@ class TestMusicTags(unittest.TestCase):
     def test_print_youtube(self) -> None:
         """Test printing data from youtube tags."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"performer:lead vocals": ["artist 4"]})
         tags.print_youtube()
         captured = self.capsys.readouterr()  # type: ignore
         expected = (
@@ -285,9 +285,9 @@ class TestMusicTags(unittest.TestCase):
     def test_print_youtube_no_data(self) -> None:
         """Test printing data from youtube tags when there are none."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"performer:lead vocals": ["artist 4"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"performer:lead vocals": ["artist 4"]})
         tags.print_youtube()
         captured = self.capsys.readouterr()  # type: ignore
         expected = "No new data parsed from description\n"
@@ -296,7 +296,7 @@ class TestMusicTags(unittest.TestCase):
     def test_print_resolved(self) -> None:
         """Test that resolved tags can be printed."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"], "title": ["title 1"], "producer": ["someone"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "title": ["title 1"], "producer": ["someone"]})
         tags.resolved = {"artist": ["artist 1"], "title": ["title 2"], "producer": ["[Removed]"]}
         tags.print_resolved(print_all=False)
         captured = self.capsys.readouterr()  # type: ignore
@@ -325,11 +325,14 @@ class TestMusicTags(unittest.TestCase):
     def test_print_resolved_with_performers(self) -> None:
         """Test that resolved tags print, including performers."""
         tags = MusicTags()
-        tags.original = {
-            "performer:lead vocals": ["artist 1"],
-            "performer:violin": ["artist 1"],
-            "performer:keyboard": ["some guy"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "performer:lead vocals": ["artist 1"],
+                "performer:violin": ["artist 1"],
+                "performer:keyboard": ["some guy"],
+            },
+        )
         tags.resolved = {
             "performer:lead vocals": ["artist 1"],
             "performer:violin": ["artist 2"],
@@ -371,7 +374,7 @@ class TestMusicTags(unittest.TestCase):
         MusicBrainz or with names from older versions, are printed last.
         """
         tags = MusicTags()
-        tags.original = {"performer:vocals": ["artist 1"]}
+        tags.set_tags(ORIGINAL, {"performer:vocals": ["artist 1"]})
         tags.resolved = {"performer:vocals": ["artist 1"], "performer:theremin": ["artist 2"]}
         tags.print_resolved(print_all=False)
         captured = self.capsys.readouterr()  # type: ignore
@@ -386,15 +389,21 @@ class TestMusicTags(unittest.TestCase):
         set to true.
         """
         tags = MusicTags()
-        tags.original = {
-            "performer:lead vocals": ["artist 1"],
-            "performer:violin": ["artist 1"],
-            "performer:guitar": ["artist 3"],
-            "performer:keyboard": ["the keyboard master"],
-        }
-        tags.youtube = {
-            "performer:guitar": ["artist 4"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "performer:lead vocals": ["artist 1"],
+                "performer:violin": ["artist 1"],
+                "performer:guitar": ["artist 3"],
+                "performer:keyboard": ["the keyboard master"],
+            },
+        )
+        tags.set_tags(
+            YOUTUBE,
+            {
+                "performer:guitar": ["artist 4"],
+            },
+        )
         tags.resolved = {
             "performer:lead vocals": ["artist 1"],
             "performer:violin": ["artist 2"],
@@ -436,16 +445,22 @@ class TestMusicTags(unittest.TestCase):
         set to false when there are several sources with relevant tags.
         """
         tags = MusicTags()
-        tags.original = {
-            "performer:lead vocals": ["artist 1"],
-            "performer:violin": ["artist 1"],
-            "performer:guitar": ["artist 3"],
-            "performer:keyboard": ["artist 5"],
-        }
-        tags.youtube = {
-            "performer:guitar": ["artist 4"],
-            "performer:keyboard": ["artist 6"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "performer:lead vocals": ["artist 1"],
+                "performer:violin": ["artist 1"],
+                "performer:guitar": ["artist 3"],
+                "performer:keyboard": ["artist 5"],
+            },
+        )
+        tags.set_tags(
+            YOUTUBE,
+            {
+                "performer:guitar": ["artist 4"],
+                "performer:keyboard": ["artist 6"],
+            },
+        )
         tags.resolved = {
             "performer:lead vocals": ["artist 1"],
             "performer:violin": ["artist 2"],
@@ -486,15 +501,21 @@ class TestMusicTags(unittest.TestCase):
         set to true.
         """
         tags = MusicTags()
-        tags.original = {
-            "artist": ["artist 1", "artist 2"],
-            "title": ["title 1"],
-            "producer": ["person 1"],
-            "arranger": ["artist 1"],
-        }
-        tags.youtube = {
-            "arranger": ["artist 2"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "artist": ["artist 1", "artist 2"],
+                "title": ["title 1"],
+                "producer": ["person 1"],
+                "arranger": ["artist 1"],
+            },
+        )
+        tags.set_tags(
+            YOUTUBE,
+            {
+                "arranger": ["artist 2"],
+            },
+        )
         tags.resolved = {
             "artist": ["artist 1", "artist 2"],
             "title": ["title 2"],
@@ -531,15 +552,21 @@ class TestMusicTags(unittest.TestCase):
         set to false.
         """
         tags = MusicTags()
-        tags.original = {
-            "artist": ["artist 1", "artist 2"],
-            "title": ["title 1"],
-            "producer": ["person 1"],
-            "arranger": ["artist 1"],
-        }
-        tags.youtube = {
-            "arranger": ["artist 2"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "artist": ["artist 1", "artist 2"],
+                "title": ["title 1"],
+                "producer": ["person 1"],
+                "arranger": ["artist 1"],
+            },
+        )
+        tags.set_tags(
+            YOUTUBE,
+            {
+                "arranger": ["artist 2"],
+            },
+        )
         tags.resolved = {
             "artist": ["artist 1", "artist 2"],
             "title": ["title 2"],
@@ -579,10 +606,10 @@ class TestMusicTags(unittest.TestCase):
         originally on in the discsubtitle tag.
         """
         tags = MusicTags()
-        tags.original = {"album": ["album 1"]}
+        tags.set_tags(ORIGINAL, {"album": ["album 1"]})
         tags.switch_album_to_disc_subtitle("album 2")
-        actual_album = tags.original.get("album")
-        actual_discsubtitle = tags.original.get("discsubtitle")
+        actual_album = tags.tags_from(ORIGINAL).get("album")
+        actual_discsubtitle = tags.tags_from(ORIGINAL).get("discsubtitle")
         self.assertIsNone(actual_album)
         assert actual_discsubtitle is not None
         self.assertListEqual(["album 1"], actual_discsubtitle)
@@ -591,30 +618,30 @@ class TestMusicTags(unittest.TestCase):
         """Test that the function works when no album tag."""
         tags = MusicTags()
         tags.switch_album_to_disc_subtitle("album 2")
-        self.assertNotIn("album", tags.original)
-        self.assertNotIn("discsubtitle", tags.original)
+        self.assertNotIn("album", tags.tags_from(ORIGINAL))
+        self.assertNotIn("discsubtitle", tags.tags_from(ORIGINAL))
 
     def test_switch_album_to_disc_subtitle_identical_tags(self) -> None:
         """Test that discsubtitle tag is not added when duplicated."""
         tags = MusicTags()
-        tags.original = {"album": ["album 1"]}
+        tags.set_tags(ORIGINAL, {"album": ["album 1"]})
         tags.switch_album_to_disc_subtitle("album 1")
-        self.assertNotIn("album", tags.original)
-        self.assertNotIn("discsubtitle", tags.original)
+        self.assertNotIn("album", tags.tags_from(ORIGINAL))
+        self.assertNotIn("discsubtitle", tags.tags_from(ORIGINAL))
 
     def test_discard_upload_date_bad_date(self) -> None:
         """Test that bad upload dates are removed."""
         tags = MusicTags()
-        tags.original = {"date": ["20220202"]}
+        tags.set_tags(ORIGINAL, {"date": ["20220202"]})
         tags.discard_upload_date()
-        self.assertNotIn("date", tags.original)
+        self.assertNotIn("date", tags.tags_from(ORIGINAL))
 
     def test_discard_upload_date_good_date(self) -> None:
         """Test that good upload dates are not removed."""
         tags = MusicTags()
-        tags.original = {"date": ["2022-02-02"]}
+        tags.set_tags(ORIGINAL, {"date": ["2022-02-02"]})
         tags.discard_upload_date()
-        actual_date = tags.original.get("date")
+        actual_date = tags.tags_from(ORIGINAL).get("date")
         assert actual_date is not None
         self.assertListEqual(["2022-02-02"], actual_date)
 
@@ -628,14 +655,17 @@ class TestMusicTags(unittest.TestCase):
             "vendor_id",
         ]
         tags = MusicTags()
-        tags.original = {
-            "language": ["eng"],
-            "compatible_brands": ["a brand"],
-            "minor_version": ["The minor version"],
-            "major_brand": ["brand"],
-            "vendor_id": ["id of the vendor"],
-            "date": ["2022-02-02"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "language": ["eng"],
+                "compatible_brands": ["a brand"],
+                "minor_version": ["The minor version"],
+                "major_brand": ["brand"],
+                "vendor_id": ["id of the vendor"],
+                "date": ["2022-02-02"],
+            },
+        )
         tags.resolved = {
             "language": ["eng"],
             "compatible_brands": ["a brand"],
@@ -656,7 +686,7 @@ class TestMusicTags(unittest.TestCase):
     def test_add_source_tag(self) -> None:
         """Test that the "youtube-dl" source tag is added."""
         tags = MusicTags()
-        tags.original = {"purl": ["youtube.com"]}
+        tags.set_tags(ORIGINAL, {"purl": ["youtube.com"]})
         tags.resolved = {"date": ["2022-02-02"]}
         tags.add_source_tag()
         self.assertEqual(2, len(tags.resolved))
@@ -665,7 +695,7 @@ class TestMusicTags(unittest.TestCase):
     def test_preserve_original_comment_when_adding_source(self) -> None:
         """Test that source tag doesn't overwrite."""
         tags = MusicTags()
-        tags.original = {"comment": ["test"], "purl": ["youtube.com"]}
+        tags.set_tags(ORIGINAL, {"comment": ["test"], "purl": ["youtube.com"]})
         tags.resolved = {"date": ["2022-02-02"]}
         tags.add_source_tag()
         self.assertEqual(2, len(tags.resolved))
@@ -674,10 +704,10 @@ class TestMusicTags(unittest.TestCase):
     def test_get_values_from_all_sources_only_new(self) -> None:
         """Test getting data from all new sources for a given tag."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"artist": ["artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
         actual_tags = tags.get_values_from_all_sources("artist", only_new=True)
         self.assertEqual(2, len(actual_tags))
         self.assertNotIn("artist 1", actual_tags)
@@ -687,10 +717,10 @@ class TestMusicTags(unittest.TestCase):
     def test_get_values_from_all_sources_include_original(self) -> None:
         """Test getting data from all sources for a given tag."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"artist": ["artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
         actual_tags = tags.get_values_from_all_sources("artist", only_new=False)
         self.assertEqual(3, len(actual_tags))
         self.assertIn("artist 1", actual_tags)
@@ -700,10 +730,10 @@ class TestMusicTags(unittest.TestCase):
     def test_get_values_from_all_sources_that_does_not_exist(self) -> None:
         """Test getting data from all sources for a non-existent tag."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"artist": ["artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
         actual_tags = tags.get_values_from_all_sources("title", only_new=False)
         self.assertEqual(0, len(actual_tags))
         self.assertNotIn("artist 1", actual_tags)
@@ -718,21 +748,21 @@ class TestMusicTags(unittest.TestCase):
         self.assertFalse(tags.check_any_new_data_exists())
 
         # Only original tags
-        tags.original = {"artist": ["artist 1"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
         self.assertFalse(tags.check_any_new_data_exists())
 
         # Other sources have same value for tag as original
-        tags.youtube = {"artist": ["artist 1"]}
-        tags.parsed_from_original = {"artist": ["artist 1"]}
-        tags.parsed_from_youtube = {"artist": ["artist 1"]}
+        tags.set_tags(YOUTUBE, {"artist": ["artist 1"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 1"]})
         self.assertFalse(tags.check_any_new_data_exists())
 
         # There actually are new values for the tag
-        tags.youtube = {"artist": ["artist 2"]}
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
         self.assertTrue(tags.check_any_new_data_exists())
-        tags.parsed_from_original = {"artist": ["artist 3"]}
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         self.assertTrue(tags.check_any_new_data_exists())
-        tags.parsed_from_youtube = {"artist": ["artist 2"]}
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
         self.assertTrue(tags.check_any_new_data_exists())
 
     def test_check_any_new_data_exists_resolved(self) -> None:
@@ -748,7 +778,7 @@ class TestMusicTags(unittest.TestCase):
         self.assertTrue(tags.check_any_new_data_exists())
 
         # Identical tag in resolved
-        tags.original = {"artist": ["artist 1"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
         self.assertFalse(tags.check_any_new_data_exists())
 
         # New tag in resolved
@@ -927,10 +957,10 @@ class TestMusicTags(unittest.TestCase):
         select_single_value.return_value = expected_artist
         tags = MusicTags()
 
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"artist": ["artist 4"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
         tags.determine_album_artist()
         self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
 
@@ -941,10 +971,10 @@ class TestMusicTags(unittest.TestCase):
         select_single_value.return_value = expected_artist
         tags = MusicTags()
 
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"artist": ["artist 4"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
         tags.determine_album_artist()
         self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
 
@@ -954,10 +984,10 @@ class TestMusicTags(unittest.TestCase):
         select_single_value.return_value = []
         tags = MusicTags()
 
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"artist": ["artist 4"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
         tags.determine_album_artist()
         self.assertNotIn("albumartist", tags.resolved)
 
@@ -967,7 +997,7 @@ class TestMusicTags(unittest.TestCase):
         select_single_value.return_value = ["artist 1 & artist 2"]
         tags = MusicTags()
 
-        tags.youtube = {"artist": ["artist 1", "artist 2"], "albumartist": ["artist 1 & artist 2"]}
+        tags.set_tags(YOUTUBE, {"artist": ["artist 1", "artist 2"], "albumartist": ["artist 1 & artist 2"]})
         tags.determine_album_artist()
         select_single_value.assert_called_once_with(["artist 1 & artist 2", "artist 1", "artist 2"])
         self.assertEqual(["artist 1 & artist 2"], tags.resolved.get("albumartist"))
@@ -980,7 +1010,7 @@ class TestMusicTags(unittest.TestCase):
         """
         tags = MusicTags()
 
-        tags.original = {"artist": ["artist 1"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
         tags.determine_album_artist()
         self.assertEqual(["artist 1"], tags.resolved.get("albumartist"))
 
@@ -991,7 +1021,7 @@ class TestMusicTags(unittest.TestCase):
         """
         tags = MusicTags()
 
-        tags.original = {"artist": ["artist 1"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
         tags.resolved = {"artist": ["artist 2"]}
         tags.determine_album_artist()
         self.assertEqual(["artist 2"], tags.resolved.get("albumartist"))
@@ -1013,8 +1043,8 @@ class TestMusicTags(unittest.TestCase):
         """
         tags = MusicTags()
 
-        tags.parsed_from_original = {"artist": ["artist 1"]}
-        tags.original = {"albumartist": ["artist 2"]}
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(ORIGINAL, {"albumartist": ["artist 2"]})
         tags.determine_album_artist()
         self.assertEqual(None, tags.resolved.get("albumartist"))
 
@@ -1133,12 +1163,12 @@ class TestMusicTags(unittest.TestCase):
         mock_show.return_value = 3  # Where a choice is returned from the menu
 
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1", "artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1", "artist 2"]})
         repeat = tags.manually_adjust_tag_when_resolving("artist")
 
         self.assertFalse(repeat)
         self.assertEqual(["[Removed]"], tags.resolved.get("artist"))
-        self.assertEqual(["artist 1", "artist 2"], tags.original.get("artist"))
+        self.assertEqual(["artist 1", "artist 2"], tags.values_from(ORIGINAL, "artist"))
 
     @patch("retag_opus.utils.TerminalMenu.__init__")
     @patch("retag_opus.utils.TerminalMenu.show")
@@ -1151,8 +1181,8 @@ class TestMusicTags(unittest.TestCase):
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1, artist 2"]}
-        tags.youtube = {"artist": ["artist 1", "artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1, artist 2"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 1", "artist 2"]})
 
         mock_show.side_effect = [0, 0]  # Second menu
         repeat = tags.manually_adjust_tag_when_resolving("artist")
@@ -1196,7 +1226,7 @@ class TestMusicTags(unittest.TestCase):
         """
         # Parsed from description
         tags = MusicTags()
-        tags.youtube = {"artist": ["artist 1"]}
+        tags.set_tags(YOUTUBE, {"artist": ["artist 1"]})
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1208,7 +1238,7 @@ class TestMusicTags(unittest.TestCase):
 
         # Parsed from description tags
         tags = MusicTags()
-        tags.parsed_from_youtube = {"artist": ["artist 1"]}
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 1"]})
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1234,7 +1264,7 @@ class TestMusicTags(unittest.TestCase):
         # Parsed from original tags
         tags = MusicTags()
 
-        tags.parsed_from_original = {"artist": ["artist 1"]}
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 1"]})
         tags.resolve_metadata()
         self.assertEqual({"artist": ["artist 1"], "albumartist": ["artist 1"]}, tags.resolved)
 
@@ -1245,9 +1275,9 @@ class TestMusicTags(unittest.TestCase):
         been pruned, resolving shouldn't set the tag back to that value.
         """
         tags = MusicTags()
-        tags.original = {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]}
+        tags.set_tags(ORIGINAL, {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]})
         tags.resolved = {"artist": ["[Removed]"], "albumartist": ["[Removed]"]}
-        tags.youtube = {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]}
+        tags.set_tags(YOUTUBE, {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]})
 
         tags.resolve_metadata()
         self.assertEqual({"artist": ["[Removed]"], "albumartist": ["[Removed]"]}, tags.resolved)
@@ -1267,9 +1297,9 @@ class TestMusicTags(unittest.TestCase):
         # album artist
         mock_show.side_effect = [0, 1]
         tags = MusicTags()
-        tags.original = {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]}
+        tags.set_tags(ORIGINAL, {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]})
         tags.resolved = {"artist": ["[Removed]"], "albumartist": ["[Removed]"]}
-        tags.youtube = {"artist": ["Real Artist"]}
+        tags.set_tags(YOUTUBE, {"artist": ["Real Artist"]})
 
         tags.resolve_metadata()
         self.assertEqual(["Real Artist"], tags.resolved.get("artist"))
@@ -1279,13 +1309,13 @@ class TestMusicTags(unittest.TestCase):
         """Test that empty tags in original tags are skipped."""
         # Parsed from description
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"], "title": []}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "title": []})
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
         print(tags.resolved)
         self.assertNotIn("artist", tags.resolved)  # No need to resolve
-        self.assertEqual(["artist 1"], tags.original.get("artist"))
+        self.assertEqual(["artist 1"], tags.values_from(ORIGINAL, "artist"))
         self.assertEqual(captured, ("", ""))
 
     @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
@@ -1300,8 +1330,8 @@ class TestMusicTags(unittest.TestCase):
 
         # Youtube
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 1 "]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 1 "]})
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1313,8 +1343,8 @@ class TestMusicTags(unittest.TestCase):
 
         # Parsed from description
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.parsed_from_youtube = {"artist": ["artist 1 "]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 1 "]})
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1326,8 +1356,8 @@ class TestMusicTags(unittest.TestCase):
 
         # Parsed from original tags
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.parsed_from_original = {"artist": ["artist 1 "]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 1 "]})
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1352,10 +1382,10 @@ class TestMusicTags(unittest.TestCase):
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 2"]})
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1405,8 +1435,8 @@ class TestMusicTags(unittest.TestCase):
 
         # With only youtube
         tags_only_youtube = MusicTags()
-        tags_only_youtube.original = {"artist": ["artist 1"]}
-        tags_only_youtube.youtube = {"artist": ["artist 2"]}
+        tags_only_youtube.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags_only_youtube.set_tags(YOUTUBE, {"artist": ["artist 2"]})
 
         tags_only_youtube.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1440,8 +1470,8 @@ class TestMusicTags(unittest.TestCase):
 
         # With only from youtube tags
         tags_only_parsed_from_youtube = MusicTags()
-        tags_only_parsed_from_youtube.original = {"artist": ["artist 1"]}
-        tags_only_parsed_from_youtube.parsed_from_youtube = {"artist": ["artist 2"]}
+        tags_only_parsed_from_youtube.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags_only_parsed_from_youtube.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
 
         tags_only_parsed_from_youtube.resolve_metadata()
         captured = self.capsys.readouterr()  # type: ignore
@@ -1492,10 +1522,10 @@ class TestMusicTags(unittest.TestCase):
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 2"]})
 
         with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
             tags.resolve_metadata()
@@ -1586,10 +1616,10 @@ class TestMusicTags(unittest.TestCase):
         mock_manual_adjust.return_value = False
 
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 2"]})
 
         tags.resolve_metadata()
 
@@ -1609,40 +1639,40 @@ class TestMusicTags(unittest.TestCase):
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
         tags_youtube = MusicTags()
-        tags_youtube.original = {"artist": ["artist 1"]}
-        tags_youtube.youtube = {"artist": ["artist 2"]}
-        tags_youtube.parsed_from_youtube = {"artist": ["artist 3"]}
-        tags_youtube.parsed_from_original = {"artist": ["artist 4"]}
+        tags_youtube.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags_youtube.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags_youtube.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
+        tags_youtube.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 4"]})
 
         mock_show.return_value = 0  # Youtube is first in list
         tags_youtube.resolve_metadata()
         self.assertEqual(["artist 2"], tags_youtube.resolved.get("artist"))
 
         tags_fromtags = MusicTags()
-        tags_fromtags.original = {"artist": ["artist 1"]}
-        tags_fromtags.youtube = {"artist": ["artist 2"]}
-        tags_fromtags.parsed_from_youtube = {"artist": ["artist 3"]}
-        tags_fromtags.parsed_from_original = {"artist": ["artist 4"]}
+        tags_fromtags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags_fromtags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags_fromtags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
+        tags_fromtags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 4"]})
 
         mock_show.return_value = 1  # Parsed from original tags is second in list
         tags_fromtags.resolve_metadata()
         self.assertEqual(["artist 4"], tags_fromtags.resolved.get("artist"))
 
         tags_original = MusicTags()
-        tags_original.original = {"artist": ["artist 1"]}
-        tags_original.youtube = {"artist": ["artist 2"]}
-        tags_original.parsed_from_youtube = {"artist": ["artist 3"]}
-        tags_original.parsed_from_original = {"artist": ["artist 4"]}
+        tags_original.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags_original.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags_original.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
+        tags_original.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 4"]})
 
         mock_show.return_value = 3  # Existing metadata is after the other sources
         tags_original.resolve_metadata()
         self.assertEqual(["artist 1"], tags_original.resolved.get("artist"))
 
         tags_fromdesc = MusicTags()
-        tags_fromdesc.original = {"artist": ["artist 1"]}
-        tags_fromdesc.youtube = {"artist": ["artist 2"]}
-        tags_fromdesc.parsed_from_youtube = {"artist": ["artist 3"]}
-        tags_fromdesc.parsed_from_original = {"artist": ["artist 4"]}
+        tags_fromdesc.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags_fromdesc.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags_fromdesc.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
+        tags_fromdesc.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 4"]})
 
         mock_show.return_value = 2  # Parsed from YouTube tags is third in list
         tags_fromdesc.resolve_metadata()
@@ -1666,9 +1696,9 @@ class TestMusicTags(unittest.TestCase):
         mock_show.side_effect = [0, 0]  # Youtube artist in both cases
 
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_youtube = {"artist": ["artist 3"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
 
         tags.resolve_metadata()
 
@@ -1692,10 +1722,17 @@ class TestMusicTags(unittest.TestCase):
         mock_show.side_effect = [0]  # Youtube artist
 
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"], "genre": ["genre 1"]}
-        tags.youtube = {"artist": ["artist 2", "artist 3"], "album": ["album 1"], "date": ["2020-01-01"]}
-        tags.parsed_from_original = {"genre": ["genre 1", "Instrumental"]}
-        tags.resolved = deepcopy(tags.original)
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "genre": ["genre 1"]})
+        tags.set_tags(
+            YOUTUBE,
+            {
+                "artist": ["artist 2", "artist 3"],
+                "album": ["album 1"],
+                "date": ["2020-01-01"],
+            },
+        )
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"genre": ["genre 1", "Instrumental"]})
+        tags.resolved = deepcopy(tags.tags_from(ORIGINAL))
         tags.apply_album_level_tags(
             {"albumartist": ["artist 3"], "genre": ["genre 2"], "album": ["Album 1"], "date": ["2019-01-01"]}
         )
@@ -1743,8 +1780,8 @@ class TestMusicTags(unittest.TestCase):
         mock_manual_adjust.return_value = True
 
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
 
         with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
             tags.resolve_metadata()
@@ -1753,11 +1790,14 @@ class TestMusicTags(unittest.TestCase):
         """Test deleting named tags."""
         delete_these = ["producer"]
         tags = MusicTags()
-        tags.original = {
-            "artist": ["artist 1"],
-            "title": ["title 2"],
-            "producer": ["producer 1"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "artist": ["artist 1"],
+                "title": ["title 2"],
+                "producer": ["producer 1"],
+            },
+        )
         tags.resolved = {
             "artist": ["artist 1"],
             "title": ["title 2"],
@@ -1774,11 +1814,14 @@ class TestMusicTags(unittest.TestCase):
         """Test deleting tags matching specified strings."""
         delete_these = ["producer 1"]
         tags = MusicTags()
-        tags.original = {
-            "artist": ["artist 1"],
-            "title": ["title 2"],
-            "producer": ["producer 1"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "artist": ["artist 1"],
+                "title": ["title 2"],
+                "producer": ["producer 1"],
+            },
+        )
         tags.resolved = {
             "artist": ["artist 1"],
             "title": ["title 2"],
@@ -1796,11 +1839,14 @@ class TestMusicTags(unittest.TestCase):
         full_match_1 = "pro.*"
         full_match_2 = ".*cer 1"
         tags = MusicTags()
-        tags.original = {
-            "artist": ["artist 1"],
-            "title": ["title 2"],
-            "producer": ["producer 1"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "artist": ["artist 1"],
+                "title": ["title 2"],
+                "producer": ["producer 1"],
+            },
+        )
         tags.resolved = {
             "artist": ["artist 1"],
             "title": ["title 2"],
@@ -1817,11 +1863,14 @@ class TestMusicTags(unittest.TestCase):
         half_match_1 = "prod"
         half_match_2 = "ucer 1"
         tags = MusicTags()
-        tags.original = {
-            "artist": ["artist 1"],
-            "title": ["title 2"],
-            "producer": ["producer 1"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "artist": ["artist 1"],
+                "title": ["title 2"],
+                "producer": ["producer 1"],
+            },
+        )
         tags.resolved = {
             "artist": ["artist 1"],
             "title": ["title 2"],
@@ -1839,9 +1888,12 @@ class TestMusicTags(unittest.TestCase):
         no_delete_this_tag = "producer"
         no_delete_this_string = "title 2"
         tags = MusicTags()
-        tags.original = {
-            "artist": ["artist 1"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "artist": ["artist 1"],
+            },
+        )
         tags.resolved = {
             "artist": ["artist 1"],
             "title": ["title 2"],
@@ -1863,11 +1915,14 @@ class TestMusicTags(unittest.TestCase):
         delete_this_string = "producer 1"
         delete_this_tag = "title"
         tags = MusicTags()
-        tags.original = {
-            "artist": ["artist 1"],
-            "title": ["title 2"],
-            "producer": ["producer 1"],
-        }
+        tags.set_tags(
+            ORIGINAL,
+            {
+                "artist": ["artist 1"],
+                "title": ["title 2"],
+                "producer": ["producer 1"],
+            },
+        )
         tags.resolved = {
             "artist": ["artist 1"],
         }
@@ -1892,8 +1947,8 @@ class TestMusicBrainzSource(unittest.TestCase):
     def test_get_colored_values_from_all_sources_includes_musicbrainz(self) -> None:
         """Test that MusicBrainz values are shown when they're new."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"], "title": ["title 1"]}
-        tags.musicbrainz = {"artist": ["artist 2"], "title": ["title 1"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "title": ["title 1"]})
+        tags.set_tags(MUSICBRAINZ, {"artist": ["artist 2"], "title": ["title 1"]})
         self.assertEqual(
             ["artist 2", "artist 1"],
             tags.get_colored_values_from_all_sources("artist"),
@@ -1903,26 +1958,26 @@ class TestMusicBrainzSource(unittest.TestCase):
     def test_get_values_from_all_sources_includes_musicbrainz(self) -> None:
         """Test that MusicBrainz values can be selected."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.musicbrainz = {"artist": ["artist 2"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(MUSICBRAINZ, {"artist": ["artist 2"]})
         self.assertEqual(["artist 2", "artist 1"], tags.get_values_from_all_sources("artist"))
         self.assertEqual(["artist 2"], tags.get_values_from_all_sources("artist", only_new=True))
 
     def test_check_any_new_data_exists_in_musicbrainz(self) -> None:
         """Test that tags only MusicBrainz has are new data."""
         tags = MusicTags()
-        tags.original = {"title": ["title 1"]}
-        tags.musicbrainz = {"title": ["title 1"]}
+        tags.set_tags(ORIGINAL, {"title": ["title 1"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["title 1"]})
         self.assertFalse(tags.check_any_new_data_exists())
-        tags.musicbrainz["musicbrainz_trackid"] = ["id 1"]
+        tags.tags_from(MUSICBRAINZ)["musicbrainz_trackid"] = ["id 1"]
         self.assertTrue(tags.check_any_new_data_exists())
 
     @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
     def test_resolve_metadata_uses_musicbrainz_last(self, _: MagicMock) -> None:
         """Test that MusicBrainz fills tags no other source has."""
         tags = MusicTags()
-        tags.youtube = {"title": ["title 1"]}
-        tags.musicbrainz = {"title": ["title 2"], "tracknumber": ["3"]}
+        tags.set_tags(YOUTUBE, {"title": ["title 1"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["title 2"], "tracknumber": ["3"]})
         tags.resolve_metadata()
         self.assertEqual({"title": ["title 1"], "tracknumber": ["3"]}, tags.resolved)
 
@@ -1930,8 +1985,8 @@ class TestMusicBrainzSource(unittest.TestCase):
     def test_resolve_metadata_matches_musicbrainz_regardless_of_typography(self, _: MagicMock) -> None:
         """Test that MusicBrainz typography doesn't cause a conflict."""
         tags = MusicTags()
-        tags.original = {"title": ["Don't Go"]}
-        tags.musicbrainz = {"title": ["Don’t Go"]}
+        tags.set_tags(ORIGINAL, {"title": ["Don't Go"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go"]})
         tags.resolve_metadata()
         self.assertEqual(["Don't Go"], tags.resolved["title"])
         out = self.capsys.readouterr().out  # type: ignore
@@ -1947,9 +2002,9 @@ class TestMusicBrainzSource(unittest.TestCase):
         mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
         tags = MusicTags()
-        tags.original = {"title": ["Dont Go"]}
-        tags.youtube = {"title": ["Don't Go"]}
-        tags.musicbrainz = {"title": ["Don’t Go"]}
+        tags.set_tags(ORIGINAL, {"title": ["Dont Go"]})
+        tags.set_tags(YOUTUBE, {"title": ["Don't Go"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go"]})
 
         tags.resolve_metadata()
 
@@ -1962,12 +2017,12 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(0, mock_menu.call_args.kwargs["cursor_index"])
         self.assertEqual(["Don’t Go"], tags.resolved["title"])
 
-        tags.youtube = {"title": ["Do Go"]}
-        tags.parsed_from_youtube = {"title": ["Don't Go"]}
+        tags.set_tags(YOUTUBE, {"title": ["Do Go"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"title": ["Don't Go"]})
         tags.resolve_metadata()
         self.assertEqual(1, mock_menu.call_args.kwargs["cursor_index"])
 
-        tags.musicbrainz = {"title": ["Something Else"]}
+        tags.set_tags(MUSICBRAINZ, {"title": ["Something Else"]})
         tags.resolve_metadata()
         self.assertEqual("MusicBrainz", mock_menu.call_args.args[0][mock_menu.call_args.kwargs["cursor_index"]])
 
@@ -1976,7 +2031,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         """Test that MusicBrainz' spelling of the album set by the user is used."""
         tags = MusicTags(manual_album_set=True)
         tags.resolved = {"album": ["a night at the opera"]}
-        tags.musicbrainz = {"album": ["A Night at the Opera"]}
+        tags.set_tags(MUSICBRAINZ, {"album": ["A Night at the Opera"]})
         tags.resolve_metadata()
         self.assertEqual(["A Night at the Opera"], tags.resolved["album"])
 
@@ -1984,13 +2039,16 @@ class TestMusicBrainzSource(unittest.TestCase):
     def test_resolve_metadata_sets_musicbrainz_ids_and_numbers_quietly(self, _: MagicMock) -> None:
         """Test that tags that depend on the match are set without messages."""
         tags = MusicTags()
-        tags.original = {"musicbrainz_trackid": ["old id"], "tracknumber": ["2"]}
-        tags.musicbrainz = {
-            "musicbrainz_trackid": ["new id"],
-            "musicbrainz_albumid": ["album id"],
-            "tracknumber": ["2"],
-            "totaltracks": ["12"],
-        }
+        tags.set_tags(ORIGINAL, {"musicbrainz_trackid": ["old id"], "tracknumber": ["2"]})
+        tags.set_tags(
+            MUSICBRAINZ,
+            {
+                "musicbrainz_trackid": ["new id"],
+                "musicbrainz_albumid": ["album id"],
+                "tracknumber": ["2"],
+                "totaltracks": ["12"],
+            },
+        )
         tags.resolve_metadata()
         self.assertEqual(["new id"], tags.resolved["musicbrainz_trackid"])
         self.assertEqual(["album id"], tags.resolved["musicbrainz_albumid"])
@@ -2017,10 +2075,10 @@ class TestMusicBrainzSource(unittest.TestCase):
         mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
         tags = MusicTags()
-        tags.original = {"album": ["Single"]}
+        tags.set_tags(ORIGINAL, {"album": ["Single"]})
         tags.resolved = {"album": ["Single"]}
-        tags.youtube = {"album": ["Single"]}
-        tags.musicbrainz = {"album": ["Album"], "tracknumber": ["5"]}
+        tags.set_tags(YOUTUBE, {"album": ["Single"]})
+        tags.set_tags(MUSICBRAINZ, {"album": ["Album"], "tracknumber": ["5"]})
         tags.resolve_metadata()
         self.assertEqual(
             ["YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
@@ -2031,8 +2089,8 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(["5"], tags.resolved["tracknumber"])
 
         tags = MusicTags()
-        tags.youtube = {"album": ["Single"]}
-        tags.musicbrainz = {"album": ["Album"]}
+        tags.set_tags(YOUTUBE, {"album": ["Single"]})
+        tags.set_tags(MUSICBRAINZ, {"album": ["Album"]})
         tags.resolve_metadata()
         self.assertEqual(["Album"], tags.resolved["album"])
 
@@ -2046,16 +2104,19 @@ class TestMusicBrainzSource(unittest.TestCase):
         mock_show.return_value = 2  # Existing metadata
         mock_menu.return_value = None
         tags = MusicTags()
-        tags.original = {"album": ["Single"], "totaltracks": ["1"]}
+        tags.set_tags(ORIGINAL, {"album": ["Single"], "totaltracks": ["1"]})
         tags.resolved = {"album": ["Single"], "totaltracks": ["1"]}
-        tags.youtube = {"album": ["Single"]}
-        tags.musicbrainz = {
-            "album": ["Album"],
-            "tracknumber": ["5"],
-            "totaltracks": ["10"],
-            "musicbrainz_albumid": ["album id"],
-            "musicbrainz_trackid": ["track id"],
-        }
+        tags.set_tags(YOUTUBE, {"album": ["Single"]})
+        tags.set_tags(
+            MUSICBRAINZ,
+            {
+                "album": ["Album"],
+                "tracknumber": ["5"],
+                "totaltracks": ["10"],
+                "musicbrainz_albumid": ["album id"],
+                "musicbrainz_trackid": ["track id"],
+            },
+        )
         tags.resolve_metadata()
         self.assertEqual(["Single"], tags.resolved["album"])
         self.assertEqual(["1"], tags.resolved["totaltracks"])
@@ -2067,8 +2128,8 @@ class TestMusicBrainzSource(unittest.TestCase):
     def test_resolve_metadata_keeps_release_tags_of_same_album(self, _: MagicMock) -> None:
         """Test that release tags are kept if the album is the release, e.g. remastered."""
         tags = MusicTags()
-        tags.youtube = {"album": ["Album (2011 Remaster)"]}
-        tags.musicbrainz = {"album": ["album"], "tracknumber": ["5"]}
+        tags.set_tags(YOUTUBE, {"album": ["Album (2011 Remaster)"]})
+        tags.set_tags(MUSICBRAINZ, {"album": ["album"], "tracknumber": ["5"]})
         tags.resolve_metadata()
         self.assertEqual(["5"], tags.resolved["tracknumber"])
 
@@ -2085,11 +2146,11 @@ class TestMusicTagsColors(unittest.TestCase):
     def test_get_colored_values_from_all_sources_styles_sources(self) -> None:
         """Test that each source of a tag has its own style."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
-        tags.youtube = {"artist": ["artist 2"]}
-        tags.parsed_from_original = {"artist": ["artist 3"]}
-        tags.parsed_from_youtube = {"artist": ["artist 4"]}
-        tags.musicbrainz = {"artist": ["artist 5"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
+        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
+        tags.set_tags(MUSICBRAINZ, {"artist": ["artist 5"]})
         expected = [
             styles.youtube("artist 2"),
             styles.parsed_from_original("artist 3"),
@@ -2102,7 +2163,7 @@ class TestMusicTagsColors(unittest.TestCase):
     def test_print_resolved_styles_changes(self) -> None:
         """Test that changed, removed, unchanged and unset tags are styled."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"], "title": ["title 1"], "producer": ["someone"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "title": ["title 1"], "producer": ["someone"]})
         tags.resolved = {"artist": ["artist 1"], "title": ["title 2"], "producer": ["[Removed]"]}
         tags.print_resolved(print_all=False)
         lines = self.capsys.readouterr().out.split("\n")  # type: ignore
@@ -2114,7 +2175,7 @@ class TestMusicTagsColors(unittest.TestCase):
     def test_print_all_styles_unset_tags(self) -> None:
         """Test that tags without a value in any source are styled as unset."""
         tags = MusicTags()
-        tags.original = {"artist": ["artist 1"]}
+        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
         tags.print_all()
         lines = self.capsys.readouterr().out.split("\n")  # type: ignore
         self.assertIn("Artist(s): " + styles.original("artist 1"), lines)

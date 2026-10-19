@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from retag_opus import musicbrainz
-from retag_opus.music_tags import MusicTags
+from retag_opus.music_tags import ORIGINAL, YOUTUBE, MusicTags
 from retag_opus.musicbrainz import MusicBrainzMatcher
 from retag_opus.musicbrainz_client import MusicBrainzError
 
@@ -194,8 +194,8 @@ def song(
 ) -> MusicTags:
     """Create tags for a song from the given sources."""
     tags = MusicTags(manual_album_set)
-    tags.original = original or {}
-    tags.youtube = youtube or {}
+    tags.set_tags(ORIGINAL, original or {})
+    tags.set_tags(YOUTUBE, youtube or {})
     tags.length = length
     return tags
 
@@ -552,7 +552,7 @@ def test_stored_release_ids() -> None:
     """Get each release stored in the songs' files once."""
     songs = album_songs()
     for tags in songs.values():
-        tags.original["musicbrainz_albumid"] = ["stored"]
+        tags.tags_from(ORIGINAL)["musicbrainz_albumid"] = ["stored"]
     assert musicbrainz.stored_release_ids(songs) == ["stored"]
     assert musicbrainz.stored_release_ids(album_songs()) == []
 
@@ -563,7 +563,7 @@ def test_match_album_tries_stored_release_first() -> None:
     client.search_releases.return_value = RELEASE_RESULTS
     client.lookup_release.side_effect = lambda mbid: RELEASE if mbid == "rel-1" else None
     songs = album_songs()
-    songs[Path("2.opus")].original["musicbrainz_albumid"] = ["stored"]
+    songs[Path("2.opus")].tags_from(ORIGINAL)["musicbrainz_albumid"] = ["stored"]
     assert MusicBrainzMatcher(client).match_album("Goodbyes", songs)
     assert [c.args[0] for c in client.lookup_release.call_args_list] == ["stored", "rel-1"]
 
@@ -572,6 +572,6 @@ def test_match_album_searches_only_when_needed() -> None:
     """Don't search when a stored release has all songs."""
     client = fake_client()
     songs = album_songs()
-    songs[Path("1.opus")].original["musicbrainz_albumid"] = ["rel-1"]
+    songs[Path("1.opus")].tags_from(ORIGINAL)["musicbrainz_albumid"] = ["rel-1"]
     assert MusicBrainzMatcher(client).match_album("Goodbyes", songs)
     client.search_releases.assert_not_called()

@@ -14,7 +14,7 @@ from typing import Final
 from simple_term_menu import TerminalMenu
 
 from retag_opus import constants, messages, styles, utils
-from retag_opus.music_tags import MusicTags
+from retag_opus.music_tags import ORIGINAL, YOUTUBE, MusicTags
 from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrainzError
 
 Tags = dict[str, list[str]]
@@ -175,11 +175,11 @@ def song_text(tags: MusicTags) -> str:
     that they aren't taken for the title of a song.
     """
     # Tags are lists of values, but a song only has one title
-    youtube_titles = tags.youtube.get("title", [])
+    youtube_titles = tags.values_from(YOUTUBE, "title")
     if youtube_titles:
-        youtube_artists = tags.youtube.get("artist", [])
+        youtube_artists = tags.values_from(YOUTUBE, "artist")
         return " ".join([youtube_titles[0]] + youtube_artists)
-    existing_titles = tags.original.get("title", [])
+    existing_titles = tags.values_from(ORIGINAL, "title")
     if existing_titles:
         return utils.remove_video_notes(existing_titles[0])
     return ""
@@ -263,9 +263,9 @@ def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None
     """
     if not releases:
         return None
-    stored_release_ids = tags.original.get("musicbrainz_albumid", [])
+    stored_release_ids = tags.values_from(ORIGINAL, "musicbrainz_albumid")
     album_names_in_tags = set()
-    for album_name in tags.youtube.get("album", []) + tags.original.get("album", []):
+    for album_name in tags.values_from(YOUTUBE, "album") + tags.values_from(ORIGINAL, "album"):
         album_names_in_tags.add(utils.normalize(utils.prune_title(album_name)))
 
     def preference(release: JsonDict) -> tuple[bool, bool, bool, str]:
@@ -319,7 +319,7 @@ def stored_release_ids(songs: dict[Path, MusicTags]) -> list[str]:
     """Get the IDs of the MusicBrainz releases stored in the songs' files."""
     release_ids: list[str] = []
     for tags in songs.values():
-        for release_id in tags.original.get("musicbrainz_albumid", []):
+        for release_id in tags.values_from(ORIGINAL, "musicbrainz_albumid"):
             if release_id not in release_ids:
                 release_ids.append(release_id)
     return release_ids
@@ -481,7 +481,7 @@ class MusicBrainzMatcher:
         """
         artist = None
         for tags in songs.values():
-            youtube_artists = tags.youtube.get("artist")
+            youtube_artists = tags.values_from(YOUTUBE, "artist")
             if youtube_artists:
                 artist = youtube_artists[0]
                 break
@@ -515,15 +515,15 @@ class MusicBrainzMatcher:
 
         :return: The recording, or None if the user skipped the song.
         """
-        stored_recording_ids = tags.original.get("musicbrainz_trackid", [])
+        stored_recording_ids = tags.values_from(ORIGINAL, "musicbrainz_trackid")
         if stored_recording_ids:
             recording = self.client.lookup_recording(stored_recording_ids[0])
             if recording is not None:
                 return recording
 
         text = song_text(tags)
-        youtube_titles = tags.youtube.get("title", [])
-        youtube_artists = tags.youtube.get("artist", [])
+        youtube_titles = tags.values_from(YOUTUBE, "title")
+        youtube_artists = tags.values_from(YOUTUBE, "artist")
         searched_for_artist = False
         if youtube_titles and youtube_artists:
             results = self.client.search_recordings(utils.prune_title(youtube_titles[0]), youtube_artists[0])
@@ -533,7 +533,7 @@ class MusicBrainzMatcher:
         else:
             results = []
         while True:
-            text_with_channel = " ".join([text] + tags.original.get("artist", []))
+            text_with_channel = " ".join([text] + tags.values_from(ORIGINAL, "artist"))
             confident_results = []
             for result in results:
                 same_title = title_matches(result.get("title", ""), text)

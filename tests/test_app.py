@@ -9,6 +9,7 @@ import pytest
 from mutagen import oggopus
 
 from retag_opus import app, utils
+from retag_opus.music_tags import YOUTUBE
 
 metadata = [
     ("title", ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"]),
@@ -832,7 +833,7 @@ def test_match_albums():
 
         songs = matcher.match_album.call_args.args[1]
     assert matched == {first: {"album": ["The Album"]}, second: {"album": ["The Album"]}}
-    assert [tags.youtube["title"] for tags in songs.values()] == [["Song 1"], ["Song 2"]]
+    assert [tags.values_from(YOUTUBE, "title") for tags in songs.values()] == [["Song 1"], ["Song 2"]]
     assert all(tags.length is not None for tags in songs.values())
 
 
