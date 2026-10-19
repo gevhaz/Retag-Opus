@@ -1,7 +1,7 @@
 """Module for storing tags from different sources and printing them."""
 import re
 from copy import deepcopy
-from typing import Final
+from typing import Callable, Final, NamedTuple
 
 from simple_term_menu import TerminalMenu
 
@@ -14,6 +14,34 @@ REMOVED_TAG: Final[list[str]] = ["[Removed]"]
 
 # Tags that should have the same value for all songs on an album
 ALBUM_LEVEL_TAGS: Final[list[str]] = ["album", "albumartist", "date", "genre"]
+
+
+class Source(NamedTuple):
+    """A source of values for a song's tags, e.g. the YouTube description.
+
+    The name is used in messages, e.g. "Metadata matches tags parsed
+    from original tags", and with a capital first letter in menus. The
+    values of the source are printed in its style, and is_equal checks
+    whether they agree with the values the song's file has, by default
+    ignoring whitespace around them.
+    """
+
+    name: str
+    style: styles.Style
+    is_equal: Callable[[list[str], list[str]], bool] = utils.is_equal_when_stripped
+
+    def capitalized_name(self) -> str:
+        """Get the name with a capital first letter, e.g. "Existing metadata"."""
+        return self.name[:1].upper() + self.name[1:]
+
+
+YOUTUBE: Final = Source("YouTube description", styles.youtube)
+PARSED_FROM_ORIGINAL: Final = Source("tags parsed from original tags", styles.parsed_from_original)
+PARSED_FROM_YOUTUBE: Final = Source("tags parsed from YouTube tags", styles.parsed_from_youtube)
+# MusicBrainz uses typographic apostrophes, quotes and dashes, which
+# don't make its values differ from the file's
+MUSICBRAINZ: Final = Source("MusicBrainz", styles.musicbrainz, utils.is_equal_when_normalized)
+EXISTING_METADATA: Final = Source("existing metadata", styles.original)
 
 
 class MusicTags:
@@ -38,6 +66,44 @@ class MusicTags:
         self.album_level_tags: Tags = {}
         # Length of the song in seconds, used to identify it
         self.length: float | None = None
+
+    def found_sources(self) -> list[tuple[Source, Tags]]:
+        """Get the sources of new values with their tags, most preferred first.
+
+        These are all sources except the song's file. When a tag has no
+        value yet, it gets the values of the first of them that has
+        any, and when listing values, they come in this order, followed
+        by the values the file has.
+        """
+        return [
+            (YOUTUBE, self.youtube),
+            (PARSED_FROM_ORIGINAL, self.parsed_from_original),
+            (PARSED_FROM_YOUTUBE, self.parsed_from_youtube),
+            (MUSICBRAINZ, self.musicbrainz),
+        ]
+
+    def found_values(self, tag_name: str) -> list[tuple[Source, list[str]]]:
+        """Get the values that the sources of new values have for a tag.
+
+        Sources without values for the tag are left out. For example,
+        if only the YouTube description and MusicBrainz have an artist,
+        found_values("artist") gives [(YOUTUBE, ["Queen"]), (MUSICBRAINZ,
+        ["Queen"])].
+        """
+        values_per_source = []
+        for source, source_tags in self.found_sources():
+            values = source_tags.get(tag_name)
+            if values:
+                values_per_source.append((source, values))
+        return values_per_source
+
+    def all_source_tags(self) -> list[Tags]:
+        """Get the tags of every source, including the song's file."""
+        all_tags = []
+        for _, source_tags in self.found_sources():
+            all_tags.append(source_tags)
+        all_tags.append(self.original)
+        return all_tags
 
     @staticmethod
     def is_performer_tag(tag_name: str) -> bool:
@@ -129,34 +195,21 @@ class MusicTags:
         print("")
 
     def get_colored_values_from_all_sources(self, tag_name: str) -> list[str]:
-        """Get the values of a tag from all sources, colored by source.
+        """Get the values of a tag from all sources, each in its source's style.
 
-        Returns a list of all values for a specific tag from various
-        sources with color depending on source.
-
-        :param tag_name: The tag name for which data should be returned
-
-        :return: List with strings containing the value the given tag
-        has in different sources with color codes that differ between
-        sources. If no source contains the tag, an empty list is
-        returned.
+        The sources come in the order of found_sources(), followed by
+        the song's file. Sources with the same values as the file are
+        left out. E.g. with the artist "A" in the file and "B" in the
+        YouTube description, it's ["B", "A"], with "B" in the YouTube
+        style. If no source has the tag, the list is empty.
         """
         colored_values: list[str] = []
-        original = self.original.get(tag_name)
-        youtube = self.youtube.get(tag_name)
-        parsed_from_youtube = self.parsed_from_youtube.get(tag_name)
-        parsed_from_original = self.parsed_from_original.get(tag_name)
-        musicbrainz = self.musicbrainz.get(tag_name)
-        if youtube and original != youtube:
-            colored_values.append(styles.youtube(" | ".join(youtube)))
-        if parsed_from_original and parsed_from_original != original:
-            colored_values.append(styles.parsed_from_original(" | ".join(parsed_from_original)))
-        if parsed_from_youtube and parsed_from_youtube != original:
-            colored_values.append(styles.parsed_from_youtube(" | ".join(parsed_from_youtube)))
-        if musicbrainz and original != musicbrainz:
-            colored_values.append(styles.musicbrainz(" | ".join(musicbrainz)))
-        if original:
-            colored_values.append(styles.original(" | ".join(original)))
+        original_values = self.original.get(tag_name)
+        for source, values in self.found_values(tag_name):
+            if values != original_values:
+                colored_values.append(source.style(" | ".join(values)))
+        if original_values:
+            colored_values.append(EXISTING_METADATA.style(" | ".join(original_values)))
         return colored_values
 
     def print_all(self) -> None:
@@ -167,8 +220,7 @@ class MusicTags:
         """
         performer_block = []
         there_are_tags = False
-        sources = [self.original, self.youtube, self.parsed_from_youtube, self.parsed_from_original, self.musicbrainz]
-        for tag_name in self.performer_tags_in_print_order(*sources):
+        for tag_name in self.performer_tags_in_print_order(*self.all_source_tags()):
             colored_values = self.get_colored_values_from_all_sources(tag_name)
             if len(colored_values) > 0:
                 there_are_tags = True
@@ -256,15 +308,7 @@ class MusicTags:
         # ones, which include the file's tags and removed tags, and when
         # printing all, the ones in the other sources too
         if print_all:
-            sources = [
-                self.resolved,
-                self.original,
-                self.youtube,
-                self.parsed_from_youtube,
-                self.parsed_from_original,
-                self.musicbrainz,
-            ]
-            performer_tags = self.performer_tags_in_print_order(*sources)
+            performer_tags = self.performer_tags_in_print_order(self.resolved, *self.all_source_tags())
         else:
             performer_tags = self.performer_tags_in_print_order(self.resolved)
         if performer_tags:
@@ -362,16 +406,12 @@ class MusicTags:
         :param only_new: Whether to leave out the values in the original
             music file.
         """
-        original_values = self.original.get(tag_name, [])
-        youtube_values = self.youtube.get(tag_name, [])
-        parsed_from_youtube_values = self.parsed_from_youtube.get(tag_name, [])
-        parsed_from_original_values = self.parsed_from_original.get(tag_name, [])
-        musicbrainz_values = self.musicbrainz.get(tag_name, [])
-        new_values = youtube_values + parsed_from_original_values + parsed_from_youtube_values + musicbrainz_values
-        if only_new:
-            return utils.remove_duplicates(new_values)
-        else:
-            return utils.remove_duplicates(new_values + original_values)
+        values: list[str] = []
+        for _, source_values in self.found_values(tag_name):
+            values += source_values
+        if not only_new:
+            values += self.original.get(tag_name, [])
+        return utils.remove_duplicates(values)
 
     def modify_resolved_field(self) -> None:
         """Manually add key-value pairs to the set of resolved tags."""
@@ -465,8 +505,8 @@ class MusicTags:
         value for.
         """
         tag_names: list[str] = []
-        for new_source in [self.youtube, self.parsed_from_original, self.parsed_from_youtube, self.musicbrainz]:
-            tag_names.extend(new_source.keys())
+        for _, source_tags in self.found_sources():
+            tag_names.extend(source_tags.keys())
         return utils.remove_duplicates(tag_names)
 
     def changed_tags(self) -> list[str]:
@@ -522,12 +562,16 @@ class MusicTags:
         pruned_album_2 = [utils.prune_title(name) for name in album_2]
         return utils.is_equal_when_normalized(pruned_album_1, pruned_album_2)
 
-    def differs_from_musicbrainz_album(self, albums: list[list[str]]) -> bool:
-        """Check whether any of the albums isn't the one found on MusicBrainz."""
+    def differs_from_musicbrainz_album(self) -> bool:
+        """Check whether another source has an album other than the one found on MusicBrainz."""
         musicbrainz_album = self.musicbrainz.get("album", [])
         if len(musicbrainz_album) == 0:
             return False
-        for album in albums:
+        other_albums = [self.original.get("album", [])]
+        for source, album in self.found_values("album"):
+            if source != MUSICBRAINZ:
+                other_albums.append(album)
+        for album in other_albums:
             if len(album) > 0 and not self.is_same_album(album, musicbrainz_album):
                 return True
         return False
@@ -678,130 +722,87 @@ class MusicTags:
                 # MusicBrainz, and then its track number would be wrong
                 continue
             original_values = self.original.get(tag_name, [])
-            youtube_values = self.youtube.get(tag_name, [])
-            parsed_from_youtube_values = self.parsed_from_youtube.get(tag_name, [])
-            parsed_from_original_values = self.parsed_from_original.get(tag_name, [])
+            found_values = self.found_values(tag_name)
             musicbrainz_values = self.musicbrainz.get(tag_name, [])
-            new_values = self.get_values_from_all_sources(tag_name, only_new=True)
 
             # MusicBrainz may have found the song on another release than
             # the album that the other sources say, e.g. on an album rather
             # than a single, and then the user chooses which is right
-            album_differs_from_musicbrainz = tag_name == "album" and self.differs_from_musicbrainz_album(
-                [original_values, youtube_values, parsed_from_original_values, parsed_from_youtube_values]
-            )
+            album_differs_from_musicbrainz = tag_name == "album" and self.differs_from_musicbrainz_album()
             # The existing value can be kept if a source agrees with it
-            can_keep_original_values = len(original_values) > 0 and not album_differs_from_musicbrainz
-            stripped_original_values = [v.strip() for v in original_values]
+            agreeing_source = None
+            if original_values and not album_differs_from_musicbrainz:
+                for source, values in found_values:
+                    if source.is_equal(values, original_values):
+                        agreeing_source = source
+                        break
 
             if tag_name.startswith(constants.MUSICBRAINZ_ID_PREFIX) and len(musicbrainz_values) > 0:
                 self.resolved[tag_name] = musicbrainz_values
-            elif not original_values and len(new_values) > 0 and not album_differs_from_musicbrainz:
-                # In order of preference
-                sources = {
-                    "YouTube description": youtube_values,
-                    "tags parsed from original tags": parsed_from_original_values,
-                    "tags parsed from YouTube tags": parsed_from_youtube_values,
-                    "MusicBrainz": musicbrainz_values,
-                }
-                for source, source_values in sources.items():
-                    if len(source_values) > 0:
-                        self.resolved[tag_name] = source_values
-                        if tag_name not in constants.track_position_tags:
-                            messages.warning(
-                                f"{tag_name.title()}: No value exists in metadata. Using {source}: {source_values}."
-                            )
-                        break
-            elif can_keep_original_values and utils.is_equal_when_stripped(youtube_values, original_values):
-                messages.success(f"{tag_name.title()}: Metadata matches YouTube description.")
-                self.resolved[tag_name] = stripped_original_values
-            elif can_keep_original_values and utils.is_equal_when_stripped(
-                parsed_from_original_values, original_values
-            ):
-                messages.success(f"{tag_name.title()}: Metadata matches tags parsed from original tags.")
-                self.resolved[tag_name] = stripped_original_values
-            elif can_keep_original_values and utils.is_equal_when_stripped(parsed_from_youtube_values, original_values):
-                messages.success(f"{tag_name.title()}: Metadata matches tags parsed from YouTube tags.")
-                self.resolved[tag_name] = stripped_original_values
-            elif can_keep_original_values and utils.is_equal_when_normalized(musicbrainz_values, original_values):
-                messages.success(f"{tag_name.title()}: Metadata matches MusicBrainz.")
-                self.resolved[tag_name] = stripped_original_values
+            elif not original_values and found_values and not album_differs_from_musicbrainz:
+                preferred_source, preferred_values = found_values[0]
+                self.resolved[tag_name] = preferred_values
+                if tag_name not in constants.track_position_tags:
+                    messages.warning(
+                        f"{tag_name.title()}: No value exists in metadata. "
+                        f"Using {preferred_source.name}: {preferred_values}."
+                    )
+            elif agreeing_source is not None:
+                messages.success(f"{tag_name.title()}: Metadata matches {agreeing_source.name}.")
+                self.resolved[tag_name] = [value.strip() for value in original_values]
             else:
-                redo = True
-                print("-----------------------------------------------")
-                self.print_resolved(print_all=True)
-                while redo:
-                    redo = False
-                    candidates = []
-                    candidate_values: list[list[str]] = []
-                    messages.conflict(f"{tag_name.title()}: Mismatch between values in description and metadata:")
-                    if len(youtube_values) > 0:
-                        print("YouTube description: " + styles.youtube(" | ".join(youtube_values)))
-                        candidates.append("YouTube description")
-                        candidate_values.append(youtube_values)
-                    if len(parsed_from_original_values) > 0:
-                        print(
-                            "Tags parsed from original tags: "
-                            + styles.parsed_from_original(" | ".join(parsed_from_original_values))
-                        )
-                        candidates.append("Tags parsed from original tags")
-                        candidate_values.append(parsed_from_original_values)
-
-                    if len(parsed_from_youtube_values) > 0:
-                        print(
-                            "Tags parsed from YouTube tags: "
-                            + styles.parsed_from_youtube(" | ".join(parsed_from_youtube_values))
-                        )
-                        candidates.append("Tags parsed from YouTube tags")
-                        candidate_values.append(parsed_from_youtube_values)
-
-                    # Start on the value MusicBrainz agrees with, or on
-                    # MusicBrainz if it agrees with none of them
-                    cursor = 0
-                    if len(musicbrainz_values) > 0:
-                        print("MusicBrainz: " + styles.musicbrainz(" | ".join(musicbrainz_values)))
-                        cursor = len(candidates)  # MusicBrainz itself
-                        for index, value in enumerate(candidate_values):
-                            if utils.is_equal_when_normalized(value, musicbrainz_values):
-                                cursor = index
-                                break
-                        candidates.append("MusicBrainz")
-
-                    print("Existing metadata: " + styles.original(" | ".join(original_values)))
-                    candidates.append("Existing metadata")
-
-                    candidates.append("Other action")
-                    candidates.append("Quit")
-
-                    candidate_menu = TerminalMenu(candidates, cursor_index=cursor)
-                    choice = candidate_menu.show()
-
-                    if not isinstance(choice, int):
-                        raise UserExitException("Skipping this and all later songs")
-
-                    match candidates[choice]:
-                        case "Other action":
-                            redo = self.manually_adjust_tag_when_resolving(tag_name)
-
-                        case "Existing metadata":
-                            self.resolved[tag_name] = original_values
-
-                        case "YouTube description":
-                            self.resolved[tag_name] = youtube_values
-
-                        case "Tags parsed from original tags":
-                            self.resolved[tag_name] = parsed_from_original_values
-
-                        case "Tags parsed from YouTube tags":
-                            self.resolved[tag_name] = parsed_from_youtube_values
-
-                        case "MusicBrainz":
-                            self.resolved[tag_name] = musicbrainz_values
-
-                        case _:
-                            raise UserExitException("Skipping this and all later songs")
+                self.ask_for_value(tag_name)
 
         self.keep_pruned_tags_removed(pruned_tags)
         if "albumartist" not in self.album_level_tags:
             self.determine_album_artist()
             self.keep_pruned_tags_removed(pruned_tags)
+
+    def ask_for_value(self, tag_name: str) -> None:
+        """Let the user choose the value of a tag that the sources disagree on.
+
+        Each source with values for the tag is a choice, followed by
+        the values the song's file has, even if it has none. The menu
+        starts on the first one that MusicBrainz agrees with, so that
+        e.g. the YouTube description is suggested if its title is the
+        one on MusicBrainz, apart from typography.
+
+        :param tag_name: The tag to choose the value of.
+
+        :raises UserExitException: Raised when the user chooses to quit
+            the app.
+        """
+        print("-----------------------------------------------")
+        self.print_resolved(print_all=True)
+        candidates = self.found_values(tag_name)
+        candidates.append((EXISTING_METADATA, self.original.get(tag_name, [])))
+
+        musicbrainz_values = self.musicbrainz.get(tag_name, [])
+        cursor = 0
+        if musicbrainz_values:
+            for index, (_, values) in enumerate(candidates):
+                if utils.is_equal_when_normalized(values, musicbrainz_values):
+                    cursor = index
+                    break
+
+        menu_entries = []
+        for source, _ in candidates:
+            menu_entries.append(source.capitalized_name())
+        other_action_index = len(menu_entries)
+        menu_entries += ["Other action", "Quit"]
+
+        redo = True
+        while redo:
+            messages.conflict(f"{tag_name.title()}: Mismatch between values in description and metadata:")
+            for source, values in candidates:
+                print(f"{source.capitalized_name()}: " + source.style(" | ".join(values)))
+
+            choice = TerminalMenu(menu_entries, cursor_index=cursor).show()
+            if not isinstance(choice, int) or choice > other_action_index:
+                raise UserExitException("Skipping this and all later songs")
+            if choice == other_action_index:
+                redo = self.manually_adjust_tag_when_resolving(tag_name)
+            else:
+                _, chosen_values = candidates[choice]
+                self.resolved[tag_name] = chosen_values
+                redo = False
