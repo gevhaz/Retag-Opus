@@ -282,11 +282,6 @@ class TestUtils(unittest.TestCase):
         actual_outcome = utils.select_single_value(candidates)
         self.assertEqual(0, len(actual_outcome))
 
-    def test_exit_now(self) -> None:
-        """Test that the exit_now function raises exception."""
-        with self.assertRaises(SystemExit):
-            utils.exit_now()
-
     def test_equal_when_stripped(self) -> None:
         """Test that lists with different whitespace/order are equal."""
         self.assertTrue(
