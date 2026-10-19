@@ -1,4 +1,28 @@
-"""Module for storing tags from different sources and printing them."""
+"""Module for storing a song's tags from all sources and choosing among them.
+
+The tags of a song can be thought of as a table, with a row per tag and
+a column per source, e.g.:
+
+            YouTube        tags parsed from   tags parsed from   MusicBrainz   the file
+            description    original tags      YouTube tags
+    artist  Queen                                                Queen         queen
+    title   Song (Live)    Song                                  Song          Song
+
+set_tags() and tags_from() set and get a whole column, e.g.
+set_tags(YOUTUBE, {"title": ["Song (Live)"]}), and values_from() gives
+one cell, e.g. values_from(YOUTUBE, "title"). The columns with the
+values that Retag Opus found come first, in order of preference, and the
+file's column, ORIGINAL, comes last, since it's what the others are
+compared with. The Source of a column says what it's
+called, which style its values are printed in, and how they're compared
+with the file's.
+
+Most methods look at one row at a time. found_values() gives the found
+values of a tag, leaving out the file and sources without any.
+resolve_metadata() goes through the rows with found values, and keeps
+the file's value if a source agrees with it, or else asks the user. The
+result is MusicTags.resolved, the column that will be saved to the file.
+"""
 import re
 from copy import deepcopy
 from typing import Callable, Final, NamedTuple
