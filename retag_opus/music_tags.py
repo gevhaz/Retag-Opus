@@ -250,31 +250,6 @@ class MusicTags:
         else:
             messages.error("No new data parsed from description")
 
-    def print_original(self) -> None:
-        """Print tags from original file.
-
-        Print tags from the original file, if they are in the predefined
-        set of tags.
-        """
-        if self.original:
-            self.print_metadata(self.original, styles.original)
-        else:
-            messages.error("There were no pre-existing tags for this file")
-
-    def print_parsed_from_original(self) -> None:
-        """Print all tags parsed from original tags."""
-        if self.parsed_from_original:
-            self.print_metadata(self.parsed_from_original, styles.parsed_from_original)
-        else:
-            messages.error("No new data parsed from tags")
-
-    def print_parsed_from_youtube(self) -> None:
-        """Print all tags parsed from YouTube description tags."""
-        if self.parsed_from_youtube:
-            self.print_metadata(self.parsed_from_youtube, styles.parsed_from_youtube)
-        else:
-            messages.error("No new data parsed from tags parsed from description")
-
     def print_resolved(self, print_all: bool = False) -> None:
         """Print resolved tags.
 
@@ -600,28 +575,6 @@ class MusicTags:
                 self.resolved["albumartist"] = resolved_artist
             elif original_artist:
                 self.resolved["albumartist"] = original_artist
-
-    def default_to_youtube_date(self) -> None:
-        """If youtube has date data, use that for resolved."""
-        date = self.youtube.get("date")
-        if date:
-            self.resolved["date"] = date
-
-    def set_artist_if_obvious(self) -> None:
-        """Set the resolved artist if it's good for sure.
-
-        If the original tag and the youtube tags are identical
-        with regards to the artist tag, assume that it is correct.
-        """
-        original_artists = self.original.get("artist")
-        youtube_artists = self.youtube.get("artist")
-        if original_artists is not None and youtube_artists is not None:
-            if (
-                len(original_artists) == 1
-                and utils.split_tag(original_artists[0]) == youtube_artists
-                or utils.is_equal_when_stripped(original_artists, youtube_artists)
-            ):
-                self.resolved["artist"] = youtube_artists
 
     def manually_adjust_tag_when_resolving(self, tag_name: str) -> bool:
         """Perform a manual action on a tag when no source is right.

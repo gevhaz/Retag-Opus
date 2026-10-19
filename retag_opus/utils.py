@@ -1,6 +1,5 @@
 """Module with helper functions for the rest of the app."""
 import re
-import sys
 import unicodedata
 from pathlib import Path
 from typing import List
@@ -208,11 +207,6 @@ def select_single_value(candidates: list[str]) -> list[str]:
         messages.info(f"Using {candidates[choice]} as tag for this song")
         return [candidates[choice]]
     return []
-
-
-def exit_now() -> None:
-    """Immediately exit the program."""
-    sys.exit(0)
 
 
 def is_equal_when_stripped(values_1: list[str], values_2: list[str]) -> bool:
