@@ -9,6 +9,12 @@
   functions in a module rather than a class of static methods. Where
   the rules here differ from them, the rules here win.
 
+# Tests
+
+- The coverage threshold, `fail_under` in `pyproject.toml`, is only
+  there to make a drop in coverage visible. It's completely fine to
+  lower it when that makes sense, e.g. after removing tested code.
+
 # Spellcheck
 
 - Keep the words in `.github/data/project-dictionary.txt` sorted
