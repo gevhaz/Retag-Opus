@@ -142,7 +142,7 @@ class TestMusicTags(unittest.TestCase):
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 2"]}
         actual = tags.get_colored_values_from_all_sources("artist")
-        expected = ["artist 1", "artist 2"]
+        expected = ["artist 2", "artist 1"]
         self.assertListEqual(expected, actual)
 
     def test_get_colored_values_from_all_sources_two_overlapping_sources(self) -> None:
@@ -151,7 +151,7 @@ class TestMusicTags(unittest.TestCase):
         tags.original = {"artist": ["artist 1"]}
         tags.youtube = {"artist": ["artist 1", "artist 2"]}
         actual = tags.get_colored_values_from_all_sources("artist")
-        expected = ["artist 1", "artist 1 | artist 2"]
+        expected = ["artist 1 | artist 2", "artist 1"]
         self.assertListEqual(expected, actual)
 
     def test_get_colored_values_from_all_sources_no_values(self) -> None:
@@ -170,10 +170,10 @@ class TestMusicTags(unittest.TestCase):
         tags.parsed_from_youtube = {"artist": ["artist 4"]}
         actual = tags.get_colored_values_from_all_sources("artist")
         expected = [
+            "artist 2",
             "artist 3",
             "artist 4",
             "artist 1",
-            "artist 2",
         ]
         self.assertListEqual(expected, actual)
 
@@ -190,7 +190,7 @@ class TestMusicTags(unittest.TestCase):
             "Title: Not set\n"
             "Album: Not set\n"
             "Album Artist: Not set\n"
-            "Artist(s): artist 3 | artist 4 | artist 1 | artist 2\n"
+            "Artist(s): artist 2 | artist 3 | artist 4 | artist 1\n"
             "Date: Not set\n"
             "Genre: Not set\n"
             "Version: Not set\n"
@@ -223,7 +223,7 @@ class TestMusicTags(unittest.TestCase):
             "Title: Not set\n"
             "Album: Not set\n"
             "Album Artist: Not set\n"
-            "Artist(s): artist 3 | artist 1 | artist 2\n"
+            "Artist(s): artist 2 | artist 3 | artist 1\n"
             "Date: Not set\n"
             "Genre: Not set\n"
             "Version: Not set\n"
@@ -538,7 +538,7 @@ class TestMusicTags(unittest.TestCase):
             "  Performers:\n"
             "  - Lead vocals: artist 1\n"
             "  - Keyboard (Removed): the keyboard master\n"
-            "  - Guitar: artist 3 | artist 4\n"
+            "  - Guitar: artist 4 | artist 3\n"
             "  - Violin: artist 2\n"
             "  Title: Not found\n"
             "  Album: Not found\n"
@@ -647,7 +647,7 @@ class TestMusicTags(unittest.TestCase):
             "  Copyright: Not found\n"
             "  Composer: Not found\n"
             "  Conductor: Not found\n"
-            "  Arranger: artist 1 | artist 2\n"
+            "  Arranger: artist 2 | artist 1\n"
             "  Author: Not found\n"
             "  Producer (Removed): person 1\n"
             "  Publisher: Not found\n"
@@ -1351,25 +1351,25 @@ class TestMusicTags(unittest.TestCase):
         tags.original = {"artist": ["artist 1, artist 2"]}
         tags.youtube = {"artist": ["artist 1", "artist 2"]}
 
-        mock_show.side_effect = [0, 1]  # Second menu
+        mock_show.side_effect = [0, 0]  # Second menu
         repeat = tags.manually_adjust_tag_when_resolving("artist")
 
         self.assertFalse(repeat)
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
 
-        mock_show.side_effect = [0, 0]  # Second menu
+        mock_show.side_effect = [0, 2]  # Second menu
         repeat = tags.manually_adjust_tag_when_resolving("artist")
 
         self.assertFalse(repeat)
         self.assertEqual(["artist 1, artist 2"], tags.resolved.get("artist"))
 
-        mock_show.side_effect = [0, 2]  # Second menu
+        mock_show.side_effect = [0, 1]  # Second menu
         repeat = tags.manually_adjust_tag_when_resolving("artist")
 
         self.assertFalse(repeat)
         self.assertEqual(["artist 2"], tags.resolved.get("artist"))
 
-        mock_show.side_effect = [0, [1, 2]]  # Second menu
+        mock_show.side_effect = [0, [0, 1]]  # Second menu
         repeat = tags.manually_adjust_tag_when_resolving("artist")
 
         self.assertFalse(repeat)
@@ -1462,7 +1462,7 @@ class TestMusicTags(unittest.TestCase):
         mock_init.return_value = None
         # Choose "YouTube description" for artist, then "Junk Artist" as
         # album artist
-        mock_show.side_effect = [0, 0]
+        mock_show.side_effect = [0, 1]
         tags = MusicTags()
         tags.original = {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]}
         tags.resolved = {"artist": ["[Removed]"], "albumartist": ["[Removed]"]}
@@ -1504,7 +1504,7 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()  # type: ignore
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            "Artist: Metadata matches YouTube description tags.\n",
+            "Artist: Metadata matches YouTube description.\n",
             captured.out,
         )
 
@@ -1562,7 +1562,7 @@ class TestMusicTags(unittest.TestCase):
                 "  Title: Not found\n"
                 "  Album: Not found\n"
                 "  Album Artist: Not found\n"
-                "  Artist(s): artist 2 | artist 2 | artist 1 | artist 2\n"
+                "  Artist(s): artist 2 | artist 2 | artist 2 | artist 1\n"
                 "  Date: Not found\n"
                 "  Genre: Not found\n"
                 "  Version: Not found\n"
@@ -1579,9 +1579,9 @@ class TestMusicTags(unittest.TestCase):
                 "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
                 "YouTube description: artist 2\n"
-                "Parsed from original tags: artist 2\n"
-                "Existing metadata:  artist 1\n"
-                "Parsed from YouTube tags: artist 2\n"
+                "Tags parsed from original tags: artist 2\n"
+                "Tags parsed from YouTube tags: artist 2\n"
+                "Existing metadata: artist 1\n"
             ),
             captured.out,
         )
@@ -1613,7 +1613,7 @@ class TestMusicTags(unittest.TestCase):
                 "  Title: Not found\n"
                 "  Album: Not found\n"
                 "  Album Artist: Not found\n"
-                "  Artist(s): artist 1 | artist 2\n"
+                "  Artist(s): artist 2 | artist 1\n"
                 "  Date: Not found\n"
                 "  Genre: Not found\n"
                 "  Version: Not found\n"
@@ -1630,7 +1630,7 @@ class TestMusicTags(unittest.TestCase):
                 "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
                 "YouTube description: artist 2\n"
-                "Existing metadata:  artist 1\n"
+                "Existing metadata: artist 1\n"
             ),
             captured.out,
         )
@@ -1664,8 +1664,8 @@ class TestMusicTags(unittest.TestCase):
                 "  Lyricist: Not found\n"
                 "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
-                "Existing metadata:  artist 1\n"
-                "Parsed from YouTube tags: artist 2\n"
+                "Tags parsed from YouTube tags: artist 2\n"
+                "Existing metadata: artist 1\n"
             ),
             captured.out,
         )
@@ -1704,7 +1704,7 @@ class TestMusicTags(unittest.TestCase):
                 "  Title: Not found\n"
                 "  Album: Not found\n"
                 "  Album Artist: Not found\n"
-                "  Artist(s): artist 2 | artist 2 | artist 1 | artist 2\n"
+                "  Artist(s): artist 2 | artist 2 | artist 2 | artist 1\n"
                 "  Date: Not found\n"
                 "  Genre: Not found\n"
                 "  Version: Not found\n"
@@ -1721,9 +1721,9 @@ class TestMusicTags(unittest.TestCase):
                 "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
                 "YouTube description: artist 2\n"
-                "Parsed from original tags: artist 2\n"
-                "Existing metadata:  artist 1\n"
-                "Parsed from YouTube tags: artist 2\n"
+                "Tags parsed from original tags: artist 2\n"
+                "Tags parsed from YouTube tags: artist 2\n"
+                "Existing metadata: artist 1\n"
             ),
             captured.out,
         )
@@ -1739,7 +1739,7 @@ class TestMusicTags(unittest.TestCase):
                 "  Title: Not found\n"
                 "  Album: Not found\n"
                 "  Album Artist: Not found\n"
-                "  Artist(s): artist 2 | artist 2 | artist 1 | artist 2\n"
+                "  Artist(s): artist 2 | artist 2 | artist 2 | artist 1\n"
                 "  Date: Not found\n"
                 "  Genre: Not found\n"
                 "  Version: Not found\n"
@@ -1756,9 +1756,9 @@ class TestMusicTags(unittest.TestCase):
                 "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
                 "YouTube description: artist 2\n"
-                "Parsed from original tags: artist 2\n"
-                "Existing metadata:  artist 1\n"
-                "Parsed from YouTube tags: artist 2\n"
+                "Tags parsed from original tags: artist 2\n"
+                "Tags parsed from YouTube tags: artist 2\n"
+                "Existing metadata: artist 1\n"
             ),
             captured.out,
         )
@@ -1821,7 +1821,7 @@ class TestMusicTags(unittest.TestCase):
         tags_fromtags.parsed_from_youtube = {"artist": ["artist 3"]}
         tags_fromtags.parsed_from_original = {"artist": ["artist 4"]}
 
-        mock_show.return_value = 1  # From tagsription is second in list
+        mock_show.return_value = 1  # Parsed from original tags is second in list
         tags_fromtags.resolve_metadata()
         self.assertEqual(["artist 4"], tags_fromtags.resolved.get("artist"))
 
@@ -1831,7 +1831,7 @@ class TestMusicTags(unittest.TestCase):
         tags_original.parsed_from_youtube = {"artist": ["artist 3"]}
         tags_original.parsed_from_original = {"artist": ["artist 4"]}
 
-        mock_show.return_value = 2  # From tagsription is second in list
+        mock_show.return_value = 3  # Existing metadata is after the other sources
         tags_original.resolve_metadata()
         self.assertEqual(["artist 1"], tags_original.resolved.get("artist"))
 
@@ -1841,7 +1841,7 @@ class TestMusicTags(unittest.TestCase):
         tags_fromdesc.parsed_from_youtube = {"artist": ["artist 3"]}
         tags_fromdesc.parsed_from_original = {"artist": ["artist 4"]}
 
-        mock_show.return_value = 3  # From description is second in list
+        mock_show.return_value = 2  # Parsed from YouTube tags is third in list
         tags_fromdesc.resolve_metadata()
         self.assertEqual(["artist 3"], tags_fromdesc.resolved.get("artist"))
 
@@ -1860,7 +1860,7 @@ class TestMusicTags(unittest.TestCase):
         are correct in the end.
         """
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
-        mock_show.side_effect = [0, 1]  # Youtube artist in both cases
+        mock_show.side_effect = [0, 0]  # Youtube artist in both cases
 
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
@@ -2092,7 +2092,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.original = {"artist": ["artist 1"], "title": ["title 1"]}
         tags.musicbrainz = {"artist": ["artist 2"], "title": ["title 1"]}
         self.assertEqual(
-            ["artist 1", "artist 2"],
+            ["artist 2", "artist 1"],
             tags.get_colored_values_from_all_sources("artist"),
         )
         self.assertEqual(["title 1"], tags.get_colored_values_from_all_sources("title"))
@@ -2102,7 +2102,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags = MusicTags()
         tags.original = {"artist": ["artist 1"]}
         tags.musicbrainz = {"artist": ["artist 2"]}
-        self.assertEqual(["artist 1", "artist 2"], tags.get_values_from_all_sources("artist"))
+        self.assertEqual(["artist 2", "artist 1"], tags.get_values_from_all_sources("artist"))
         self.assertEqual(["artist 2"], tags.get_values_from_all_sources("artist", only_new=True))
 
     def test_check_any_new_data_exists_in_musicbrainz(self) -> None:
@@ -2141,7 +2141,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self, mock_show: MagicMock, mock_menu: MagicMock, _: MagicMock
     ) -> None:
         """Test that MusicBrainz is an option and hints at the right one."""
-        mock_show.return_value = 2
+        mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
         tags = MusicTags()
         tags.original = {"title": ["Dont Go"]}
@@ -2153,7 +2153,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         out = self.capsys.readouterr().out  # type: ignore
         self.assertIn("MusicBrainz: Don’t Go\n", out)
         self.assertEqual(
-            ["YouTube description", "Existing metadata", "MusicBrainz", "Other action", "Quit"],
+            ["YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
             mock_menu.call_args.args[0],
         )
         self.assertEqual(0, mock_menu.call_args.kwargs["cursor_index"])
@@ -2162,7 +2162,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.youtube = {"title": ["Do Go"]}
         tags.parsed_from_youtube = {"title": ["Don't Go"]}
         tags.resolve_metadata()
-        self.assertEqual(2, mock_menu.call_args.kwargs["cursor_index"])
+        self.assertEqual(1, mock_menu.call_args.kwargs["cursor_index"])
 
         tags.musicbrainz = {"title": ["Something Else"]}
         tags.resolve_metadata()
@@ -2211,7 +2211,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self, mock_show: MagicMock, mock_menu: MagicMock, _: MagicMock
     ) -> None:
         """Test that the user chooses the album if MusicBrainz found another release."""
-        mock_show.return_value = 2
+        mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
         tags = MusicTags()
         tags.original = {"album": ["Single"]}
@@ -2220,10 +2220,10 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.musicbrainz = {"album": ["Album"], "tracknumber": ["5"]}
         tags.resolve_metadata()
         self.assertEqual(
-            ["YouTube description", "Existing metadata", "MusicBrainz", "Other action", "Quit"],
+            ["YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
             mock_menu.call_args.args[0],
         )
-        self.assertEqual(2, mock_menu.call_args.kwargs["cursor_index"])
+        self.assertEqual(1, mock_menu.call_args.kwargs["cursor_index"])
         self.assertEqual(["Album"], tags.resolved["album"])
         self.assertEqual(["5"], tags.resolved["tracknumber"])
 
@@ -2240,7 +2240,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self, mock_show: MagicMock, mock_menu: MagicMock, _: MagicMock
     ) -> None:
         """Test that release tags aren't used if the album is another release."""
-        mock_show.return_value = 1  # Existing metadata
+        mock_show.return_value = 2  # Existing metadata
         mock_menu.return_value = None
         tags = MusicTags()
         tags.original = {"album": ["Single"], "totaltracks": ["1"]}
@@ -2288,11 +2288,11 @@ class TestMusicTagsColors(unittest.TestCase):
         tags.parsed_from_youtube = {"artist": ["artist 4"]}
         tags.musicbrainz = {"artist": ["artist 5"]}
         expected = [
+            styles.youtube("artist 2"),
             styles.parsed_from_original("artist 3"),
             styles.parsed_from_youtube("artist 4"),
-            styles.original("artist 1"),
-            styles.youtube("artist 2"),
             styles.musicbrainz("artist 5"),
+            styles.original("artist 1"),
         ]
         self.assertListEqual(expected, tags.get_colored_values_from_all_sources("artist"))
 

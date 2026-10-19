@@ -212,7 +212,7 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         "\n  Title: Proper Goodbyes (feat. Ben Ivor)"
         "\n  Album: Proper Goodbyes (feat. Ben Ivor)"
         "\n  Album Artist: The Global"
-        "\n  Artist(s): The Global | Ben Ivor | artist 1 | The Global | Ben Ivor"
+        "\n  Artist(s): The Global | Ben Ivor | The Global | Ben Ivor | artist 1"
         "\n  Date: 2029-08-22"
         "\n  Genre: Not found"
         "\n  Version: Not found"
@@ -229,8 +229,8 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         "\n  Writer: Not found"
         "\n\nArtist: Mismatch between values in description and metadata:"
         "\nYouTube description: The Global | Ben Ivor"
-        "\nExisting metadata:  artist 1"
-        "\nParsed from YouTube tags: The Global | Ben Ivor"
+        "\nTags parsed from YouTube tags: The Global | Ben Ivor"
+        "\nExisting metadata: artist 1"
         "\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
 
@@ -266,11 +266,11 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         "\n-----------------------------------------------"
         "\n  Other tags:"
         "\n  - synopsis: [Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]"
-        "\n  Title: Proper Goodbyes | Proper Goodbyes | Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"
-        " | Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"
+        "\n  Title: Proper Goodbyes (feat. Ben Ivor) (2036 Remaster) | Proper Goodbyes | Proper Goodbyes"
+        " | Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"
         "\n  Album: Proper Goodbyes (feat. Ben Ivor)"
         "\n  Album Artist: The Global"
-        "\n  Artist(s): artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2 | The Global | Ben Ivor"
+        "\n  Artist(s): The Global | Ben Ivor | artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2"
         "\n  Date: 2029-08-22"
         "\n  Genre: Not found"
         "\n  Version: 2039 Remaster | 2036 Remaster"
@@ -288,9 +288,9 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         # All sources should show up here
         "\n\nTitle: Mismatch between values in description and metadata:"
         "\nYouTube description: Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"
-        "\nParsed from original tags: Proper Goodbyes"
-        "\nExisting metadata:  Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"
-        "\nParsed from YouTube tags: Proper Goodbyes"
+        "\nTags parsed from original tags: Proper Goodbyes"
+        "\nTags parsed from YouTube tags: Proper Goodbyes"
+        "\nExisting metadata: Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"
         "\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
 
@@ -410,14 +410,14 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     expected_regex = re.compile(
         # Original status print
         re.escape(
-            "Artist(s): artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2 | The Global | Ben Ivor"
+            "Artist(s): The Global | Ben Ivor | artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2"
         )
         + r".*"
         # # One of the resolved status prints
         + re.escape("Artist(s): The Global | Ben Ivor") + ".*"
         # # Reset status print (same as first)
         + re.escape(
-            "Artist(s): artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2 | The Global | Ben Ivor"
+            "Artist(s): The Global | Ben Ivor | artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2"
         )
         + ".*",
         re.DOTALL,

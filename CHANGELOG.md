@@ -48,6 +48,9 @@
   copyright and release date read. Copies whose layout was changed, e.g. with
   all lines joined into one, no longer give a title or organization made of
   several lines run together. Conflicts are asked about with the title first.
+- The values of a tag are listed in the same order everywhere: the YouTube
+  description, tags parsed from the original tags, tags parsed from the YouTube
+  tags, MusicBrainz, and last the existing metadata.
 - Python 3.13 or newer is now required.
 - The short option for `--album` is now `-a` instead of `-b`.
 - Unset tags are shown in gray instead of black, so they are readable on dark
