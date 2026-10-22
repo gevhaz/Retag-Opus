@@ -189,7 +189,7 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
             "synopsis",
             [
                 "Provided to YouTube by Rich Men's Group Digital Ltd."
-                "\n\nProper Goodbyes (feat. Ben Ivor) · The Global · Ben Ivor"
+                "\n\nProper Goodbyes · The Global · Ben Ivor"
                 "\n\nProper Goodbyes (feat. Ben Ivor)"
                 "\n\n℗ 2022 The Global under exclusive license to 5BE Ltd"
                 "\n\nReleased on: 2029-08-22"
@@ -212,14 +212,14 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         "\nOrganization: No value exists in metadata. "
         'Using YouTube description: ["Rich Men\'s Group Digital Ltd."].'
         "\nTitle: No value exists in metadata. "
-        "Using YouTube description: ['Proper Goodbyes (feat. Ben Ivor)']."
+        "Using YouTube description: ['Proper Goodbyes']."
         "\n-----------------------------------------------"
         "\n  Other tags:"
         "\n  - synopsis: [Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]"
-        "\n  Title: Proper Goodbyes (feat. Ben Ivor)"
+        "\n  Title: Proper Goodbyes"
         "\n  Album: Proper Goodbyes (feat. Ben Ivor)"
         "\n  Album Artist: The Global"
-        "\n  Artist(s): The Global | Ben Ivor | The Global | Ben Ivor | artist 1"
+        "\n  Artist(s): The Global | Ben Ivor | artist 1"
         "\n  Date: 2029-08-22"
         "\n  Genre: Not found"
         "\n  Version: Not found"
@@ -236,7 +236,6 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         "\n  Writer: Not found"
         "\n\nArtist: Mismatch between values in description and metadata:"
         "\nYouTube description: The Global | Ben Ivor"
-        "\nTags parsed from YouTube tags: The Global | Ben Ivor"
         "\nExisting metadata: artist 1"
         "\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
@@ -313,7 +312,7 @@ def test_setting_grouping(capsys, music_directory, monkeypatch):
     mock_show = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 1, 0]
+    mock_show.side_effect = [0, 1, 0, 0]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -334,7 +333,7 @@ def test_pass(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0]
+    mock_show.side_effect = [0, 0, 0, 0]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -363,7 +362,7 @@ def test_quit_through_escape(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, None]
+    mock_show.side_effect = [0, 0, 0, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -395,7 +394,7 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 2, None]
+    mock_show.side_effect = [0, 0, 0, 2, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
@@ -465,8 +464,9 @@ def test_saving(music_directory, monkeypatch, capsys):
     mock_show = Mock()
     # First: Choose youtube for 'artist'
     # Second: Choose youtube for 'title'
-    # Third: Save file
-    mock_show.side_effect = [0, 0, 1]
+    # Third: Choose the version from the existing title
+    # Fourth: Save file
+    mock_show.side_effect = [0, 0, 0, 1]
 
     monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
     monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
@@ -544,11 +544,12 @@ def test_deleting_tag(music_directory, monkeypatch, capsys):
     mock_show = Mock()
     # First: Choose youtube for 'artist'
     # Second: Choose youtube for 'title'
-    # Third: delete tag
-    # Fourth: Select album
-    # Fifth: Delete the only tag
-    # Sixth: Save file
-    mock_show.side_effect = [0, 0, 4, 0, 0, 1]
+    # Third: Choose the version from the existing title
+    # Fourth: delete tag
+    # Fifth: Select album
+    # Sixth: Delete the only tag
+    # Seventh: Save file
+    mock_show.side_effect = [0, 0, 0, 4, 0, 0, 1]
 
     monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
     monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)

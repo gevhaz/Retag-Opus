@@ -64,6 +64,9 @@
   kept when a source has the same, instead of being asked about for every song
   with several artists, and the choices are the sources' album artists instead
   of all artists. A missing album artist is no longer copied from the artists.
+- When a song has no value for a tag and the sources disagree on it, e.g. the
+  YouTube description and MusicBrainz on the album artist, you are asked which
+  is right, instead of the first source being used.
 
 ### Removed
 
