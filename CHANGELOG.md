@@ -77,6 +77,10 @@
   YouTube description or parsed tags have the same value.
 - Look for the configuration file in `XDG_CONFIG_HOME`, as documented, instead
   of `XDG_CONFIG_DIR`.
+- The album artist is only taken from the auto-generated part of a YouTube
+  description. Text written by whoever uploaded the video can name a featured
+  artist first, e.g. in "“Song (feat. B)” by A", and then B became the album
+  artist.
 
 ### Internal
 

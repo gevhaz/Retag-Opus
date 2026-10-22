@@ -106,4 +106,11 @@ def test_parse_changed_copy_of_auto_generated_description() -> None:
 def test_parse_uploader_text() -> None:
     """Some common sentences are read in the uploader's text."""
     tags = description_parser.parse("Listen to “Song” by Singer from ‘Album’\n")
-    assert tags == {"title": ["Song"], "artist": ["Singer"], "albumartist": ["Singer"], "album": ["Album"]}
+    assert tags == {"title": ["Song"], "artist": ["Singer"], "album": ["Album"]}
+
+
+def test_parse_no_album_artist_from_uploader_text() -> None:
+    """The uploader's text gives no album artist, since its artists can be in any order."""
+    tags = description_parser.parse("“Song (feat. Featured Singer)” by Singer from ‘Album’\n")
+    assert tags["artist"] == ["Featured Singer", "Singer"]
+    assert "albumartist" not in tags
