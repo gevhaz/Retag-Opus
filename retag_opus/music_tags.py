@@ -76,12 +76,9 @@ class MusicTags:
     one provided by the OggOpus object.
     """
 
-    def __init__(self, manual_album_set: bool = False) -> None:
+    def __init__(self) -> None:
         """Create empty attributes for each source."""
         self.tags_printed_for_every_song = dict(constants.tags_printed_for_every_song)
-        self.manual_album_set = manual_album_set
-        if manual_album_set:
-            self.tags_printed_for_every_song["discsubtitle"] = "Disc subtitle"
         # The tags of each source. The sources other than the song's file
         # come first, most preferred first. When a tag has no value yet, it
         # gets the values of the first of them that has any, and lists of
@@ -368,20 +365,6 @@ class MusicTags:
             print("  " + printed_tag_name + ": " + " | ".join(colored_values))
         else:
             self.print_metadata_key(printed_tag_name, tag_name, styles.original, self.resolved)
-
-    def switch_album_to_disc_subtitle(self, manual_album_name: str) -> None:
-        """Move album tag to discsubtitle tag.
-
-        Switches the original album tag to the discsubtitle tag so that
-        it will be used in the comparison for that tag, rather than
-        album, which is not used when the album is set manually.
-
-        :param manual_album_name: What to use as the new album tag.
-        """
-        original_tags = self.tags_from(ORIGINAL)
-        original_album = original_tags.pop("album", None)
-        if original_album is not None and original_album != [manual_album_name]:
-            original_tags["discsubtitle"] = original_album
 
     def discard_upload_date(self) -> None:
         """If the date is just the upload date, discard it."""

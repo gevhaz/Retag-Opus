@@ -190,10 +190,9 @@ def song(
     original: Tags | None = None,
     youtube: Tags | None = None,
     length: float | None = 201.0,
-    manual_album_set: bool = False,
 ) -> MusicTags:
     """Create tags for a song from the given sources."""
-    tags = MusicTags(manual_album_set)
+    tags = MusicTags()
     tags.set_tags(ORIGINAL, original or {})
     tags.set_tags(YOUTUBE, youtube or {})
     tags.length = length
@@ -362,13 +361,6 @@ def test_match_song_stored_id_not_found() -> None:
     original = {"musicbrainz_trackid": ["gone"], "title": [VIDEO_TITLE]}
     assert MusicBrainzMatcher(client).match_song(song(original=original))
     client.search_recordings_by_words.assert_called_once()
-
-
-def test_match_song_manual_album() -> None:
-    """With a manual album, tags describing the release are left out."""
-    tags = MusicBrainzMatcher(fake_client()).match_song(song(original={"title": [VIDEO_TITLE]}, manual_album_set=True))
-    assert not set(tags) & set(musicbrainz.ALBUM_AND_RELEASE_TAGS)
-    assert tags["date"] == ["2022-08-22"]
 
 
 def test_match_song_not_on_release() -> None:

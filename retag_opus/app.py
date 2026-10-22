@@ -63,22 +63,20 @@ def get_album(file_path: Path) -> str | None:
     return album or None
 
 
-def group_by_album(files: list[Path], manual_album: str | None) -> dict[Path, str]:
+def group_by_album(files: list[Path]) -> dict[Path, str]:
     """Find out which songs are on the same album as another song.
 
     Songs with the same album name (ignoring case) in the YouTube
-    description are considered to be from the same album. If the album
-    has been set manually, all songs are.
+    description are considered to be from the same album.
 
     :param files: All songs to be retagged.
-    :param manual_album: The album set by the user, if any.
 
     :return: The album of each song that shares album with another,
         written as in the description of the first of its songs.
     """
     album_per_song: dict[Path, str] = {}
     for file_path in files:
-        album = manual_album if manual_album is not None else get_album(file_path)
+        album = get_album(file_path)
         if album is not None:
             album_per_song[file_path] = album
 
@@ -118,27 +116,22 @@ def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
             messages.success(f"Album level tags saved for file: {utils.file_path_to_song_name(file_path)}")
 
 
-def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, MusicTags]:
+def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
     """Read the tags of a song and parse new tags from them.
 
     :param file_path: The song to read.
-    :param manual_album: The album set by the user, if any.
 
     :return: The song's file, for saving changes to it, and
         its tags from all sources.
     """
     # 1. Read the data and make basic improvements
-    manual_album_set = manual_album is not None
     opus_file: OggOpus = OggOpus(file_path)  # type: ignore
     original_tags: Tags = dict(opus_file.items())  # type: ignore
-    tags = MusicTags(manual_album_set=manual_album_set)
+    tags = MusicTags()
     tags.length = getattr(getattr(opus_file, "info", None), "length", None)
 
     tags.set_tags(ORIGINAL, original_tags)
     tags.discard_upload_date()
-    if manual_album is not None:
-        tags.switch_album_to_disc_subtitle(manual_album)
-
     tags.resolved = deepcopy(original_tags)
 
     original_tags_parser = TagsParser(original_tags)
@@ -146,17 +139,13 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
     original_tags_parser.split_select_original_tags()
     tags.set_tags(PARSED_FROM_ORIGINAL, original_tags_parser.tags)
 
-    # 1.1 Manually set album
-    if manual_album is not None:
-        tags.resolved["album"] = [manual_album]
-
     # 2. Get description
     description_lines = get_description(original_tags)
 
     # 3. If description exists, send it to be parsed
     if description_lines:
         description = "\n".join(description_lines)
-        youtube_tags = description_parser.parse(description, manual_album_set=manual_album_set)
+        youtube_tags = description_parser.parse(description)
         tags.set_tags(YOUTUBE, youtube_tags)
         tags.add_source_tag()
 
@@ -177,21 +166,18 @@ def save_tags(opus_file: OggOpus, tags: Tags) -> None:
     opus_file.save()
 
 
-def match_albums(
-    matcher: MusicBrainzMatcher, shared_album_per_song: dict[Path, str], manual_album: str | None
-) -> dict[Path, Tags]:
+def match_albums(matcher: MusicBrainzMatcher, shared_album_per_song: dict[Path, str]) -> dict[Path, Tags]:
     """Identify each album on MusicBrainz, with all its songs at once.
 
     :param matcher: Used for finding the albums on MusicBrainz.
     :param shared_album_per_song: The album of each song that shares
         album with another.
-    :param manual_album: The album set by the user, if any.
 
     :return: Tags from MusicBrainz for each song whose album was found.
     """
     songs_per_album: dict[str, dict[Path, MusicTags]] = {}
     for file_path, album in shared_album_per_song.items():
-        _, tags = read_song(file_path, manual_album)
+        _, tags = read_song(file_path)
         songs_per_album.setdefault(album, {})[file_path] = tags
 
     musicbrainz_tags_per_song: dict[Path, Tags] = {}
@@ -220,16 +206,14 @@ def run(argv: Sequence[str] | None = None) -> int:
 
     shared_album_per_song: dict[Path, str] = {}
     if not args.individual:
-        shared_album_per_song = group_by_album(opus_files, args.manual_album)
+        shared_album_per_song = group_by_album(opus_files)
     # Album level tags saved for an earlier song on each album
     saved_album_level_tags: dict[str, Tags] = {}
 
     use_musicbrainz = args.musicbrainz if args.musicbrainz is not None else config.get("musicbrainz", False)
     # One matcher for all songs, so that its cache and rate limit are shared
     matcher = MusicBrainzMatcher() if use_musicbrainz else None
-    musicbrainz_tags_per_song = (
-        match_albums(matcher, shared_album_per_song, args.manual_album) if matcher is not None else {}
-    )
+    musicbrainz_tags_per_song = match_albums(matcher, shared_album_per_song) if matcher is not None else {}
     tags_to_delete = config.get("tags_to_delete", [])
     strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
 
@@ -244,7 +228,7 @@ def run(argv: Sequence[str] | None = None) -> int:
             messages.info(f"Song {song_index + 1} of {len(opus_files)}")
             messages.info(f"----- Song: {song_name} -----")
 
-            opus_file, tags = read_song(file_path, args.manual_album)
+            opus_file, tags = read_song(file_path)
             description_lines = get_description(tags.tags_from(ORIGINAL))
             if matcher is not None:
                 if file_path not in musicbrainz_tags_per_song:
@@ -254,12 +238,15 @@ def run(argv: Sequence[str] | None = None) -> int:
             # 4.5 Get rid of shady tags
             tags.prune_resolved_tags(tags_to_delete, strings_to_delete_tags_based_on)
 
+            if args.grouping is not None:
+                tags.resolved["grouping"] = [args.grouping]
+
             # 4.6 Use the same album level tags as for earlier songs on
             # the same album
             if shared_album is not None and shared_album in saved_album_level_tags:
                 tags.apply_album_level_tags(saved_album_level_tags[shared_album])
 
-            if not tags.check_any_new_data_exists() and not args.manual_album:
+            if not tags.check_any_new_data_exists():
                 messages.warning("No new data exists. Skipping song.")
                 break
 

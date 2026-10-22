@@ -19,13 +19,13 @@ class Cli:
         shtab.add_argument_to(parser, ["-s", "--print-completion"])
 
         parser.add_argument(
-            "-a",
-            "--album",
+            "-g",
+            "--grouping",
             action="store",
             required=False,
             default=None,
-            dest="manual_album",
-            help="Manually sets the album tag to the given value and puts any parsed album in the " "discsubtitle tag",
+            dest="grouping",
+            help="Sets the grouping tag to the given value, e.g. to put the songs in a mix of your own",
         )
 
         parser.add_argument(

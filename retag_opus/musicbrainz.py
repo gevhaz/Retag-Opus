@@ -23,9 +23,6 @@ MIN_RELEASE_SEARCH_SCORE: Final[int] = 90
 MAX_LENGTH_DIFFERENCE_SECONDS: Final[float] = 3.0
 MAX_RELEASE_LOOKUPS: Final[int] = 3
 
-# Tags that describe the release a song is on, rather than the song
-ALBUM_AND_RELEASE_TAGS: Final[list[str]] = ["album", "albumartist"] + constants.release_tags
-
 # Attributes of vocal and instrument relationships that say how the
 # artist took part rather than in what role, e.g. "guest". Like Picard,
 # they're left out of the role.
@@ -389,9 +386,6 @@ class MusicBrainzMatcher:
     def match_song(self, tags: MusicTags) -> Tags:
         """Get tags for a song from MusicBrainz.
 
-        When the album is set manually, the release found for the song
-        isn't that album, so tags describing the release are left out.
-
         :return: Tags from MusicBrainz, or no tags if the song wasn't
             found, the user skipped it, or MusicBrainz can't be used.
         """
@@ -411,12 +405,7 @@ class MusicBrainzMatcher:
         for medium, track in release_tracks(release):
             if track["recording"]["id"] == recording["id"]:
                 print(styles.musicbrainz(match_message(track, release)))
-                song_tags = track_tags(release, medium, track)
-                if tags.manual_album_set:
-                    # The release found for the song isn't the album the user set
-                    for tag_name in ALBUM_AND_RELEASE_TAGS:
-                        song_tags.pop(tag_name, None)
-                return song_tags
+                return track_tags(release, medium, track)
         return {}
 
     def match_album(self, album: str, songs: dict[Path, MusicTags]) -> dict[Path, Tags]:

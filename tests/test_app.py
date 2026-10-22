@@ -299,13 +299,10 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
     assert actual_output == expected_output
 
 
-def test_setting_manual_album(capsys, music_directory, monkeypatch):
-    """Test setting a manual album and see that it overrides.
+def test_setting_grouping(capsys, music_directory, monkeypatch):
+    """Test that the grouping set with --grouping is shown as a change.
 
-    Test that when the user sets a manual album, that s used for the
-    album tag and whatever album is found from the tags is set as the
-    "discsubtitle" tag instead. Also double check that the album from
-    the description is not set as an album tag.
+    The album from the description is still used as the album.
     """
     mock_show = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
@@ -317,17 +314,12 @@ def test_setting_manual_album(capsys, music_directory, monkeypatch):
     monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
     monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
 
-    exit_code = app.run(["--directory", music_directory, "--album", "manualalbum"])
+    exit_code = app.run(["--directory", music_directory, "--grouping", "My Mix"])
 
     actual_output, _ = capsys.readouterr()
-    expected_album_output = "Album: manualalbum"
-    not_expected_album_output = "Album: Proper Goodbyes (feat. Ben Ivor)"
-    expected_discsubtitle_output = "Disc subtitle: Proper Goodbyes (feat. Ben Ivor)"
-
     assert exit_code == 0
-    assert expected_album_output in actual_output
-    assert not_expected_album_output not in actual_output
-    assert expected_discsubtitle_output in actual_output
+    assert "  - grouping: My Mix" in actual_output
+    assert "Album: Proper Goodbyes (feat. Ben Ivor)" in actual_output
 
 
 def test_pass(capsys, music_directory, monkeypatch):
@@ -624,8 +616,7 @@ def write_opus_file(path: Path, metadata: dict[str, list[str]]) -> None:
 def test_group_by_album(capsys):
     """Songs with the same album in the description are grouped.
 
-    The album tag isn't used, and setting the album with --album puts
-    all songs in the same group.
+    The album tag isn't used.
     """
     with TemporaryDirectory() as temp_dir:
         first = Path(temp_dir) / "first.opus"
@@ -639,30 +630,24 @@ def test_group_by_album(capsys):
         write_opus_file(no_description_1, {"title": ["Song 3"], "album": ["My Album"]})
         write_opus_file(no_description_2, {"title": ["Song 4"], "album": ["My Album"]})
 
-        groups = app.group_by_album([first, second, single, no_description_1, no_description_2], None)
-        manual_groups = app.group_by_album([first, single, no_description_1], "Manual")
+        groups = app.group_by_album([first, second, single, no_description_1, no_description_2])
 
     assert groups == {first: "The Album", second: "The Album"}
-    assert manual_groups == {first: "Manual", single: "Manual", no_description_1: "Manual"}
     out, _ = capsys.readouterr()
     assert out == (
         "2 songs are from the album 'The Album'. Album artist, date, genre and album saved for "
         "one of them will be saved for all of them.\n"
-        "3 songs are from the album 'Manual'. Album artist, date, genre and album saved for "
-        "one of them will be saved for all of them.\n"
     )
 
 
-def test_manual_album(monkeypatch):
-    """Songs put in one album with --album share album level tags.
+def test_grouping(monkeypatch):
+    """Songs put in a group with --grouping keep their own albums.
 
-    Even though the songs are from different albums according to the
-    descriptions, the album artist, date and genre of the first song
-    should be used for the second song.
+    The songs are from different albums according to the descriptions,
+    so each keeps its own album, date and genre.
     """
-    # First song: Youtube artist, album artist "The Global", save
-    # Second song: Youtube artist, save
-    choices = [0, 0, 1, 0, 1]
+    # Each song: Youtube artist, album artist "The Global", save
+    choices = [0, 0, 1, 0, 0, 1]
     mock_show = Mock(side_effect=choices)
     monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
     monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
@@ -677,23 +662,23 @@ def test_manual_album(monkeypatch):
         # Process the files in a known order
         monkeypatch.setattr(Path, "glob", lambda *_: iter([first, second]))
 
-        exit_code = app.run(["--directory", temp_dir, "--album", "My Album"])
+        exit_code = app.run(["--directory", temp_dir, "--grouping", "My Mix"])
 
         first_metadata = oggopus.OggOpus(first)
         second_metadata = oggopus.OggOpus(second)
 
     assert exit_code == 0
     assert mock_show.call_count == len(choices)
-    assert first_metadata["album"] == ["My Album"]
-    assert second_metadata["album"] == ["My Album"]
-    assert first_metadata["discsubtitle"] == ["Single 1"]
-    assert second_metadata["discsubtitle"] == ["Single 2"]
-    assert first_metadata["albumartist"] == ["The Global"]
-    assert second_metadata["albumartist"] == ["The Global"]
+    assert first_metadata["grouping"] == ["My Mix"]
+    assert second_metadata["grouping"] == ["My Mix"]
+    assert first_metadata["album"] == ["Single 1"]
+    assert second_metadata["album"] == ["Single 2"]
+    assert "discsubtitle" not in first_metadata
+    assert "discsubtitle" not in second_metadata
     assert first_metadata["genre"] == ["Pop"]
-    assert second_metadata["genre"] == ["Pop"]
+    assert second_metadata["genre"] == ["Rock"]
     assert first_metadata["date"] == ["2029-08-22"]
-    assert second_metadata["date"] == ["2029-08-22"]
+    assert second_metadata["date"] == ["2030-01-01"]
 
 
 @pytest.mark.parametrize("individual", [False, True])
@@ -829,7 +814,7 @@ def test_match_albums():
         write_opus_file(first, album_song_metadata("Song 1", "The Album", "Pop"))
         write_opus_file(second, album_song_metadata("Song 2", "The Album", "Pop"))
 
-        matched = app.match_albums(matcher, {first: "The Album", second: "The Album"}, None)
+        matched = app.match_albums(matcher, {first: "The Album", second: "The Album"})
 
         songs = matcher.match_album.call_args.args[1]
     assert matched == {first: {"album": ["The Album"]}, second: {"album": ["The Album"]}}
