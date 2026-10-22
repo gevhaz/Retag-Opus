@@ -56,12 +56,13 @@ roles, e.g. `Associated Performer, Drums: Roger Taylor`. Any role after
 "Associated Performer" becomes a performer tag, e.g. `performer:theremin`.
 Roles that have no tag, e.g. "Mastering Engineer", are left out.
 
-The auto-generated part of a description is found even when someone pasted it
-among their own text, and it's read by its layout: the line after "Provided to
-YouTube by" has the title and artists, the next one the album, and so on. In
-text written by whoever uploaded the video, only credits with known roles and a
-few common sentences are read. A pasted copy whose layout was changed, e.g. with
-all lines joined into one, is read like such text.
+An auto-generated description is found even when someone pasted it among their
+own text, and it's read by its layout: the line after "Provided to YouTube by"
+has the title and artists, the next one the album, and so on. The text around a
+pasted copy is then left out. In a description written by whoever uploaded the
+video, only credits with known roles and a few common sentences are read. A
+pasted copy whose layout was changed, e.g. with all lines joined into one, is
+read like such a description.
 
 Purple text indicates that the tag comes from the YouTube description.
 Blue indicates that the tag existed in the metadata since before. Yellow
@@ -99,10 +100,13 @@ song is from.
 With the `--musicbrainz` flag, or `musicbrainz = true` in the configuration
 file, songs are also looked up on [MusicBrainz](https://musicbrainz.org). Its
 values are shown in orange and treated like the values from the other
-sources, but are used last when sources disagree. When a tag has conflicting
-values, the menu starts on the value of the most preferred source. Values that
-only differ in typography, like straight and curly apostrophes, count as the
-same.
+sources. When sources disagree, an auto-generated YouTube description and the
+tags parsed from it are preferred over MusicBrainz, since YouTube made the
+description from the label's data. A description written by the uploader, and
+the tags parsed from it, are less trusted than MusicBrainz. When a tag has
+conflicting values, the menu starts on the value of the most preferred source.
+Values that only differ in typography, like straight and curly apostrophes,
+count as the same.
 
 Besides title, artist, album, album artist and date, MusicBrainz gives track
 and disc numbers, credits such as composer, lyricist, writer, producer and

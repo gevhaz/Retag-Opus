@@ -44,13 +44,16 @@
 - Notes about the video, like "(Official Video)", are left out when searching
   MusicBrainz.
 - The auto-generated part of a YouTube description is read by its layout, also
-  when it's pasted among other text, and only there are the organization,
-  copyright and release date read. Copies whose layout was changed, e.g. with
-  all lines joined into one, no longer give a title or organization made of
-  several lines run together. Conflicts are asked about with the title first.
+  when it's pasted among other text, which is then left out. Only there are the
+  organization, copyright and release date read. Copies whose layout was
+  changed, e.g. with all lines joined into one, no longer give a title or
+  organization made of several lines run together. Conflicts are asked about
+  with the title first.
 - The values of a tag are listed in the same order everywhere: the YouTube
   description, tags parsed from the original tags, tags parsed from the YouTube
-  tags, MusicBrainz, and last the existing metadata.
+  tags, MusicBrainz, and last the existing metadata. If the YouTube description
+  was written by the uploader rather than auto-generated, it and the tags
+  parsed from it come after MusicBrainz instead.
 - Python 3.13 or newer is now required.
 - `--album` (`-b`) is replaced by `--grouping` (`-g`), which puts songs in a mix
   of your own by setting the `grouping` tag. The album stays the one the song is

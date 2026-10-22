@@ -1851,6 +1851,53 @@ class TestMusicBrainzSource(unittest.TestCase):
         mock_show.assert_called_once()
         self.assertEqual(["Jane Paknia & Hagop Tchaparian"], tags.resolved["albumartist"])
 
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_prefers_musicbrainz_to_uploader_description(
+        self, mock_show: MagicMock, mock_menu: MagicMock
+    ) -> None:
+        """Test that MusicBrainz comes after an auto-generated description, but before an uploader's."""
+        mock_show.return_value = 0
+        mock_menu.return_value = None
+        tags = MusicTags()
+        tags.youtube_is_auto_generated = False
+        tags.set_tags(YOUTUBE, {"title": ["Song (Official Video)"], "album": ["Don't Go"]})
+        tags.set_tags(PARSED_FROM_YOUTUBE, {"title": ["Song (Official)"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["Song"], "album": ["Don’t Go"]})
+
+        tags.resolve_metadata()
+
+        self.assertEqual(
+            [
+                "MusicBrainz",
+                "YouTube description",
+                "Tags parsed from YouTube tags",
+                "Existing metadata",
+                "Other action",
+                "Quit",
+            ],
+            mock_menu.call_args.args[0],
+        )
+        self.assertEqual(["Song"], tags.resolved["title"])
+        # Where the sources agree, MusicBrainz's value is used
+        self.assertEqual(["Don’t Go"], tags.resolved["album"])
+
+        tags.youtube_is_auto_generated = True
+        tags.resolve_metadata()
+        self.assertEqual(
+            [
+                "YouTube description",
+                "Tags parsed from YouTube tags",
+                "MusicBrainz",
+                "Existing metadata",
+                "Other action",
+                "Quit",
+            ],
+            mock_menu.call_args.args[0],
+        )
+        self.assertEqual(["Song (Official Video)"], tags.resolved["title"])
+        self.assertEqual(["Don't Go"], tags.resolved["album"])
+
     def test_sources_agree_regardless_of_typography(self) -> None:
         """Test that sources only differing in typography and case agree."""
         tags = MusicTags()

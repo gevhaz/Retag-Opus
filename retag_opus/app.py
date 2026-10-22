@@ -147,6 +147,7 @@ def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
         description = "\n".join(description_lines)
         youtube_tags = description_parser.parse(description)
         tags.set_tags(YOUTUBE, youtube_tags)
+        tags.youtube_is_auto_generated = description_parser.is_auto_generated(description)
         tags.add_source_tag()
 
         youtube_tags_parser = TagsParser(youtube_tags)
