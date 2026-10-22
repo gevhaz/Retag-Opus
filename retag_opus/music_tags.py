@@ -135,6 +135,19 @@ class MusicTags:
                 values_per_source.append((source, values))
         return values_per_source
 
+    def sources_agree(self, tag_name: str) -> bool:
+        """Check whether the sources of new values have the same values for a tag.
+
+        Typography and case don't matter. For example, ["Jane Paknia"]
+        from the YouTube description and ["Jane Paknia & Hagop
+        Tchaparian"] from MusicBrainz don't agree.
+        """
+        values_per_source = [values for _, values in self.found_values(tag_name)]
+        for values in values_per_source[1:]:
+            if not utils.is_equal_when_normalized(values, values_per_source[0]):
+                return False
+        return True
+
     @staticmethod
     def is_performer_tag(tag_name: str) -> bool:
         """Check if a tag is a performer's role, e.g. "performer:violin"."""
@@ -685,7 +698,7 @@ class MusicTags:
 
             if tag_name.startswith(constants.MUSICBRAINZ_ID_PREFIX) and len(musicbrainz_values) > 0:
                 self.resolved[tag_name] = musicbrainz_values
-            elif not original_values and found_values and not album_differs_from_musicbrainz:
+            elif not original_values and found_values and self.sources_agree(tag_name):
                 preferred_source, preferred_values = found_values[0]
                 self.resolved[tag_name] = preferred_values
                 if tag_name not in constants.track_position_tags:

@@ -1827,12 +1827,38 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertTrue(tags.check_any_new_data_exists())
 
     def test_resolve_metadata_uses_musicbrainz_last(self) -> None:
-        """Test that MusicBrainz fills tags no other source has."""
+        """Test that MusicBrainz fills tags no other source has.
+
+        Where the sources agree, the value from the YouTube description
+        is used, as it's written there.
+        """
         tags = MusicTags()
         tags.set_tags(YOUTUBE, {"title": ["title 1"]})
-        tags.set_tags(MUSICBRAINZ, {"title": ["title 2"], "tracknumber": ["3"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["Title 1"], "tracknumber": ["3"]})
         tags.resolve_metadata()
         self.assertEqual({"title": ["title 1"], "tracknumber": ["3"]}, tags.resolved)
+
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_asks_when_sources_disagree(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test that the user chooses a missing value when the sources disagree on it."""
+        mock_show.return_value = 1  # MusicBrainz
+        mock_menu.return_value = None
+        tags = MusicTags()
+        tags.set_tags(YOUTUBE, {"albumartist": ["Jane Paknia"]})
+        tags.set_tags(MUSICBRAINZ, {"albumartist": ["Jane Paknia & Hagop Tchaparian"]})
+        tags.resolve_metadata()
+        mock_show.assert_called_once()
+        self.assertEqual(["Jane Paknia & Hagop Tchaparian"], tags.resolved["albumartist"])
+
+    def test_sources_agree_regardless_of_typography(self) -> None:
+        """Test that sources only differing in typography and case agree."""
+        tags = MusicTags()
+        tags.set_tags(YOUTUBE, {"title": ["Don't Go"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["Don’t go"]})
+        self.assertTrue(tags.sources_agree("title"))
+        tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go (Live)"]})
+        self.assertFalse(tags.sources_agree("title"))
 
     def test_resolve_metadata_matches_musicbrainz_regardless_of_typography(self) -> None:
         """Test that MusicBrainz typography doesn't cause a conflict."""
@@ -1959,8 +1985,14 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertNotIn("musicbrainz_albumid", tags.resolved)
         self.assertEqual(["track id"], tags.resolved["musicbrainz_trackid"])
 
-    def test_resolve_metadata_keeps_release_tags_of_same_album(self) -> None:
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_keeps_release_tags_of_same_album(
+        self, mock_show: MagicMock, mock_menu: MagicMock
+    ) -> None:
         """Test that release tags are kept if the album is the release, e.g. remastered."""
+        mock_show.return_value = 0  # The album as written in the YouTube description
+        mock_menu.return_value = None
         tags = MusicTags()
         tags.set_tags(YOUTUBE, {"album": ["Album (2011 Remaster)"]})
         tags.set_tags(MUSICBRAINZ, {"album": ["album"], "tracknumber": ["5"]})
