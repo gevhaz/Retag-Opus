@@ -78,7 +78,6 @@ class MusicTags:
 
     def __init__(self) -> None:
         """Create empty attributes for each source."""
-        self.tags_printed_for_every_song = dict(constants.tags_printed_for_every_song)
         # The tags of each source. The sources other than the song's file
         # come first, most preferred first. When a tag has no value yet, it
         # gets the values of the first of them that has any, and lists of
@@ -220,7 +219,7 @@ class MusicTags:
             for tag_name in self.performer_tags_in_print_order(metadata):
                 if tag_name in metadata and metadata[tag_name] is not None:
                     self.print_metadata_key(self.performer_print_name(tag_name), tag_name, style, metadata)
-        for tag_name, print_name in self.tags_printed_for_every_song.items():
+        for tag_name, print_name in constants.tags_printed_for_every_song.items():
             self.print_metadata_key(print_name, tag_name, style, metadata)
         print("")
 
@@ -257,7 +256,7 @@ class MusicTags:
                 performer_block.append(self.performer_print_name(tag_name) + ": " + " | ".join(colored_values))
 
         main_block = []
-        for tag_name, print_name in self.tags_printed_for_every_song.items():
+        for tag_name, print_name in constants.tags_printed_for_every_song.items():
             colored_values = self.get_colored_values_from_all_sources(tag_name)
             if len(colored_values) > 0:
                 there_are_tags = True
@@ -293,7 +292,7 @@ class MusicTags:
         for tag_name in self.resolved.keys():
             if tag_name.startswith(constants.MUSICBRAINZ_ID_PREFIX):
                 continue
-            if tag_name not in self.tags_printed_for_every_song and not self.is_performer_tag(tag_name):
+            if tag_name not in constants.tags_printed_for_every_song and not self.is_performer_tag(tag_name):
                 other_tag_names.append(tag_name)
         if other_tag_names:
             print("  Other tags:")
@@ -320,7 +319,7 @@ class MusicTags:
             print("  Performers:")
             for tag_name in performer_tags:
                 self.print_resolved_tag(self.performer_print_name(tag_name), tag_name, print_all)
-        for tag_name, print_name in self.tags_printed_for_every_song.items():
+        for tag_name, print_name in constants.tags_printed_for_every_song.items():
             self.print_resolved_tag(print_name, tag_name, print_all)
 
         print("")
@@ -426,7 +425,7 @@ class MusicTags:
         """
         tags_in_resolved = []
         for tag_name, tag_values in self.resolved.items():
-            is_known_tag = tag_name in self.tags_printed_for_every_song or self.is_performer_tag(tag_name)
+            is_known_tag = tag_name in constants.tags_printed_for_every_song or self.is_performer_tag(tag_name)
             if is_known_tag and tag_values != REMOVED_TAG:
                 tags_in_resolved.append(tag_name)
 
