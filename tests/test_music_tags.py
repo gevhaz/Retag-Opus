@@ -19,22 +19,22 @@ class TestMusicTags(unittest.TestCase):
     """Test the MusicTags class."""
 
     @pytest.fixture(autouse=True)
-    def capsys(self, capsys) -> None:  # type: ignore
-        """Fixture for capturing system output."""
-        self.capsys = capsys  # type: ignore
+    def store_capsys(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Store pytest's capsys, since unittest test methods can't take fixtures."""
+        self.capsys = capsys
 
     def test_print_metadata_key(self) -> None:
         """Test printing of a single metadata key."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "title": ["title 1", "title 2"]}
         MusicTags().print_metadata_key("Artist", "artist", styles.original, tags)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual("  Artist: artist 1 | artist 2\n", captured.out)
 
     def test_print_metadata(self) -> None:
         """Test printing of metadata."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "title": ["title 1", "title 2"]}
         MusicTags().print_metadata(tags, styles.original)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Title: title 1 | title 2\n"
             "  Album: Not found\n"
@@ -62,7 +62,7 @@ class TestMusicTags(unittest.TestCase):
         """Test printing of metadata where there are performer tags."""
         tags: Tags = {"artist": ["artist 1", "artist 2"], "performer:lead vocals": ["bassist 1"]}
         MusicTags().print_metadata(tags, styles.original)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Performers:\n"
             "  - Lead vocals: bassist 1\n"
@@ -100,7 +100,7 @@ class TestMusicTags(unittest.TestCase):
             "performer:violin": ["person 3"],
         }
         MusicTags().print_metadata(tags, styles.original)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Performers:\n"
             "  - Violin: person 3\n"
@@ -185,7 +185,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
         tags.print_all()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "Title: Not set\n"
             "Album: Not set\n"
@@ -216,7 +216,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"performer:lead vocals": ["artist 4"]})
         tags.print_all()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "Performers:\n"
             "- Lead vocals: artist 4\n"
@@ -245,7 +245,7 @@ class TestMusicTags(unittest.TestCase):
         """Test printing the combined metadata of all sources."""
         tags = MusicTags()
         tags.print_all()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = "There's no data to be printed\n"
         self.assertEqual(expected, captured.out)
 
@@ -257,7 +257,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"performer:lead vocals": ["artist 4"]})
         tags.print_youtube()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Performers:\n"
             "  - Lead vocals: artist 5\n"
@@ -289,7 +289,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"performer:lead vocals": ["artist 4"]})
         tags.print_youtube()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = "No new data parsed from description\n"
         self.assertEqual(expected, captured.out)
 
@@ -299,7 +299,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "title": ["title 1"], "producer": ["someone"]})
         tags.resolved = {"artist": ["artist 1"], "title": ["title 2"], "producer": ["[Removed]"]}
         tags.print_resolved(print_all=False)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Title: title 2\n"
             "  Album: Not found\n"
@@ -339,7 +339,7 @@ class TestMusicTags(unittest.TestCase):
             "performer:keyboard": ["[Removed]"],
         }
         tags.print_resolved(print_all=False)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Performers:\n"
             "  - Lead vocals: artist 1\n"
@@ -377,7 +377,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(ORIGINAL, {"performer:vocals": ["artist 1"]})
         tags.resolved = {"performer:vocals": ["artist 1"], "performer:theremin": ["artist 2"]}
         tags.print_resolved(print_all=False)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertNotIn("Other tags", captured.out)
         expected = "  Performers:\n  - Theremin: artist 2\n  - Vocals: artist 1\n  Title: Not found\n"
         self.assertIn(expected, captured.out)
@@ -410,7 +410,7 @@ class TestMusicTags(unittest.TestCase):
             "performer:keyboard": ["[Removed]"],
         }
         tags.print_resolved(print_all=True)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Performers:\n"
             "  - Lead vocals: artist 1\n"
@@ -467,7 +467,7 @@ class TestMusicTags(unittest.TestCase):
             "performer:keyboard": ["[Removed]"],
         }
         tags.print_resolved(print_all=False)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Performers:\n"
             "  - Lead vocals: artist 1\n"
@@ -522,7 +522,7 @@ class TestMusicTags(unittest.TestCase):
             "producer": ["[Removed]"],
         }
         tags.print_resolved(print_all=True)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Title: title 2\n"
             "  Album: Not found\n"
@@ -573,7 +573,7 @@ class TestMusicTags(unittest.TestCase):
             "producer": ["[Removed]"],
         }
         tags.print_resolved(print_all=False)
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         expected = (
             "  Title: title 2\n"
             "  Album: Not found\n"
@@ -812,7 +812,7 @@ class TestMusicTags(unittest.TestCase):
         tags.resolved = {"artist": ["artist 1", "artist 2"]}
         tags.delete_tag_item()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual("Returning without removing anything\n", captured.out)
 
     @patch("retag_opus.utils.TerminalMenu.__init__")
@@ -847,7 +847,7 @@ class TestMusicTags(unittest.TestCase):
         tags.resolved = {"artist": ["artist 1", "artist 2"]}
         tags.delete_tag_item()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual("Returning without removing anything\n", captured.out)
 
     @patch("retag_opus.utils.TerminalMenu.__init__")
@@ -875,7 +875,7 @@ class TestMusicTags(unittest.TestCase):
         tags.delete_tag_item()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
         self.assertEqual(["[Removed]"], tags.resolved.get("title"))
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual("Returning without removing anything\n", captured.out)
 
     @patch("retag_opus.music_tags.input")
@@ -1034,7 +1034,7 @@ class TestMusicTags(unittest.TestCase):
         expected = "Going back to previous menu\n"
 
         repeat = tags.manually_adjust_tag_when_resolving("artist")
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
 
         self.assertTrue(repeat)
         self.assertEqual(expected, captured.out)
@@ -1042,7 +1042,7 @@ class TestMusicTags(unittest.TestCase):
         mock_show.return_value = (0, 1)  # Where a choice is returned from the menu
 
         repeat = tags.manually_adjust_tag_when_resolving("artist")
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
 
         self.assertTrue(repeat)
 
@@ -1058,7 +1058,7 @@ class TestMusicTags(unittest.TestCase):
         expected = "Going back to previous menu\n"
 
         repeat = tags.manually_adjust_tag_when_resolving("artist")
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
 
         self.assertTrue(repeat)
         self.assertEqual(expected, captured.out)
@@ -1093,7 +1093,7 @@ class TestMusicTags(unittest.TestCase):
         tags.resolved = {}
         mock_input.return_value = ""
         repeat = tags.manually_adjust_tag_when_resolving("artist")
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
 
         self.assertTrue(repeat)
         self.assertNotIn("artist", tags.resolved)
@@ -1178,7 +1178,7 @@ class TestMusicTags(unittest.TestCase):
 
         mock_show.side_effect = [0, None]  # Second menu
         repeat = tags.manually_adjust_tag_when_resolving("artist")
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
 
         self.assertTrue(repeat)
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
@@ -1197,7 +1197,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(YOUTUBE, {"artist": ["artist 1"]})
 
         tags.resolve_metadata()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
             "Artist: No value exists in metadata. Using YouTube description: ['artist 1'].\n",
@@ -1209,7 +1209,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 1"]})
 
         tags.resolve_metadata()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
             "Artist: No value exists in metadata. Using tags parsed from YouTube tags: ['artist 1'].\n",
@@ -1280,7 +1280,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "title": []})
 
         tags.resolve_metadata()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         print(tags.resolved)
         self.assertNotIn("artist", tags.resolved)  # No need to resolve
         self.assertEqual(["artist 1"], tags.values_from(ORIGINAL, "artist"))
@@ -1302,7 +1302,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(YOUTUBE, {"artist": ["artist 1 "]})
 
         tags.resolve_metadata()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
             "Artist: Metadata matches YouTube description.\n",
@@ -1315,7 +1315,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 1 "]})
 
         tags.resolve_metadata()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
             "Artist: Metadata matches tags parsed from YouTube tags.\n",
@@ -1328,7 +1328,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 1 "]})
 
         tags.resolve_metadata()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
             "Artist: Metadata matches tags parsed from original tags.\n",
@@ -1356,7 +1356,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 2"]})
 
         tags.resolve_metadata()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
@@ -1407,7 +1407,7 @@ class TestMusicTags(unittest.TestCase):
         tags_only_youtube.set_tags(YOUTUBE, {"artist": ["artist 2"]})
 
         tags_only_youtube.resolve_metadata()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
@@ -1442,7 +1442,7 @@ class TestMusicTags(unittest.TestCase):
         tags_only_parsed_from_youtube.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
 
         tags_only_parsed_from_youtube.resolve_metadata()
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
@@ -1498,7 +1498,7 @@ class TestMusicTags(unittest.TestCase):
         with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
             tags.resolve_metadata()
 
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
@@ -1533,7 +1533,7 @@ class TestMusicTags(unittest.TestCase):
         with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
             tags.resolve_metadata()
 
-        captured = self.capsys.readouterr()  # type: ignore
+        captured = self.capsys.readouterr()
         self.assertEqual(
             (
                 "-----------------------------------------------\n"
@@ -1908,9 +1908,9 @@ class TestMusicBrainzSource(unittest.TestCase):
     """Test MusicBrainz as a source of tags."""
 
     @pytest.fixture(autouse=True)
-    def capsys(self, capsys) -> None:  # type: ignore
-        """Fixture for capturing system output."""
-        self.capsys = capsys  # type: ignore
+    def store_capsys(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Store pytest's capsys, since unittest test methods can't take fixtures."""
+        self.capsys = capsys
 
     def test_get_colored_values_from_all_sources_includes_musicbrainz(self) -> None:
         """Test that MusicBrainz values are shown when they're new."""
@@ -1957,7 +1957,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go"]})
         tags.resolve_metadata()
         self.assertEqual(["Don't Go"], tags.resolved["title"])
-        out = self.capsys.readouterr().out  # type: ignore
+        out = self.capsys.readouterr().out
         self.assertEqual("Title: Metadata matches MusicBrainz.\n", out)
 
     @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
@@ -1976,7 +1976,7 @@ class TestMusicBrainzSource(unittest.TestCase):
 
         tags.resolve_metadata()
 
-        out = self.capsys.readouterr().out  # type: ignore
+        out = self.capsys.readouterr().out
         self.assertIn("MusicBrainz: Don’t Go\n", out)
         self.assertEqual(
             ["YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
@@ -2012,7 +2012,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(["new id"], tags.resolved["musicbrainz_trackid"])
         self.assertEqual(["album id"], tags.resolved["musicbrainz_albumid"])
         self.assertEqual(["12"], tags.resolved["totaltracks"])
-        out = self.capsys.readouterr().out  # type: ignore
+        out = self.capsys.readouterr().out
         self.assertEqual("Tracknumber: Metadata matches MusicBrainz.\n", out)
 
     def test_print_resolved_hides_musicbrainz_ids(self) -> None:
@@ -2020,7 +2020,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags = MusicTags()
         tags.resolved = {"musicbrainz_trackid": ["id"], "tracknumber": ["2"]}
         tags.print_resolved()
-        out = self.capsys.readouterr().out  # type: ignore
+        out = self.capsys.readouterr().out
         self.assertIn("tracknumber", out)
         self.assertNotIn("musicbrainz_trackid", out)
 
@@ -2098,9 +2098,9 @@ class TestMusicTagsColors(unittest.TestCase):
     """Test that tags are printed in the style that tells what they are."""
 
     @pytest.fixture(autouse=True)
-    def capsys(self, capsys) -> None:  # type: ignore
-        """Fixture for capturing system output."""
-        self.capsys = capsys  # type: ignore
+    def store_capsys(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Store pytest's capsys, since unittest test methods can't take fixtures."""
+        self.capsys = capsys
 
     def test_get_colored_values_from_all_sources_styles_sources(self) -> None:
         """Test that each source of a tag has its own style."""
@@ -2125,7 +2125,7 @@ class TestMusicTagsColors(unittest.TestCase):
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "title": ["title 1"], "producer": ["someone"]})
         tags.resolved = {"artist": ["artist 1"], "title": ["title 2"], "producer": ["[Removed]"]}
         tags.print_resolved(print_all=False)
-        lines = self.capsys.readouterr().out.split("\n")  # type: ignore
+        lines = self.capsys.readouterr().out.split("\n")
         self.assertIn("  Title: " + styles.changed("title 2"), lines)
         self.assertIn("  Artist(s): " + styles.original("artist 1"), lines)
         self.assertIn("  Producer (Removed): " + styles.removed("someone"), lines)
@@ -2136,6 +2136,6 @@ class TestMusicTagsColors(unittest.TestCase):
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
         tags.print_all()
-        lines = self.capsys.readouterr().out.split("\n")  # type: ignore
+        lines = self.capsys.readouterr().out.split("\n")
         self.assertIn("Artist(s): " + styles.original("artist 1"), lines)
         self.assertIn("Title: " + styles.unset("Not set"), lines)
