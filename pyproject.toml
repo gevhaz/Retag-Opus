@@ -46,7 +46,7 @@ shtab = "^1.5.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^26.10.1"
-isort = {version = "^5.10.1", extras = ["colors"]}
+isort = {version = "^9.0.2", extras = ["colors"]}
 mypy = "^1.6.0"
 flake8 = "^7.1"
 flake8-docstrings = "^1.6.0"
