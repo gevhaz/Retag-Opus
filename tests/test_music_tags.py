@@ -4,10 +4,9 @@ import os
 import sys
 import unittest
 from copy import deepcopy
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-from mock import patch
 
 from retag_opus import styles
 from retag_opus.exceptions import UserExitException
