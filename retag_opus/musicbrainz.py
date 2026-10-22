@@ -7,6 +7,7 @@ for them. A search result is only used without asking when its title
 is in what was searched for and its length is the song's, and, when
 searching by words, one of its artists is in them too.
 """
+
 import re
 from pathlib import Path
 from typing import Final

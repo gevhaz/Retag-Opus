@@ -3,6 +3,7 @@
 This module holds variables that should be constant and can be accessed
 in other parts of the app.
 """
+
 from typing import Final
 
 # PRINTED_SPACE = "\u00b7"

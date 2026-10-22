@@ -1,4 +1,5 @@
 """Tests for musicbrainz_client.py."""
+
 import io
 import json
 import urllib.error

@@ -1,4 +1,5 @@
 """Tests for app.py and cli.py."""
+
 import re
 import subprocess
 from pathlib import Path

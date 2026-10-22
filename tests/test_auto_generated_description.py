@@ -1,4 +1,5 @@
 """Tests for auto_generated_description.py."""
+
 from retag_opus import auto_generated_description
 
 AUTO_GENERATED_LINES = [

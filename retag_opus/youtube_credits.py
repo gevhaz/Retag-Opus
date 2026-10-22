@@ -12,6 +12,7 @@ either names from the DDEX standard, like "Associated Performer", or
 anything the label wrote itself, like "Drums". So there's no complete
 list of roles, but the lines always have the same form.
 """
+
 from typing import Final
 
 from retag_opus import constants

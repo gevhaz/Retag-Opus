@@ -1,4 +1,5 @@
 """Module for parsing command line arguments."""
+
 import argparse
 from argparse import Namespace
 from typing import Sequence

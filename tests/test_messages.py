@@ -1,4 +1,5 @@
 """Tests for messages.py."""
+
 from typing import Callable
 
 import pytest

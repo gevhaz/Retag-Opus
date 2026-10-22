@@ -1,4 +1,5 @@
 """Tests for tags_parser.py."""
+
 import unittest
 
 import pytest

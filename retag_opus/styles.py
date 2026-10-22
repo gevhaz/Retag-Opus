@@ -5,6 +5,7 @@ the color after it. Whether to use color is decided every time a style
 is applied: there is no color when NO_COLOR is set, or when stdout is
 not a terminal unless FORCE_COLOR is set.
 """
+
 import os
 import sys
 from typing import Callable

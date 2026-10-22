@@ -1,4 +1,5 @@
 """Tests for youtube_credits.py."""
+
 import pytest
 
 from retag_opus import youtube_credits
