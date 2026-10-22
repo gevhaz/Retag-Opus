@@ -7,9 +7,10 @@ from tempfile import TemporaryDirectory
 from unittest.mock import Mock
 
 import pytest
+import simple_term_menu
 from mutagen import oggopus
 
-from retag_opus import app, utils
+from retag_opus import app
 from retag_opus.music_tags import YOUTUBE
 
 metadata = [
@@ -156,8 +157,8 @@ def test_file_without_description_has_existing_tags_parsed(capsys, music_directo
     mock_show.side_effect = [0, 0]
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: [("title", ["Song (Live)"])])
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
 
     exit_code = app.run(["--directory", music_directory])
 
@@ -199,8 +200,8 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata_no_title)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
 
     exit_code = app.run(["--directory", music_directory])
 
@@ -258,8 +259,8 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
     """
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", lambda _: (x for x in [0, 1]))
 
     exit_code = app.run(["--directory", music_directory])
 
@@ -312,12 +313,12 @@ def test_setting_grouping(capsys, music_directory, monkeypatch):
     mock_show = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 1, 1, 0]
+    mock_show.side_effect = [0, 1, 0]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
 
     exit_code = app.run(["--directory", music_directory, "--grouping", "My Mix"])
 
@@ -333,12 +334,12 @@ def test_pass(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, 0]
+    mock_show.side_effect = [0, 0, 0]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
     monkeypatch.setattr(oggopus.OggOpus, "save", mock_save)
 
     exit_code = app.run(["--directory", music_directory])
@@ -362,12 +363,12 @@ def test_quit_through_escape(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, None]
+    mock_show.side_effect = [0, 0, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
     monkeypatch.setattr(oggopus.OggOpus, "save", mock_save)
 
     exit_code = app.run(["--directory", music_directory])
@@ -394,12 +395,12 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     mock_save = Mock()
     # The last one is for the "Pass" selection. Earlier ones are for
     # selecting tags in the tag selection menu.
-    mock_show.side_effect = [0, 0, 0, 2, None]
+    mock_show.side_effect = [0, 0, 2, None]
 
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
     monkeypatch.setattr(oggopus.OggOpus, "save", mock_save)
 
     exit_code = app.run(["--directory", music_directory])
@@ -451,8 +452,8 @@ def test_saving(music_directory, monkeypatch, capsys):
     # Manually selected
     expected_metadata["title"] = ["Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"]  # Chose "youtube"
     expected_metadata["artist"] = ["The Global", "Ben Ivor"]  # Chose "youtube"
-    expected_metadata["albumartist"] = ["The Global"]  # Chose the first alternative
     # Automatically resolved
+    expected_metadata["albumartist"] = ["The Global"]  # First artist in the auto-generated description
     expected_metadata["comment"] = ["youtube-dl"]
     expected_metadata["date"] = ["2029-08-22"]
     expected_metadata["copyright"] = ["2022 The Global under exclusive license to 5BE Ltd"]
@@ -464,12 +465,11 @@ def test_saving(music_directory, monkeypatch, capsys):
     mock_show = Mock()
     # First: Choose youtube for 'artist'
     # Second: Choose youtube for 'title'
-    # Third: Select album artist "The Global"
-    # Fourth: Save file
-    mock_show.side_effect = [0, 0, 0, 1]
+    # Third: Save file
+    mock_show.side_effect = [0, 0, 1]
 
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
 
     # Create an opus file for testing saving
     test_opus_file_path = Path(music_directory) / "test.opus"
@@ -532,8 +532,8 @@ def test_deleting_tag(music_directory, monkeypatch, capsys):
     # Manually selected
     expected_metadata["title"] = ["Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"]  # Chose "youtube"
     expected_metadata["artist"] = ["The Global", "Ben Ivor"]  # Chose "youtube"
-    expected_metadata["albumartist"] = ["The Global"]  # Chose the first alternative
     # Automatically resolved
+    expected_metadata["albumartist"] = ["The Global"]  # First artist in the auto-generated description
     expected_metadata["comment"] = ["youtube-dl"]
     expected_metadata["date"] = ["2029-08-22"]
     expected_metadata["copyright"] = ["2022 The Global under exclusive license to 5BE Ltd"]
@@ -544,15 +544,14 @@ def test_deleting_tag(music_directory, monkeypatch, capsys):
     mock_show = Mock()
     # First: Choose youtube for 'artist'
     # Second: Choose youtube for 'title'
-    # Third: Select album artist "The Global"
-    # Fourth: delete tag
-    # Fifth: Select album
-    # Sixth: Delete the only tag
-    # Seventh: Save file
-    mock_show.side_effect = [0, 0, 0, 4, 0, 0, 1]
+    # Third: delete tag
+    # Fourth: Select album
+    # Fifth: Delete the only tag
+    # Sixth: Save file
+    mock_show.side_effect = [0, 0, 4, 0, 0, 1]
 
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
 
     # Create an opus file for testing saving
     test_opus_file_path = Path(music_directory) / "test.opus"
@@ -651,11 +650,11 @@ def test_grouping(monkeypatch):
     The songs are from different albums according to the descriptions,
     so each keeps its own album, date and genre.
     """
-    # Each song: Youtube artist, album artist "The Global", save
-    choices = [0, 0, 1, 0, 0, 1]
+    # Each song: Youtube artist, save
+    choices = [0, 1, 0, 1]
     mock_show = Mock(side_effect=choices)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
 
     with TemporaryDirectory() as temp_dir:
         first = Path(temp_dir) / "first.opus"
@@ -690,23 +689,17 @@ def test_grouping(monkeypatch):
 def test_saving_album(monkeypatch, capsys, individual):
     """Album level tags saved for one song should be used for the rest.
 
-    For the second song on the same album, album artist is not asked
-    for, and the date and genre from the first song are used, unless
-    the user asked to handle each song individually.
+    For the second song on the same album, the date and genre from the
+    first song are used, unless the user asked to handle each song
+    individually.
     """
     mock_show = Mock()
-    if individual:
-        # First song: Youtube artist, album artist "The Global", save
-        # Second song: Youtube artist, album artist "Ben Ivor", save
-        choices = [0, 0, 1, 0, 1, 1]
-    else:
-        # First song: Youtube artist, album artist "The Global", save
-        # Second song: Youtube artist, save
-        choices = [0, 0, 1, 0, 1]
+    # Each song: Youtube artist, save
+    choices = [0, 1, 0, 1]
     mock_show.side_effect = choices
 
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
 
     with TemporaryDirectory() as temp_dir:
         first = Path(temp_dir) / "first.opus"
@@ -729,12 +722,11 @@ def test_saving_album(monkeypatch, capsys, individual):
     assert first_metadata["albumartist"] == ["The Global"]
     assert first_metadata["genre"] == ["Pop"]
     assert second_metadata["album"] == ["The Album"]
+    assert second_metadata["albumartist"] == ["The Global"]
     if individual:
-        assert second_metadata["albumartist"] == ["Ben Ivor"]
         assert second_metadata["genre"] == ["Rock"]
         assert second_metadata["date"] == ["2030-01-01"]
     else:
-        assert second_metadata["albumartist"] == ["The Global"]
         assert second_metadata["genre"] == ["Pop"]
         assert second_metadata["date"] == ["2029-08-22"]
         assert "Genre: Using value from earlier song on the same album" in capsys.readouterr().out
@@ -746,12 +738,12 @@ def test_saving_album_updates_earlier_songs(monkeypatch):
     Songs on the same album that were already passed should get the
     album level tags of a song saved later.
     """
-    # First song: Youtube artist, album artist "The Global", pass
-    # Second song: Youtube artist, album artist "Ben Ivor", save
-    choices = [0, 0, 0, 0, 1, 1]
+    # First song: Youtube artist, pass
+    # Second song: Youtube artist, save
+    choices = [0, 0, 0, 1]
     mock_show = Mock(side_effect=choices)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
-    monkeypatch.setattr(utils.TerminalMenu, "show", mock_show)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", mock_show)
 
     with TemporaryDirectory() as temp_dir:
         first = Path(temp_dir) / "first.opus"
@@ -770,7 +762,7 @@ def test_saving_album_updates_earlier_songs(monkeypatch):
     assert exit_code == 0
     assert mock_show.call_count == len(choices)
     assert first_metadata["album"] == ["The Album"]
-    assert first_metadata["albumartist"] == ["Ben Ivor"]
+    assert first_metadata["albumartist"] == ["The Global"]
     assert first_metadata["genre"] == ["Rock"]
     assert first_metadata["date"] == ["2030-01-01"]
     # Tags that aren't album level tags are not saved for passed songs
@@ -790,9 +782,9 @@ def test_musicbrainz_lookup(capsys, music_directory, monkeypatch, argv, config, 
     """Look up songs on MusicBrainz only when enabled, once per song."""
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)
     monkeypatch.setattr(oggopus.OggOpus, "items", lambda *_: metadata)
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
     # Resolve artist, reset, resolve artist again, quit
-    monkeypatch.setattr(utils.TerminalMenu, "show", Mock(side_effect=[0, 2, 0, None]))
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", Mock(side_effect=[0, 2, 0, None]))
     config_dir = Path(music_directory) / "config"
     config_dir.mkdir()
     (config_dir / "retag.toml").write_text(config)
@@ -841,7 +833,7 @@ def test_match_albums():
 def test_musicbrainz_without_visible_changes(monkeypatch, capsys, found, expected_output, expected_trackid):
     """Don't ask about saving when nothing the user can check changes."""
     menu = Mock()
-    monkeypatch.setattr(utils.TerminalMenu, "__init__", menu)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", menu)
     matcher = Mock()
     matcher.match_song.return_value = found
     monkeypatch.setattr(app, "MusicBrainzMatcher", lambda: matcher)

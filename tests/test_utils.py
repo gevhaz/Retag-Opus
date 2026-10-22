@@ -2,8 +2,6 @@
 
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
 
 from retag_opus import utils
 
@@ -244,42 +242,6 @@ class TestUtils(unittest.TestCase):
         song = Path("test/<artist> - <title>.mp3")
 
         self.assertEqual("test/<artist> - <title>.mp3", utils.file_path_to_song_name(song))
-
-    @patch("retag_opus.utils.TerminalMenu")
-    def test_select_single_tag(self, mock_menu: MagicMock) -> None:
-        """Test that a candidate from a list can be selected."""
-        candidates = ["candidate 1", "candidate 2", "candidate 3"]
-        menu = SimpleNamespace(show=(lambda: 1))  # second option
-        mock_menu.return_value = menu
-        actual_outcome = utils.select_single_value(candidates)
-        self.assertListEqual(["candidate 2"], actual_outcome)
-
-    @patch("retag_opus.utils.TerminalMenu")
-    def test_select_single_tag_no_choice(self, mock_menu: MagicMock) -> None:
-        """Test that selection of no choice results in empty list."""
-        candidates = ["candidate 1", "candidate 2", "candidate 3"]
-        menu = SimpleNamespace(show=(lambda: None))  # no option selected
-        mock_menu.return_value = menu
-        actual_outcome = utils.select_single_value(candidates)
-        self.assertEqual(0, len(actual_outcome))
-
-    @patch("retag_opus.utils.TerminalMenu")
-    def test_select_single_tag_multiple_choices(self, mock_menu: MagicMock) -> None:
-        """Test that multiple selection is not allowed."""
-        candidates = ["candidate 1", "candidate 2", "candidate 3"]
-        menu = SimpleNamespace(show=(lambda: [1, 2]))  # second and third option
-        mock_menu.return_value = menu
-        actual_outcome = utils.select_single_value(candidates)
-        self.assertEqual(0, len(actual_outcome))
-
-    @patch("retag_opus.utils.TerminalMenu")
-    def test_select_single_tag_no_change(self, mock_menu: MagicMock) -> None:
-        """Test that it's possible to use the 'no choice' option."""
-        candidates = ["candidate 1", "candidate 2", "candidate 3"]
-        menu = SimpleNamespace(show=(lambda: 3))  # "no choice" option
-        mock_menu.return_value = menu
-        actual_outcome = utils.select_single_value(candidates)
-        self.assertEqual(0, len(actual_outcome))
 
     def test_equal_when_stripped(self) -> None:
         """Test that lists with different whitespace/order are equal."""

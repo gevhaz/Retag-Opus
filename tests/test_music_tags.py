@@ -669,19 +669,6 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(2, len(tags.resolved))
         self.assertEqual(["test", "youtube-dl"], tags.resolved.get("comment"))
 
-    def test_get_values_from_all_sources_only_new(self) -> None:
-        """Test getting data from all new sources for a given tag."""
-        tags = MusicTags()
-        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
-        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
-        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
-        actual_tags = tags.get_values_from_all_sources("artist", only_new=True)
-        self.assertEqual(2, len(actual_tags))
-        self.assertNotIn("artist 1", actual_tags)
-        self.assertIn("artist 2", actual_tags)
-        self.assertIn("artist 3", actual_tags)
-
     def test_get_values_from_all_sources_include_original(self) -> None:
         """Test getting data from all sources for a given tag."""
         tags = MusicTags()
@@ -689,7 +676,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
-        actual_tags = tags.get_values_from_all_sources("artist", only_new=False)
+        actual_tags = tags.get_values_from_all_sources("artist")
         self.assertEqual(3, len(actual_tags))
         self.assertIn("artist 1", actual_tags)
         self.assertIn("artist 2", actual_tags)
@@ -702,7 +689,7 @@ class TestMusicTags(unittest.TestCase):
         tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
-        actual_tags = tags.get_values_from_all_sources("title", only_new=False)
+        actual_tags = tags.get_values_from_all_sources("title")
         self.assertEqual(0, len(actual_tags))
         self.assertNotIn("artist 1", actual_tags)
         self.assertNotIn("artist 2", actual_tags)
@@ -753,8 +740,8 @@ class TestMusicTags(unittest.TestCase):
         tags.resolved = {"artist": ["artist 2"]}
         self.assertTrue(tags.check_any_new_data_exists())
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_delete_tag_item(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test deleting one value from a tag list."""
         mock_show.side_effect = [0, 1]  # Where a choice is returned from the menu
@@ -765,8 +752,8 @@ class TestMusicTags(unittest.TestCase):
         tags.delete_tag_item()
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_delete_tag_item_performer(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test deleting one value from a tag list."""
         mock_show.side_effect = [1, 1]  # Where a choice is returned from the menu
@@ -777,8 +764,8 @@ class TestMusicTags(unittest.TestCase):
         tags.delete_tag_item()
         self.assertEqual(["artist 1"], tags.resolved.get("performer:lead vocals"))
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_delete_tag_item_unknown_tag(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test deleting one value from a tag list."""
         mock_show.side_effect = [0, 0]  # Where a choice is returned from the menu
@@ -789,8 +776,8 @@ class TestMusicTags(unittest.TestCase):
         tags.delete_tag_item()
         self.assertEqual(["artist 1"], tags.resolved.get("unknown_key"))
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_delete_tag_item_two_items(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test deleting two values from a tag list."""
         mock_show.side_effect = [0, [1, 2]]  # Where a choice is returned from the menu
@@ -801,8 +788,8 @@ class TestMusicTags(unittest.TestCase):
         tags.delete_tag_item()
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_delete_tag_item_zero_items(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test deleting zero values from a tag list."""
         mock_show.side_effect = [0, None]  # Where a choice is returned from the menu
@@ -815,8 +802,8 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()
         self.assertEqual("Returning without removing anything\n", captured.out)
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_delete_tag_item_all_items(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test deleting all values from a tag list.
 
@@ -831,8 +818,8 @@ class TestMusicTags(unittest.TestCase):
         tags.delete_tag_item()
         self.assertEqual(tags.resolved["artist"], ["[Removed]"])
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_delete_tag_item_quit(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test quitting witout deleting tag.
 
@@ -850,8 +837,8 @@ class TestMusicTags(unittest.TestCase):
         captured = self.capsys.readouterr()
         self.assertEqual("Returning without removing anything\n", captured.out)
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_delete_tag_item_hide_already_removed(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test that a deleted tag isn't suggested for deletion.
 
@@ -918,106 +905,8 @@ class TestMusicTags(unittest.TestCase):
         tags.modify_resolved_field()
         self.assertEqual(["artist 1", "artist 2"], tags.resolved.get("artist"))
 
-    @patch("retag_opus.utils.select_single_value")
-    def test_determine_album_artist_select_one(self, select_single_value: MagicMock) -> None:
-        """Test that album artist can be picked up normally."""
-        expected_artist = ["artist 4"]
-        select_single_value.return_value = expected_artist
-        tags = MusicTags()
-
-        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
-        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
-        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
-        tags.determine_album_artist()
-        self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
-
-    @patch("retag_opus.utils.select_single_value")
-    def test_determine_album_artist_select_two(self, select_single_value: MagicMock) -> None:
-        """Test that two album artists can be selected."""
-        expected_artist = ["artist 2", "artist 4"]
-        select_single_value.return_value = expected_artist
-        tags = MusicTags()
-
-        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
-        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
-        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
-        tags.determine_album_artist()
-        self.assertEqual(expected_artist, tags.resolved.get("albumartist"))
-
-    @patch("retag_opus.utils.select_single_value")
-    def test_determine_album_artist_select_zero(self, select_single_value: MagicMock) -> None:
-        """Test that no tag is added when nothing is selected."""
-        select_single_value.return_value = []
-        tags = MusicTags()
-
-        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
-        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
-        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
-        tags.determine_album_artist()
-        self.assertNotIn("albumartist", tags.resolved)
-
-    @patch("retag_opus.utils.select_single_value")
-    def test_determine_album_artist_unsplit_is_candidate(self, select_single_value: MagicMock) -> None:
-        """Test that the unsplit album artist is offered with split artists."""
-        select_single_value.return_value = ["artist 1 & artist 2"]
-        tags = MusicTags()
-
-        tags.set_tags(YOUTUBE, {"artist": ["artist 1", "artist 2"], "albumartist": ["artist 1 & artist 2"]})
-        tags.determine_album_artist()
-        select_single_value.assert_called_once_with(["artist 1 & artist 2", "artist 1", "artist 2"])
-        self.assertEqual(["artist 1 & artist 2"], tags.resolved.get("albumartist"))
-
-    def test_determine_album_artist_only_old_exist(self) -> None:
-        """Test that two album artists can be selected.
-
-        When only the original tags have an artist, use that one as
-        albumartist without asking.
-        """
-        tags = MusicTags()
-
-        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.determine_album_artist()
-        self.assertEqual(["artist 1"], tags.resolved.get("albumartist"))
-
-    def test_determine_album_artist_old_and_resolved_exist(self) -> None:
-        """Test that resolved artist is preferred.
-
-        When resolved artist is found, that should be used.
-        """
-        tags = MusicTags()
-
-        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.resolved = {"artist": ["artist 2"]}
-        tags.determine_album_artist()
-        self.assertEqual(["artist 2"], tags.resolved.get("albumartist"))
-
-    def test_determine_album_artist_no_artist_or_albumartist(self) -> None:
-        """Test nothing is added when nothing to choose from."""
-        tags = MusicTags()
-
-        tags.determine_album_artist()
-        self.assertNotIn("albumartist", tags.resolved)
-
-    def test_determine_album_artist_one_exists(self) -> None:
-        """Test that no change is made when album artist is good.
-
-        When there is only one artist in all sources, and there already
-        is an albumartist in the original tags, there is no need to make
-        any changes to the album artist because there is only one to
-        choose from.
-        """
-        tags = MusicTags()
-
-        tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(ORIGINAL, {"albumartist": ["artist 2"]})
-        tags.determine_album_artist()
-        self.assertEqual(None, tags.resolved.get("albumartist"))
-
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_manually_adjust_tag_when_resolving_no_choice(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test no choice or multiple choice not allowed.
 
@@ -1046,8 +935,8 @@ class TestMusicTags(unittest.TestCase):
 
         self.assertTrue(repeat)
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_manually_adjust_tag_when_resolving_go_back(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test going back to previous menu."""
         tags = MusicTags()
@@ -1063,8 +952,8 @@ class TestMusicTags(unittest.TestCase):
         self.assertTrue(repeat)
         self.assertEqual(expected, captured.out)
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     @patch("builtins.input")
     def test_manually_adjust_tag_when_resolving_manual(
         self,
@@ -1099,8 +988,8 @@ class TestMusicTags(unittest.TestCase):
         self.assertNotIn("artist", tags.resolved)
         self.assertEqual("No input, not changing tag\n", captured.out)
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     @patch("retag_opus.music_tags.MusicTags.print_youtube")
     def test_manually_adjust_tag_when_resolving_print_description_data(
         self,
@@ -1119,8 +1008,8 @@ class TestMusicTags(unittest.TestCase):
         self.assertTrue(repeat)
         mock_print_youtube.assert_called_once()
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_manually_adjust_tag_when_resolving_remove_tag(
         self,
         mock_show: MagicMock,
@@ -1138,8 +1027,8 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(["[Removed]"], tags.resolved.get("artist"))
         self.assertEqual(["artist 1", "artist 2"], tags.values_from(ORIGINAL, "artist"))
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_manually_adjust_tag_when_resolving_select(
         self,
         mock_show: MagicMock,
@@ -1234,7 +1123,7 @@ class TestMusicTags(unittest.TestCase):
 
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 1"]})
         tags.resolve_metadata()
-        self.assertEqual({"artist": ["artist 1"], "albumartist": ["artist 1"]}, tags.resolved)
+        self.assertEqual({"artist": ["artist 1"]}, tags.resolved)
 
     def test_resolve_metadata_keeps_pruned_tag_removed(self) -> None:
         """Test that a pruned tag isn't restored by a matching source.
@@ -1250,8 +1139,8 @@ class TestMusicTags(unittest.TestCase):
         tags.resolve_metadata()
         self.assertEqual({"artist": ["[Removed]"], "albumartist": ["[Removed]"]}, tags.resolved)
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_replaces_pruned_tag_with_new_value(
         self, mock_show: MagicMock, mock_init: MagicMock
     ) -> None:
@@ -1286,16 +1175,13 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(["artist 1"], tags.values_from(ORIGINAL, "artist"))
         self.assertEqual(captured, ("", ""))
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    def test_resolve_metadata_equal_when_stripped(self, mock_album_artist: MagicMock) -> None:
+    def test_resolve_metadata_equal_when_stripped(self) -> None:
         """Test that new metadata autoresolves when equal when stripped.
 
         If a new source differs from the original only in that one of
         them has some extra whitespace, remove the whitespace and use
         that value.
         """
-        mock_album_artist.return_value = None
-
         # Youtube
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
@@ -1335,17 +1221,10 @@ class TestMusicTags(unittest.TestCase):
             captured.out,
         )
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
-    def test_resolve_metadata_print_all_sources(
-        self,
-        mock_show: MagicMock,
-        mock_menu: MagicMock,
-        mock_album_artist: MagicMock,
-    ) -> None:
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_print_all_sources(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test printing available new metadata."""
-        mock_album_artist.return_value = None
         mock_show.return_value = 0  # Where a choice is returned from the menu
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
@@ -1387,17 +1266,12 @@ class TestMusicTags(unittest.TestCase):
             captured.out,
         )
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_do_not_print_lines_for_empty_source(
-        self,
-        mock_show: MagicMock,
-        mock_menu: MagicMock,
-        mock_album_artist: MagicMock,
+        self, mock_show: MagicMock, mock_menu: MagicMock
     ) -> None:
         """Test that empty sources don't get printed."""
-        mock_album_artist.return_value = None
         mock_show.return_value = 0  # Where a choice is returned from the menu
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
@@ -1471,21 +1345,14 @@ class TestMusicTags(unittest.TestCase):
             captured.out,
         )
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
-    def test_resolve_metadata_skip_song(
-        self,
-        mock_show: MagicMock,
-        mock_menu: MagicMock,
-        mock_album_artist: MagicMock,
-    ) -> None:
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_skip_song(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test skipping a song when resolving metadata.
 
         There are two ways. Either pressing escape, which returns None
         from the menu, or selecting 'Quit'
         """
-        mock_album_artist.return_value = None
         mock_show.return_value = None  # Where a choice is returned from the menu
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
@@ -1565,18 +1432,12 @@ class TestMusicTags(unittest.TestCase):
         )
 
     @patch("retag_opus.music_tags.MusicTags.manually_adjust_tag_when_resolving")
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_other_action(
-        self,
-        mock_show: MagicMock,
-        mock_menu: MagicMock,
-        mock_album_artist: MagicMock,
-        mock_manual_adjust: MagicMock,
+        self, mock_show: MagicMock, mock_menu: MagicMock, mock_manual_adjust: MagicMock
     ) -> None:
         """Test the "other action" function is called when requested."""
-        mock_album_artist.return_value = None
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
         mock_show.return_value = 4  # Where a choice is returned from the menu
 
@@ -1593,17 +1454,10 @@ class TestMusicTags(unittest.TestCase):
 
         mock_manual_adjust.assert_called_once()
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
-    def test_resolve_metadata_choosing_source(
-        self,
-        mock_show: MagicMock,
-        mock_menu: MagicMock,
-        mock_album_artist: MagicMock,
-    ) -> None:
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_choosing_source(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test choosing the source to use when resolving."""
-        mock_album_artist.return_value = None
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
 
         tags_youtube = MusicTags()
@@ -1646,35 +1500,68 @@ class TestMusicTags(unittest.TestCase):
         tags_fromdesc.resolve_metadata()
         self.assertEqual(["artist 3"], tags_fromdesc.resolved.get("artist"))
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
-    def test_resolve_metadata_choosing_source_and_album_artist(
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_keeps_album_artist_a_source_agrees_with(
         self,
         mock_show: MagicMock,
         mock_menu: MagicMock,
     ) -> None:
-        """Test that choosing an artist and then album artist works.
+        """Test that a song with several artists isn't asked about its album artist.
 
-        The album artist should be one of the values for the artist tags
-        of the available sources. Test That those show up as
-        alternatives when selecting the album artist, and that both tags
-        are correct in the end.
+        The album artist is resolved like other tags, so the existing
+        one is kept when a source has the same, however many artists
+        the song has.
         """
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
-        mock_show.side_effect = [0, 0]  # Youtube artist in both cases
 
         tags = MusicTags()
-        tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
-        tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
+        tags.set_tags(ORIGINAL, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]})
+        tags.set_tags(YOUTUBE, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]})
 
         tags.resolve_metadata()
 
-        self.assertEqual(["artist 2"], tags.resolved.get("artist"))
-        self.assertEqual(["artist 2"], tags.resolved.get("albumartist"))
+        mock_show.assert_not_called()
+        self.assertEqual(["Singer"], tags.resolved.get("albumartist"))
 
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    def test_resolve_metadata_fills_album_artist(self) -> None:
+        """Test that a song without an album artist gets the one a source has."""
+        tags = MusicTags()
+        tags.set_tags(ORIGINAL, {"artist": ["Singer", "Other Singer"]})
+        tags.set_tags(YOUTUBE, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]})
+
+        tags.resolve_metadata()
+
+        self.assertEqual(["Singer"], tags.resolved.get("albumartist"))
+
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_asks_about_album_artist_no_source_agrees_with(
+        self,
+        mock_show: MagicMock,
+        mock_menu: MagicMock,
+    ) -> None:
+        """Test that the user chooses the album artist when no source has the existing one.
+
+        E.g. the existing album artist has two values, which earlier
+        versions could set, and the choices are the album artists of
+        the sources, one value each.
+        """
+        mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
+        mock_show.return_value = 0  # YouTube description
+
+        tags = MusicTags()
+        tags.set_tags(ORIGINAL, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer", "Other Singer"]})
+        tags.set_tags(YOUTUBE, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]})
+        tags.set_tags(MUSICBRAINZ, {"albumartist": ["Singer & Other Singer"]})
+
+        tags.resolve_metadata()
+
+        mock_show.assert_called_once()
+        self.assertEqual(["Singer"], tags.resolved.get("albumartist"))
+
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_album_tags(
         self,
         mock_show: MagicMock,
@@ -1726,8 +1613,8 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual({"album": ["album 1"], "albumartist": ["artist 1"]}, tags.get_album_level_tags())
 
     @patch("retag_opus.music_tags.MusicTags.manually_adjust_tag_when_resolving")
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_looping(
         self,
         mock_show: MagicMock,
@@ -1929,7 +1816,6 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
         tags.set_tags(MUSICBRAINZ, {"artist": ["artist 2"]})
         self.assertEqual(["artist 2", "artist 1"], tags.get_values_from_all_sources("artist"))
-        self.assertEqual(["artist 2"], tags.get_values_from_all_sources("artist", only_new=True))
 
     def test_check_any_new_data_exists_in_musicbrainz(self) -> None:
         """Test that tags only MusicBrainz has are new data."""
@@ -1940,8 +1826,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.tags_from(MUSICBRAINZ)["musicbrainz_trackid"] = ["id 1"]
         self.assertTrue(tags.check_any_new_data_exists())
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    def test_resolve_metadata_uses_musicbrainz_last(self, _: MagicMock) -> None:
+    def test_resolve_metadata_uses_musicbrainz_last(self) -> None:
         """Test that MusicBrainz fills tags no other source has."""
         tags = MusicTags()
         tags.set_tags(YOUTUBE, {"title": ["title 1"]})
@@ -1949,8 +1834,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.resolve_metadata()
         self.assertEqual({"title": ["title 1"], "tracknumber": ["3"]}, tags.resolved)
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    def test_resolve_metadata_matches_musicbrainz_regardless_of_typography(self, _: MagicMock) -> None:
+    def test_resolve_metadata_matches_musicbrainz_regardless_of_typography(self) -> None:
         """Test that MusicBrainz typography doesn't cause a conflict."""
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"title": ["Don't Go"]})
@@ -1960,11 +1844,10 @@ class TestMusicBrainzSource(unittest.TestCase):
         out = self.capsys.readouterr().out
         self.assertEqual("Title: Metadata matches MusicBrainz.\n", out)
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_starts_on_value_musicbrainz_agrees_with(
-        self, mock_show: MagicMock, mock_menu: MagicMock, _: MagicMock
+        self, mock_show: MagicMock, mock_menu: MagicMock
     ) -> None:
         """Test that MusicBrainz is an option and hints at the right one."""
         mock_show.return_value = 1  # MusicBrainz
@@ -1994,8 +1877,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.resolve_metadata()
         self.assertEqual("MusicBrainz", mock_menu.call_args.args[0][mock_menu.call_args.kwargs["cursor_index"]])
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    def test_resolve_metadata_sets_musicbrainz_ids_and_numbers_quietly(self, _: MagicMock) -> None:
+    def test_resolve_metadata_sets_musicbrainz_ids_and_numbers_quietly(self) -> None:
         """Test that tags that depend on the match are set without messages."""
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"musicbrainz_trackid": ["old id"], "tracknumber": ["2"]})
@@ -2024,12 +1906,9 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertIn("tracknumber", out)
         self.assertNotIn("musicbrainz_trackid", out)
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
-    def test_resolve_metadata_asks_about_other_release(
-        self, mock_show: MagicMock, mock_menu: MagicMock, _: MagicMock
-    ) -> None:
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_asks_about_other_release(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test that the user chooses the album if MusicBrainz found another release."""
         mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
@@ -2053,12 +1932,9 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.resolve_metadata()
         self.assertEqual(["Album"], tags.resolved["album"])
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    @patch("retag_opus.utils.TerminalMenu.__init__")
-    @patch("retag_opus.utils.TerminalMenu.show")
-    def test_resolve_metadata_keeps_release_tags_consistent(
-        self, mock_show: MagicMock, mock_menu: MagicMock, _: MagicMock
-    ) -> None:
+    @patch("simple_term_menu.TerminalMenu.__init__")
+    @patch("simple_term_menu.TerminalMenu.show")
+    def test_resolve_metadata_keeps_release_tags_consistent(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
         """Test that release tags aren't used if the album is another release."""
         mock_show.return_value = 2  # Existing metadata
         mock_menu.return_value = None
@@ -2083,8 +1959,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertNotIn("musicbrainz_albumid", tags.resolved)
         self.assertEqual(["track id"], tags.resolved["musicbrainz_trackid"])
 
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    def test_resolve_metadata_keeps_release_tags_of_same_album(self, _: MagicMock) -> None:
+    def test_resolve_metadata_keeps_release_tags_of_same_album(self) -> None:
         """Test that release tags are kept if the album is the release, e.g. remastered."""
         tags = MusicTags()
         tags.set_tags(YOUTUBE, {"album": ["Album (2011 Remaster)"]})

@@ -5,9 +5,7 @@ import unicodedata
 from pathlib import Path
 from typing import List
 
-from simple_term_menu import TerminalMenu
-
-from retag_opus import constants, messages
+from retag_opus import constants
 
 
 def remove_duplicates(values: list[str]) -> list[str]:
@@ -185,29 +183,6 @@ def file_path_to_song_name(file_path: Path) -> str:
         elif title_only_match:
             text_to_print = title_only_match.group(1)
     return text_to_print
-
-
-def select_single_value(candidates: list[str]) -> list[str]:
-    """Select a single value to keep for a tag from a menu.
-
-    Lets the user select one of the candidate values and returns
-    a list with that as the only item. The user can also choose to
-    skip with q, escape, or choosing the --No change-- item.
-
-    :param candidates: The values to choose between.
-
-    :return: A list with the selected candidate or an empty list if
-    none is selected.
-    """
-    candidates.append("--No change--")
-    choose_one_tag_menu = TerminalMenu(candidates, title="Choose one tag to use")
-    choice = choose_one_tag_menu.show()
-    if choice is None:
-        messages.warning("No tag selected")
-    elif isinstance(choice, int) and choice != len(candidates) - 1:
-        messages.info(f"Using {candidates[choice]} as tag for this song")
-        return [candidates[choice]]
-    return []
 
 
 def is_equal_when_stripped(values_1: list[str], values_2: list[str]) -> bool:

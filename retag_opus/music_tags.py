@@ -392,18 +392,15 @@ class MusicTags:
         if is_from_youtube and "youtube-dl" not in original_comment:
             self.resolved["comment"] = original_comment + ["youtube-dl"]
 
-    def get_values_from_all_sources(self, tag_name: str, only_new: bool = False) -> list[str]:
-        """Get the values of a tag from all sources.
+    def get_values_from_all_sources(self, tag_name: str) -> list[str]:
+        """Get the values of a tag from all sources, including the song's file.
 
         :param tag_name: Tag to get values for.
-        :param only_new: Whether to leave out the values in the original
-            music file.
         """
         values: list[str] = []
         for _, source_values in self.found_values(tag_name):
             values += source_values
-        if not only_new:
-            values += self.values_from(ORIGINAL, tag_name)
+        values += self.values_from(ORIGINAL, tag_name)
         return utils.remove_duplicates(values)
 
     def modify_resolved_field(self) -> None:
@@ -574,27 +571,6 @@ class MusicTags:
         """Check whether the album is the release found on MusicBrainz."""
         return self.is_same_album(self.resolved.get("album", []), self.values_from(MUSICBRAINZ, "album"))
 
-    def determine_album_artist(self) -> None:
-        """Choose value to use for albumartist tag."""
-        album_artist_candidates = utils.remove_duplicates(
-            self.get_values_from_all_sources("albumartist", only_new=True) + self.get_values_from_all_sources("artist")
-        )
-        resolved_artist = self.resolved.get("artist")
-        original_artist = self.values_from(ORIGINAL, "artist")
-
-        if len(album_artist_candidates) > 1:
-            print("-----------------------------------------------")
-            self.print_resolved(print_all=True)
-            messages.info("Select the album artist:")
-            selected_album_artist = utils.select_single_value(album_artist_candidates)
-            if len(selected_album_artist) > 0:
-                self.resolved["albumartist"] = selected_album_artist
-        elif not self.values_from(ORIGINAL, "albumartist"):
-            if resolved_artist:
-                self.resolved["albumartist"] = resolved_artist
-            elif original_artist:
-                self.resolved["albumartist"] = original_artist
-
     def manually_adjust_tag_when_resolving(self, tag_name: str) -> bool:
         """Perform a manual action on a tag when no source is right.
 
@@ -685,8 +661,6 @@ class MusicTags:
             )
 
         for tag_name in self.tags_with_new_data():
-            if tag_name == "albumartist":
-                continue  # Handled by determine_album_artist
             if tag_name in self.album_level_tags:
                 continue
             if tag_name in constants.release_tags and not self.album_is_musicbrainz_release():
@@ -726,9 +700,6 @@ class MusicTags:
                 self.ask_for_value(tag_name)
 
         self.keep_pruned_tags_removed(pruned_tags)
-        if "albumartist" not in self.album_level_tags:
-            self.determine_album_artist()
-            self.keep_pruned_tags_removed(pruned_tags)
 
     def ask_for_value(self, tag_name: str) -> None:
         """Let the user choose the value of a tag that the sources disagree on.

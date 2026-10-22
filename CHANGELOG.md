@@ -60,6 +60,10 @@
   terminal backgrounds.
 - Colors are turned off when the `NO_COLOR` environment variable is set, and
   can be forced on with `FORCE_COLOR`.
+- The album artist is resolved like other tags. An existing album artist is
+  kept when a source has the same, instead of being asked about for every song
+  with several artists, and the choices are the sources' album artists instead
+  of all artists. A missing album artist is no longer copied from the artists.
 
 ### Removed
 
