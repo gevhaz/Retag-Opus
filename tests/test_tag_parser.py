@@ -11,9 +11,9 @@ class TestTagsParser(unittest.TestCase):
     """Test the TagsParser class."""
 
     @pytest.fixture(autouse=True)
-    def capsys(self, capsys) -> None:  # type: ignore
-        """Fixture for capturing system output."""
-        self.capsys = capsys  # type: ignore
+    def store_capsys(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Store pytest's capsys, since unittest test methods can't take fixtures."""
+        self.capsys = capsys
 
     def test_clean_original_tags_no_change(self) -> None:
         """Test basic case of cleaning original tags.
