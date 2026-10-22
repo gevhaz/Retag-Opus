@@ -847,18 +847,18 @@ dev = ["black", "build", "mypy", "pytest", "pytest-cov", "setuptools", "tox", "t
 
 [[package]]
 name = "shtab"
-version = "1.6.5"
+version = "1.13.0"
 description = "Automagic shell tab completion for Python CLI applications"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "shtab-1.6.5-py3-none-any.whl", hash = "sha256:3c7be25ab65a324ed41e9c2964f2146236a5da6e6a247355cfea56f65050f220"},
-    {file = "shtab-1.6.5.tar.gz", hash = "sha256:cf4ab120183e84cce041abeb6f620f9560739741dfc31dd466315550c08be9ec"},
+    {file = "shtab-1.13.0-py3-none-any.whl", hash = "sha256:cdf7543fc1888dd131320917f3ba9643d8f1a77d406114a09d5a31f76274c7d9"},
+    {file = "shtab-1.13.0.tar.gz", hash = "sha256:0a5be9d7ab2b4549e9a38252abcd5ecf5ec6813ecd80c6b06fa851bff55a5085"},
 ]
 
 [package.extras]
-dev = ["pytest (>=6)", "pytest-cov", "pytest-timeout"]
+dev = ["click", "pytest (>=6)", "pytest-cov"]
 
 [[package]]
 name = "simple-term-menu"
