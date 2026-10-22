@@ -54,34 +54,46 @@ def parse_uploader_text(lines: list[str]) -> Tags:
     return tags
 
 
+def non_empty_lines(description: str) -> list[str]:
+    """Get the lines of a description that aren't empty or only whitespace."""
+    lines = []
+    for line in description.splitlines():
+        if line.strip():
+            lines.append(line)
+    return lines
+
+
+def is_auto_generated(description: str) -> bool:
+    """Check whether a YouTube description has a part that YouTube generated.
+
+    Such a part comes from the label's data, so it's more reliable than
+    text written by the uploader. It counts even if the uploader pasted
+    it among their own text, e.g. "Our new video!" before "Provided to
+    YouTube by Label".
+    """
+    return auto_generated_description.find(non_empty_lines(description)) is not None
+
+
 def parse(description: str) -> Tags:
     """Parse a YouTube description into tags.
 
-    Where both the auto-generated part and the uploader's text have a
-    tag, the value from the auto-generated part is used, since its
-    layout is known.
+    If the description has a part that YouTube generated, only that part
+    is read, by its layout, and any text the uploader wrote around it is
+    left out. Otherwise the whole description is read as the uploader's
+    text.
 
     :param description: The whole YouTube description.
 
     :return: The tags found in the description.
     """
-    lines = []
-    for line in description.splitlines():
-        if line.strip():
-            lines.append(line)
-
-    uploader_lines = lines
-    auto_generated_tags: Tags = {}
+    lines = non_empty_lines(description)
     auto_generated_part = auto_generated_description.find(lines)
     if auto_generated_part is not None:
         first_index, last_index = auto_generated_part
         index_after_last = last_index + 1
-        auto_generated_lines = lines[first_index:index_after_last]
-        auto_generated_tags = auto_generated_description.parse(auto_generated_lines)
-        uploader_lines = lines[:first_index] + lines[index_after_last:]
-
-    tags = parse_uploader_text(uploader_lines)
-    tags.update(auto_generated_tags)
+        tags = auto_generated_description.parse(lines[first_index:index_after_last])
+    else:
+        tags = parse_uploader_text(lines)
 
     artists = tags.get("artist")
     if artists:

@@ -90,8 +90,15 @@ def test_parse_auto_generated_part_in_uploader_text() -> None:
     # The auto-generated part has the title and album of the song
     assert tags["title"] == ["Song"]
     assert tags["album"] == ["Album"]
-    # Tags only in the uploader's text are used too
-    assert tags["performer:guitar"] == ["Gui Tarist"]
+    # The uploader's text around it is left out
+    assert "performer:guitar" not in tags
+
+
+def test_is_auto_generated() -> None:
+    """A description is auto-generated if it has an auto-generated part, even among other text."""
+    assert description_parser.is_auto_generated(AUTO_GENERATED_DESCRIPTION)
+    assert description_parser.is_auto_generated("Our new video!\n\n" + AUTO_GENERATED_DESCRIPTION)
+    assert not description_parser.is_auto_generated("Listen to “Song” by Singer from ‘Album’\n")
 
 
 def test_parse_changed_copy_of_auto_generated_description() -> None:

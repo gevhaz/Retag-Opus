@@ -618,6 +618,23 @@ def write_opus_file(path: Path, metadata: dict[str, list[str]]) -> None:
     opus_file.save()
 
 
+def test_read_song_notes_whether_description_is_auto_generated():
+    """Whether a description is auto-generated decides how much it's trusted."""
+    with TemporaryDirectory() as temp_dir:
+        auto_generated = Path(temp_dir) / "auto_generated.opus"
+        by_uploader = Path(temp_dir) / "by_uploader.opus"
+        write_opus_file(auto_generated, album_song_metadata("Song 1", "The Album", "Pop"))
+        write_opus_file(by_uploader, {"synopsis": ["Listen to “Song 2” by Singer from ‘The Album’"]})
+
+        _, auto_generated_tags = app.read_song(auto_generated)
+        _, by_uploader_tags = app.read_song(by_uploader)
+
+    assert auto_generated_tags.values_from(YOUTUBE, "title") == ["Song 1"]
+    assert auto_generated_tags.youtube_is_auto_generated
+    assert by_uploader_tags.values_from(YOUTUBE, "title") == ["Song 2"]
+    assert not by_uploader_tags.youtube_is_auto_generated
+
+
 def test_group_by_album(capsys):
     """Songs with the same album in the description are grouped.
 
