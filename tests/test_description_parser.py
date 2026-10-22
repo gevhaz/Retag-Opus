@@ -106,13 +106,3 @@ def test_parse_uploader_text() -> None:
     """Some common sentences are read in the uploader's text."""
     tags = description_parser.parse("Listen to “Song” by Singer from ‘Album’\n")
     assert tags == {"title": ["Song"], "artist": ["Singer"], "albumartist": ["Singer"], "album": ["Album"]}
-
-
-def test_parse_manual_album() -> None:
-    """With a manually set album, the album is the disc subtitle."""
-    tags = description_parser.parse(AUTO_GENERATED_DESCRIPTION, manual_album_set=True)
-    assert tags["discsubtitle"] == ["Album"]
-    assert "album" not in tags
-    tags = description_parser.parse("Listen to “Song” by Singer from ‘Album’\n", manual_album_set=True)
-    assert tags["discsubtitle"] == ["Album"]
-    assert "album" not in tags

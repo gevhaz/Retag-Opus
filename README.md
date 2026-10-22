@@ -30,8 +30,8 @@ options:
 -h, --help            show this help message and exit
 -s {bash,zsh,tcsh}, --print-completion {bash,zsh,tcsh}
                       print shell completion script
--a MANUAL_ALBUM, --album MANUAL_ALBUM
-                      Manually sets the album tag to the given value and puts any parsed album in the discsubtitle tag
+-g GROUPING, --grouping GROUPING
+                      Sets the grouping tag to the given value, e.g. to put the songs in a mix of your own
 -d DIRECTORY, --directory DIRECTORY
                       directory in which the files to be retagged are located
 -i, --individual      Choose album level tags separately for each song, even for songs that are from the same album
@@ -83,11 +83,16 @@ removed.
 ## Albums
 
 Songs whose YouTube descriptions have the same album are considered to be from
-the same album, and so are all songs if you set the album with `--album`. For
-those songs, the album artist, date, genre and album are only chosen once: when
-you save one of them, they are saved for all of them, including songs that
-were skipped or passed earlier. Use `--individual` to choose them for every
-song.
+the same album. For those songs, the album artist, date, genre and album are
+only chosen once: when you save one of them, they are saved for all of them,
+including songs that were skipped or passed earlier. Use `--individual` to
+choose them for every song.
+
+## Mixes
+
+To put songs from different albums in a mix of your own, set the `grouping` tag
+with `--grouping`, e.g. `--grouping "Road Trip"`. The album stays the one the
+song is from.
 
 ## MusicBrainz
 
@@ -122,9 +127,7 @@ Songs from the same album (see above) are looked up together, without asking
 anything: they are matched by title and length to the tracks of a release with
 the album's name, and the smallest and earliest release that has all of them
 is used, so that e.g. the original edition is preferred over a deluxe edition.
-If you set the album with `--album`, the album is spelled as on MusicBrainz.
-Songs whose album isn't found this way, for example because the album is your
-own collection, are looked up one by one.
+Songs whose album isn't found this way are looked up one by one.
 
 A song is looked up by its MusicBrainz ID if the file has one. Otherwise it is
 searched for: by title and artist if they are in the YouTube description, and
@@ -132,10 +135,7 @@ otherwise by the words of its title, which is then usually a YouTube video
 title like `KAUN TUJHE Full Video | M.S. DHONI -THE UNTOLD STORY |Amaal Mallik
 Palak`. A result is used without asking if its title is among those words and
 its length is within three seconds of the song's. Otherwise you choose among
-the results, search for something else, or skip MusicBrainz for that song. If
-you set the album with `--album` and the song wasn't found as part of it, tags
-describing the release the song was found on, like album and track number,
-aren't used.
+the results, search for something else, or skip MusicBrainz for that song.
 
 Looking up songs sends their titles, artists and albums to MusicBrainz. No
 account is needed. MusicBrainz allows one request per second, so looking up a

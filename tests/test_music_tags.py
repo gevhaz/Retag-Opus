@@ -597,38 +597,6 @@ class TestMusicTags(unittest.TestCase):
         sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
 
-    def test_switch_album_to_disc_subtitle(self) -> None:
-        """Test the album and discsubtitle switching function.
-
-        The function is used when the user want to set a specific album
-        for all songs being retagged, so that they are in a compilation
-        of songs, while preserving data about which album the song was
-        originally on in the discsubtitle tag.
-        """
-        tags = MusicTags()
-        tags.set_tags(ORIGINAL, {"album": ["album 1"]})
-        tags.switch_album_to_disc_subtitle("album 2")
-        actual_album = tags.tags_from(ORIGINAL).get("album")
-        actual_discsubtitle = tags.tags_from(ORIGINAL).get("discsubtitle")
-        self.assertIsNone(actual_album)
-        assert actual_discsubtitle is not None
-        self.assertListEqual(["album 1"], actual_discsubtitle)
-
-    def test_switch_album_to_disc_subtitle_no_album(self) -> None:
-        """Test that the function works when no album tag."""
-        tags = MusicTags()
-        tags.switch_album_to_disc_subtitle("album 2")
-        self.assertNotIn("album", tags.tags_from(ORIGINAL))
-        self.assertNotIn("discsubtitle", tags.tags_from(ORIGINAL))
-
-    def test_switch_album_to_disc_subtitle_identical_tags(self) -> None:
-        """Test that discsubtitle tag is not added when duplicated."""
-        tags = MusicTags()
-        tags.set_tags(ORIGINAL, {"album": ["album 1"]})
-        tags.switch_album_to_disc_subtitle("album 1")
-        self.assertNotIn("album", tags.tags_from(ORIGINAL))
-        self.assertNotIn("discsubtitle", tags.tags_from(ORIGINAL))
-
     def test_discard_upload_date_bad_date(self) -> None:
         """Test that bad upload dates are removed."""
         tags = MusicTags()
@@ -2025,15 +1993,6 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.set_tags(MUSICBRAINZ, {"title": ["Something Else"]})
         tags.resolve_metadata()
         self.assertEqual("MusicBrainz", mock_menu.call_args.args[0][mock_menu.call_args.kwargs["cursor_index"]])
-
-    @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
-    def test_resolve_metadata_musicbrainz_spelling_of_manual_album(self, _: MagicMock) -> None:
-        """Test that MusicBrainz' spelling of the album set by the user is used."""
-        tags = MusicTags(manual_album_set=True)
-        tags.resolved = {"album": ["a night at the opera"]}
-        tags.set_tags(MUSICBRAINZ, {"album": ["A Night at the Opera"]})
-        tags.resolve_metadata()
-        self.assertEqual(["A Night at the Opera"], tags.resolved["album"])
 
     @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
     def test_resolve_metadata_sets_musicbrainz_ids_and_numbers_quietly(self, _: MagicMock) -> None:

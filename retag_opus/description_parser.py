@@ -22,7 +22,7 @@ UPLOADER_TEXT_PATTERNS: Final[dict[str, list[str]]] = {
 }
 
 
-def parse_uploader_text(lines: list[str], manual_album_set: bool) -> Tags:
+def parse_uploader_text(lines: list[str]) -> Tags:
     """Parse the text an uploader wrote in a description.
 
     For example, "“Song” by Singer from ‘Album’" gives the title,
@@ -31,18 +31,12 @@ def parse_uploader_text(lines: list[str], manual_album_set: bool) -> Tags:
     skipped.
 
     :param lines: Lines written by the uploader.
-    :param manual_album_set: Whether the user has set the album. Then
-        the album of the song is its disc subtitle.
 
     :return: The tags found in the lines.
     """
-    patterns = dict(UPLOADER_TEXT_PATTERNS)
-    if manual_album_set:
-        patterns["discsubtitle"] = patterns.pop("album")
-
     tags: Tags = {}
     for line in lines:
-        for tag_name, tag_patterns in patterns.items():
+        for tag_name, tag_patterns in UPLOADER_TEXT_PATTERNS.items():
             for pattern in tag_patterns:
                 pattern_match = re.match(pattern, line)
                 if pattern_match:
@@ -59,7 +53,7 @@ def parse_uploader_text(lines: list[str], manual_album_set: bool) -> Tags:
     return tags
 
 
-def parse(description: str, manual_album_set: bool = False) -> Tags:
+def parse(description: str) -> Tags:
     """Parse a YouTube description into tags.
 
     Where both the auto-generated part and the uploader's text have a
@@ -67,8 +61,6 @@ def parse(description: str, manual_album_set: bool = False) -> Tags:
     layout is known.
 
     :param description: The whole YouTube description.
-    :param manual_album_set: Whether the user has set the album. Then
-        the album of the song is its disc subtitle.
 
     :return: The tags found in the description.
     """
@@ -84,10 +76,10 @@ def parse(description: str, manual_album_set: bool = False) -> Tags:
         first_index, last_index = auto_generated_part
         index_after_last = last_index + 1
         auto_generated_lines = lines[first_index:index_after_last]
-        auto_generated_tags = auto_generated_description.parse(auto_generated_lines, manual_album_set)
+        auto_generated_tags = auto_generated_description.parse(auto_generated_lines)
         uploader_lines = lines[:first_index] + lines[index_after_last:]
 
-    tags = parse_uploader_text(uploader_lines, manual_album_set)
+    tags = parse_uploader_text(uploader_lines)
     tags.update(auto_generated_tags)
 
     artists = tags.get("artist")

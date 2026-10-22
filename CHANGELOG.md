@@ -52,7 +52,10 @@
   description, tags parsed from the original tags, tags parsed from the YouTube
   tags, MusicBrainz, and last the existing metadata.
 - Python 3.13 or newer is now required.
-- The short option for `--album` is now `-a` instead of `-b`.
+- `--album` (`-b`) is replaced by `--grouping` (`-g`), which puts songs in a mix
+  of your own by setting the `grouping` tag. The album stays the one the song is
+  from, instead of becoming the disc subtitle, and its tags from MusicBrainz,
+  like track numbers, are used.
 - Unset tags are shown in gray instead of black, so they are readable on dark
   terminal backgrounds.
 - Colors are turned off when the `NO_COLOR` environment variable is set, and
