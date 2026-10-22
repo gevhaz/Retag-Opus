@@ -1,4 +1,5 @@
 """Module with helper functions for the rest of the app."""
+
 import re
 import unicodedata
 from pathlib import Path

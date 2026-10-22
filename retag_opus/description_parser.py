@@ -6,6 +6,7 @@ auto_generated_description. The rest is written by the uploader in any
 way, so only a few common patterns and credits with known roles, e.g.
 "Composer: Name", are read from it.
 """
+
 import re
 from typing import Final
 

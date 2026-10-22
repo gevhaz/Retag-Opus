@@ -4,6 +4,7 @@ Only read access is used, which requires no account or API key. The
 MusicBrainz API rules require a User-Agent identifying the application
 and no more than one request per second on average.
 """
+
 import json
 import re
 import time

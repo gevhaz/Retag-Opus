@@ -22,6 +22,7 @@ The copyright and release date lines can be missing. Uploaders
 sometimes paste such a description into their own, with other text
 before or after it, so it's looked for anywhere in a description.
 """
+
 import re
 from typing import Final
 

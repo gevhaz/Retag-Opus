@@ -3,6 +3,7 @@
 This module is for parsing text in the existing metadata keys, rather
 that the YouTube description.
 """
+
 import re
 from typing import Dict, Final, List
 

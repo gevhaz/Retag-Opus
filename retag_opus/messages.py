@@ -1,4 +1,5 @@
 """Module for printing messages to the user, colored by their kind."""
+
 from retag_opus import styles
 
 _error = styles.ansi("31")

@@ -23,6 +23,7 @@ resolve_metadata() goes through the rows with found values, and keeps
 the file's value if a source agrees with it, or else asks the user. The
 result is MusicTags.resolved, the column that will be saved to the file.
 """
+
 import re
 from copy import deepcopy
 from typing import Callable, Final, NamedTuple

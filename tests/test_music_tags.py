@@ -1,4 +1,5 @@
 """Tests for music_tags.py."""
+
 import os
 import sys
 import unittest
