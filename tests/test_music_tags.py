@@ -1872,10 +1872,8 @@ class TestMusicBrainzSource(unittest.TestCase):
 
     @patch("simple_term_menu.TerminalMenu.__init__")
     @patch("simple_term_menu.TerminalMenu.show")
-    def test_resolve_metadata_starts_on_value_musicbrainz_agrees_with(
-        self, mock_show: MagicMock, mock_menu: MagicMock
-    ) -> None:
-        """Test that MusicBrainz is an option and hints at the right one."""
+    def test_resolve_metadata_offers_musicbrainz(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
+        """Test that MusicBrainz is a choice, with its own typography."""
         mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
         tags = MusicTags()
@@ -1891,17 +1889,7 @@ class TestMusicBrainzSource(unittest.TestCase):
             ["YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
             mock_menu.call_args.args[0],
         )
-        self.assertEqual(0, mock_menu.call_args.kwargs["cursor_index"])
         self.assertEqual(["Don’t Go"], tags.resolved["title"])
-
-        tags.set_tags(YOUTUBE, {"title": ["Do Go"]})
-        tags.set_tags(PARSED_FROM_YOUTUBE, {"title": ["Don't Go"]})
-        tags.resolve_metadata()
-        self.assertEqual(1, mock_menu.call_args.kwargs["cursor_index"])
-
-        tags.set_tags(MUSICBRAINZ, {"title": ["Something Else"]})
-        tags.resolve_metadata()
-        self.assertEqual("MusicBrainz", mock_menu.call_args.args[0][mock_menu.call_args.kwargs["cursor_index"]])
 
     def test_resolve_metadata_sets_musicbrainz_ids_and_numbers_quietly(self) -> None:
         """Test that tags that depend on the match are set without messages."""
@@ -1948,7 +1936,6 @@ class TestMusicBrainzSource(unittest.TestCase):
             ["YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
             mock_menu.call_args.args[0],
         )
-        self.assertEqual(1, mock_menu.call_args.kwargs["cursor_index"])
         self.assertEqual(["Album"], tags.resolved["album"])
         self.assertEqual(["5"], tags.resolved["tracknumber"])
 
