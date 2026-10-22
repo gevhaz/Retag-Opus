@@ -85,7 +85,6 @@ def parse(description: str) -> Tags:
 
     artists = tags.get("artist")
     if artists:
-        tags["albumartist"] = [artists[0]]
         single_artists: list[str] = []
         for joined_artists in artists:
             single_artists += utils.split_tag(joined_artists)
