@@ -719,9 +719,8 @@ class MusicTags:
 
         Each source with values for the tag is a choice, followed by
         the values the song's file has, even if it has none. The menu
-        starts on the first one that MusicBrainz agrees with, so that
-        e.g. the YouTube description is suggested if its title is the
-        one on MusicBrainz, apart from typography.
+        starts on the first choice, which is the most preferred source,
+        e.g. the YouTube description if it has values for the tag.
 
         :param tag_name: The tag to choose the value of.
 
@@ -732,14 +731,6 @@ class MusicTags:
         self.print_resolved(print_all=True)
         candidates = self.found_values(tag_name)
         candidates.append((ORIGINAL, self.values_from(ORIGINAL, tag_name)))
-
-        musicbrainz_values = self.values_from(MUSICBRAINZ, tag_name)
-        cursor = 0
-        if musicbrainz_values:
-            for index, (_, values) in enumerate(candidates):
-                if utils.is_equal_when_normalized(values, musicbrainz_values):
-                    cursor = index
-                    break
 
         menu_entries = []
         for source, _ in candidates:
@@ -753,7 +744,7 @@ class MusicTags:
             for source, values in candidates:
                 print(f"{source.capitalized_name()}: " + source.style(" | ".join(values)))
 
-            choice = TerminalMenu(menu_entries, cursor_index=cursor).show()
+            choice = TerminalMenu(menu_entries).show()
             if not isinstance(choice, int) or choice > other_action_index:
                 raise UserExitException("Skipping this and all later songs")
             if choice == other_action_index:

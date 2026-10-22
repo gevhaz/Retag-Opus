@@ -100,9 +100,9 @@ With the `--musicbrainz` flag, or `musicbrainz = true` in the configuration
 file, songs are also looked up on [MusicBrainz](https://musicbrainz.org). Its
 values are shown in orange and treated like the values from the other
 sources, but are used last when sources disagree. When a tag has conflicting
-values, the menu starts on the value MusicBrainz agrees with, or on the
-MusicBrainz value if it agrees with none of them. Values that only differ in
-typography, like straight and curly apostrophes, count as the same.
+values, the menu starts on the value of the most preferred source. Values that
+only differ in typography, like straight and curly apostrophes, count as the
+same.
 
 Besides title, artist, album, album artist and date, MusicBrainz gives track
 and disc numbers, credits such as composer, lyricist, writer, producer and
