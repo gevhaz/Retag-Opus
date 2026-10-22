@@ -76,12 +76,11 @@ class MusicTags:
     one provided by the OggOpus object.
     """
 
-    def __init__(self, manual_album_set: bool = False) -> None:
+    def __init__(self) -> None:
         """Create empty attributes for each source."""
         self.tags_printed_for_every_song = dict(constants.tags_printed_for_every_song)
-        self.manual_album_set = manual_album_set
-        if manual_album_set:
-            self.tags_printed_for_every_song["discsubtitle"] = "Disc subtitle"
+        # The album set by the user, if any, see use_manual_album()
+        self.manual_album: str | None = None
         # The tags of each source. The sources other than the song's file
         # come first, most preferred first. When a tag has no value yet, it
         # gets the values of the first of them that has any, and lists of
@@ -369,19 +368,36 @@ class MusicTags:
         else:
             self.print_metadata_key(printed_tag_name, tag_name, styles.original, self.resolved)
 
-    def switch_album_to_disc_subtitle(self, manual_album_name: str) -> None:
-        """Move album tag to discsubtitle tag.
+    def use_manual_album(self, manual_album: str) -> None:
+        """Use an album set by the user instead of the album in the tags.
 
-        Switches the original album tag to the discsubtitle tag so that
-        it will be used in the comparison for that tag, rather than
-        album, which is not used when the album is set manually.
+        The user sets the album to put songs in a collection of their
+        own. The album that the file or the YouTube description gives
+        is then where the song is from, so it's moved to the
+        discsubtitle tag and resolved like other tags. The file's album
+        isn't kept as disc subtitle if it's the album set by the user.
+        Call this after the file's and the YouTube description's tags
+        are set and resolved is a copy of the file's tags.
 
-        :param manual_album_name: What to use as the new album tag.
+        Example: with the file's album "Single" and the manual album
+        "Mix", the file's discsubtitle becomes ["Single"] and the
+        resolved album ["Mix"].
+
+        :param manual_album: The album set by the user.
         """
-        original_tags = self.tags_from(ORIGINAL)
-        original_album = original_tags.pop("album", None)
-        if original_album is not None and original_album != [manual_album_name]:
-            original_tags["discsubtitle"] = original_album
+        self.manual_album = manual_album
+        self.tags_printed_for_every_song["discsubtitle"] = "Disc subtitle"
+
+        youtube_tags = self.tags_from(YOUTUBE)
+        if "album" in youtube_tags:
+            youtube_tags["discsubtitle"] = youtube_tags.pop("album")
+
+        # The resolved tags start as a copy of the file's tags
+        for file_tags in [self.tags_from(ORIGINAL), self.resolved]:
+            file_album = file_tags.pop("album", None)
+            if file_album is not None and file_album != [manual_album]:
+                file_tags["discsubtitle"] = file_album
+        self.resolved["album"] = [manual_album]
 
     def discard_upload_date(self) -> None:
         """If the date is just the upload date, discard it."""

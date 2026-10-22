@@ -412,7 +412,7 @@ class MusicBrainzMatcher:
             if track["recording"]["id"] == recording["id"]:
                 print(styles.musicbrainz(match_message(track, release)))
                 song_tags = track_tags(release, medium, track)
-                if tags.manual_album_set:
+                if tags.manual_album is not None:
                     # The release found for the song isn't the album the user set
                     for tag_name in ALBUM_AND_RELEASE_TAGS:
                         song_tags.pop(tag_name, None)

@@ -190,13 +190,15 @@ def song(
     original: Tags | None = None,
     youtube: Tags | None = None,
     length: float | None = 201.0,
-    manual_album_set: bool = False,
+    manual_album: str | None = None,
 ) -> MusicTags:
     """Create tags for a song from the given sources."""
-    tags = MusicTags(manual_album_set)
+    tags = MusicTags()
     tags.set_tags(ORIGINAL, original or {})
     tags.set_tags(YOUTUBE, youtube or {})
     tags.length = length
+    if manual_album is not None:
+        tags.use_manual_album(manual_album)
     return tags
 
 
@@ -366,7 +368,7 @@ def test_match_song_stored_id_not_found() -> None:
 
 def test_match_song_manual_album() -> None:
     """With a manual album, tags describing the release are left out."""
-    tags = MusicBrainzMatcher(fake_client()).match_song(song(original={"title": [VIDEO_TITLE]}, manual_album_set=True))
+    tags = MusicBrainzMatcher(fake_client()).match_song(song(original={"title": [VIDEO_TITLE]}, manual_album="Mix"))
     assert not set(tags) & set(musicbrainz.ALBUM_AND_RELEASE_TAGS)
     assert tags["date"] == ["2022-08-22"]
 

@@ -128,17 +128,13 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
         its tags from all sources.
     """
     # 1. Read the data and make basic improvements
-    manual_album_set = manual_album is not None
     opus_file: OggOpus = OggOpus(file_path)  # type: ignore
     original_tags: Tags = dict(opus_file.items())  # type: ignore
-    tags = MusicTags(manual_album_set=manual_album_set)
+    tags = MusicTags()
     tags.length = getattr(getattr(opus_file, "info", None), "length", None)
 
     tags.set_tags(ORIGINAL, original_tags)
     tags.discard_upload_date()
-    if manual_album is not None:
-        tags.switch_album_to_disc_subtitle(manual_album)
-
     tags.resolved = deepcopy(original_tags)
 
     original_tags_parser = TagsParser(original_tags)
@@ -146,23 +142,23 @@ def read_song(file_path: Path, manual_album: str | None) -> tuple[OggOpus, Music
     original_tags_parser.split_select_original_tags()
     tags.set_tags(PARSED_FROM_ORIGINAL, original_tags_parser.tags)
 
-    # 1.1 Manually set album
-    if manual_album is not None:
-        tags.resolved["album"] = [manual_album]
-
     # 2. Get description
     description_lines = get_description(original_tags)
 
     # 3. If description exists, send it to be parsed
     if description_lines:
         description = "\n".join(description_lines)
-        youtube_tags = description_parser.parse(description, manual_album_set=manual_album_set)
+        youtube_tags = description_parser.parse(description)
         tags.set_tags(YOUTUBE, youtube_tags)
         tags.add_source_tag()
 
         youtube_tags_parser = TagsParser(youtube_tags)
         youtube_tags_parser.parse_tags()
         tags.set_tags(PARSED_FROM_YOUTUBE, youtube_tags_parser.tags)
+
+    # 4. Manually set album
+    if manual_album is not None:
+        tags.use_manual_album(manual_album)
 
     return opus_file, tags
 

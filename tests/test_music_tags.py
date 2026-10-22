@@ -597,37 +597,40 @@ class TestMusicTags(unittest.TestCase):
         sys.stdout.write(captured.out)
         self.assertEqual(expected, captured.out)
 
-    def test_switch_album_to_disc_subtitle(self) -> None:
-        """Test the album and discsubtitle switching function.
+    def test_use_manual_album(self) -> None:
+        """Test that the albums of the file and the description become disc subtitles.
 
-        The function is used when the user want to set a specific album
-        for all songs being retagged, so that they are in a compilation
-        of songs, while preserving data about which album the song was
-        originally on in the discsubtitle tag.
+        The user sets the album to put songs in a collection of their
+        own, and the albums the songs were originally on are kept in the
+        discsubtitle tag.
         """
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"album": ["album 1"]})
-        tags.switch_album_to_disc_subtitle("album 2")
-        actual_album = tags.tags_from(ORIGINAL).get("album")
-        actual_discsubtitle = tags.tags_from(ORIGINAL).get("discsubtitle")
-        self.assertIsNone(actual_album)
-        assert actual_discsubtitle is not None
-        self.assertListEqual(["album 1"], actual_discsubtitle)
+        tags.set_tags(YOUTUBE, {"album": ["album 3"]})
+        tags.resolved = {"album": ["album 1"]}
+        tags.use_manual_album("album 2")
+        self.assertEqual({"discsubtitle": ["album 1"]}, tags.tags_from(ORIGINAL))
+        self.assertEqual({"discsubtitle": ["album 3"]}, tags.tags_from(YOUTUBE))
+        self.assertEqual({"album": ["album 2"], "discsubtitle": ["album 1"]}, tags.resolved)
+        self.assertEqual("album 2", tags.manual_album)
+        self.assertIn("discsubtitle", tags.tags_printed_for_every_song)
 
-    def test_switch_album_to_disc_subtitle_no_album(self) -> None:
-        """Test that the function works when no album tag."""
+    def test_use_manual_album_no_album(self) -> None:
+        """Test that no disc subtitle is added when there's no album."""
         tags = MusicTags()
-        tags.switch_album_to_disc_subtitle("album 2")
-        self.assertNotIn("album", tags.tags_from(ORIGINAL))
-        self.assertNotIn("discsubtitle", tags.tags_from(ORIGINAL))
+        tags.use_manual_album("album 2")
+        self.assertEqual({}, tags.tags_from(ORIGINAL))
+        self.assertEqual({}, tags.tags_from(YOUTUBE))
+        self.assertEqual({"album": ["album 2"]}, tags.resolved)
 
-    def test_switch_album_to_disc_subtitle_identical_tags(self) -> None:
-        """Test that discsubtitle tag is not added when duplicated."""
+    def test_use_manual_album_identical_tags(self) -> None:
+        """Test that the file's album isn't kept as disc subtitle if it's the manual album."""
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"album": ["album 1"]})
-        tags.switch_album_to_disc_subtitle("album 1")
-        self.assertNotIn("album", tags.tags_from(ORIGINAL))
-        self.assertNotIn("discsubtitle", tags.tags_from(ORIGINAL))
+        tags.resolved = {"album": ["album 1"]}
+        tags.use_manual_album("album 1")
+        self.assertEqual({}, tags.tags_from(ORIGINAL))
+        self.assertEqual({"album": ["album 1"]}, tags.resolved)
 
     def test_discard_upload_date_bad_date(self) -> None:
         """Test that bad upload dates are removed."""
@@ -2029,8 +2032,8 @@ class TestMusicBrainzSource(unittest.TestCase):
     @patch("retag_opus.music_tags.MusicTags.determine_album_artist")
     def test_resolve_metadata_musicbrainz_spelling_of_manual_album(self, _: MagicMock) -> None:
         """Test that MusicBrainz' spelling of the album set by the user is used."""
-        tags = MusicTags(manual_album_set=True)
-        tags.resolved = {"album": ["a night at the opera"]}
+        tags = MusicTags()
+        tags.use_manual_album("a night at the opera")
         tags.set_tags(MUSICBRAINZ, {"album": ["A Night at the Opera"]})
         tags.resolve_metadata()
         self.assertEqual(["A Night at the Opera"], tags.resolved["album"])
