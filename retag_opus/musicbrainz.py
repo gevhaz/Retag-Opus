@@ -9,6 +9,7 @@ searching by words, one of its artists is in them too.
 """
 
 import re
+import readline
 from pathlib import Path
 from typing import Final
 
@@ -556,7 +557,12 @@ class MusicBrainzMatcher:
             choice = self.ask_for_recording(results, words_to_match, tags.length)
             if choice is not True:
                 return choice or None
-            words_to_match = input(f"Search MusicBrainz for [{words_to_match}]: ").strip() or words_to_match
+            # Put the previous search on the line, ready to edit
+            readline.set_startup_hook(lambda: readline.insert_text(words_to_match))
+            try:
+                words_to_match = input("Search MusicBrainz: ").strip() or words_to_match
+            finally:
+                readline.set_startup_hook()
             results = self.client.search_recordings_by_words(words_to_match) if words_to_match else []
             searched_for_artist = False
 
