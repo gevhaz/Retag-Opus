@@ -1,7 +1,7 @@
 """Tests for app.py and cli.py."""
 
 import re
-import subprocess
+import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock
@@ -12,6 +12,8 @@ from mutagen import oggopus
 
 from retag_opus import app
 from retag_opus.music_tags import YOUTUBE
+
+SILENT_OPUS_FILE = Path(__file__).parent / "data" / "silence.opus"
 
 metadata = [
     ("title", ["Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"]),
@@ -40,25 +42,8 @@ def music_directory():
 
 
 def create_silent_opus_file(path: Path) -> None:
-    """Write one second of silence encoded as opus to path using ffmpeg."""
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-y",
-            "-loglevel",
-            "error",
-            "-f",
-            "lavfi",
-            "-i",
-            "anullsrc=r=48000:cl=mono",
-            "-t",
-            "1",
-            "-c:a",
-            "libopus",
-            str(path),
-        ],
-        check=True,
-    )
+    """Write one second of silence encoded as opus, without tags, to path."""
+    shutil.copyfile(SILENT_OPUS_FILE, path)
 
 
 def test_print_version(capsys):
