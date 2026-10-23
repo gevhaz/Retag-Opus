@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from retag_opus.musicbrainz_client import USER_AGENT, MusicBrainzClient, MusicBrainzError
+from retag_opus.musicbrainz_client import USER_AGENT, MusicBrainzClient, MusicBrainzError, exact_title_and_artist_query
 
 
 class FakeOpener:
@@ -118,17 +118,23 @@ def test_get_raises_when_unreachable() -> None:
         client.get("recording/abc", {})
 
 
-def test_search_recordings_builds_quoted_query() -> None:
+def test_exact_title_and_artist_query() -> None:
     """Search terms are quoted and escaped as phrases."""
+    assert exact_title_and_artist_query('Say "Hi"', "Artist") == 'recording:"Say \\"Hi\\"" AND artist:"Artist"'
+
+
+def test_search_recordings_with_fields() -> None:
+    """Send a query that names fields as written."""
     client, opener, _ = make_client({"recordings": [{"id": "abc", "score": 100}]})
-    assert client.search_recordings('Say "Hi"', "Artist") == [{"id": "abc", "score": 100}]
-    assert opener.query()["query"] == ['recording:"Say \\"Hi\\"" AND artist:"Artist"']
+    assert client.search_recordings('recording:"Hi" AND artist:"Artist"') == [{"id": "abc", "score": 100}]
+    assert opener.query()["query"] == ['recording:"Hi" AND artist:"Artist"']
+    assert "dismax" not in opener.query()
 
 
 def test_search_recordings_by_words() -> None:
     """Search for words only, leaving out other characters."""
     client, opener, _ = make_client({"recordings": [{"id": "abc"}]})
-    assert client.search_recordings_by_words('Song: "Hi" | (Official) M.S. Artist') == [{"id": "abc"}]
+    assert client.search_recordings('Song: "Hi" | (Official) M.S. Artist') == [{"id": "abc"}]
     assert opener.query()["query"] == ["Song Hi Official M S Artist"]
     assert opener.query()["dismax"] == ["true"]
 
@@ -136,7 +142,7 @@ def test_search_recordings_by_words() -> None:
 def test_search_not_found() -> None:
     """Searches that find nothing give no results."""
     client, _, _ = make_client(http_error(404))
-    assert client.search_recordings_by_words("Title") == []
+    assert client.search_recordings("Title") == []
 
 
 def test_search_releases() -> None:

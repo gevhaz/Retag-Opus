@@ -26,6 +26,25 @@ RETRY_DELAYS: Final[list[float]] = [2.0, 4.0, 8.0]
 REQUEST_TIMEOUT_SECONDS: Final[float] = 15.0
 
 
+def quote_as_phrase(text: str) -> str:
+    """Quote text as a phrase in a search query.
+
+    MusicBrainz searches are written in the query language of the
+    Lucene search engine, e.g. 'recording:"Title" AND artist:"Name"',
+    where quotes make a phrase that has to match as a whole.
+    """
+    escaped = text.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def exact_title_and_artist_query(title: str, artist: str) -> str:
+    """Get a query for recordings with exactly the given title and artist.
+
+    E.g. 'recording:"Title" AND artist:"Name"'.
+    """
+    return f"recording:{quote_as_phrase(title)} AND artist:{quote_as_phrase(artist)}"
+
+
 class MusicBrainzError(Exception):
     """Raised when the MusicBrainz web service can't be used."""
 
@@ -104,27 +123,23 @@ class MusicBrainzClient:
         self._cache[url] = result
         return result
 
-    def search_recordings(self, title: str, artist: str) -> list[JsonDict]:
-        """Search for recordings with exactly the given title and artist.
+    def search_recordings(self, query: str) -> list[JsonDict]:
+        """Search for recordings.
+
+        A query with field names, like 'recording:"Title" AND
+        artist:"Name"', is sent as written. Any other query is words in
+        any order, which may be in the title, artist, or release of the
+        recording. That suits text that mixes them, like a YouTube video
+        title. Characters other than letters and digits are left out of
+        the words, since the service rejects some of them.
 
         :return: Recordings with the releases they're on, best match
             first.
         """
-        query = f"recording:{self._phrase(title)} AND artist:{self._phrase(artist)}"
-        return self._search("recording", {"query": query})
-
-    def search_recordings_by_words(self, text: str) -> list[JsonDict]:
-        """Search for recordings matching words in any order.
-
-        The words may be in the title, artist, or release of the
-        recording, which suits text that mixes them, like a YouTube
-        video title. Characters other than letters and digits are left
-        out, since the service rejects some of them.
-
-        :return: Recordings with the releases they're on, best match
-            first.
-        """
-        words = " ".join(re.findall(r"\w+", text))
+        query_has_field_names = re.search(r"\b[a-z]+:", query) is not None
+        if query_has_field_names:
+            return self._search("recording", {"query": query})
+        words = " ".join(re.findall(r"\w+", query))
         return self._search("recording", {"query": words, "dismax": "true"})
 
     def search_releases(self, title: str, artist: str | None) -> list[JsonDict]:
@@ -133,9 +148,9 @@ class MusicBrainzClient:
         :return: Releases, best match first. Each release has a "score"
             between 0 and 100 and a "track-count".
         """
-        query = f"release:{self._phrase(title)}"
+        query = f"release:{quote_as_phrase(title)}"
         if artist:
-            query += f" AND artist:{self._phrase(artist)}"
+            query += f" AND artist:{quote_as_phrase(artist)}"
         return self._search("release", {"query": query})
 
     def lookup_recording(self, mbid: str) -> JsonDict | None:
@@ -167,14 +182,3 @@ class MusicBrainzClient:
             return []
         found: list[JsonDict] = result.get(f"{entity}s", [])
         return found
-
-    @staticmethod
-    def _phrase(text: str) -> str:
-        """Quote text as a phrase in a search query.
-
-        MusicBrainz searches are written in the query language of the
-        Lucene search engine, e.g. 'recording:"Title" AND artist:"Name"',
-        where quotes make a phrase that has to match as a whole.
-        """
-        escaped = text.replace("\\", "\\\\").replace('"', '\\"')
-        return f'"{escaped}"'
