@@ -35,6 +35,10 @@
   still one commit. Each commit should pass the tests on its own.
 - Until a branch is merged, fold review fixes into the commits they fix.
 
+# Pull requests
+
+- Follow the rules in @CONTRIBUTING.md.
+
 # Standards
 
 - When choosing between conventions, e.g. for tag names, prefer them in
