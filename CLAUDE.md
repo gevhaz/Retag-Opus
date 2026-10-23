@@ -9,6 +9,11 @@
   functions in a module rather than a class of static methods. Where
   the rules here differ from them, the rules here win.
 
+# Platforms
+
+- Only Linux is supported, so e.g. `readline` can be used without a
+  fallback for Windows.
+
 # Tests
 
 - The coverage threshold, `fail_under` in `pyproject.toml`, is only
