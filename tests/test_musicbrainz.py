@@ -270,7 +270,7 @@ def test_length_matches() -> None:
 
 
 def test_choose_release() -> None:
-    """Prefer the stored release, the named album, then the earliest official release."""
+    """Prefer the stored release, the named album, official releases, YouTube's date, then the earliest."""
     releases = SEARCH_RESULT["releases"]
     stored = song(original={"musicbrainz_albumid": ["bootleg"], "album": ["Goodbyes"]})
     assert musicbrainz.choose_release(releases, stored)["id"] == "bootleg"  # type: ignore[index]
@@ -285,6 +285,8 @@ def test_choose_release() -> None:
     ]
     remaster = song(youtube={"album": ["Goodbyes (2011 Remaster)"]})
     assert musicbrainz.choose_release(editions, remaster)["id"] == "original"  # type: ignore[index]
+    reissued = song(youtube={"album": ["Goodbyes"], "date": ["2001"]})
+    assert musicbrainz.choose_release(editions, reissued)["id"] == "dvd"  # type: ignore[index]
     assert musicbrainz.choose_release([], song()) is None
 
 

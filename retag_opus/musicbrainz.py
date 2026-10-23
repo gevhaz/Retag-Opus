@@ -256,8 +256,9 @@ def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None
 
     The release whose ID is in the song's file is preferred, then
     releases with the album name in the song's tags, ignoring e.g.
-    "(2011 Remaster)", then official releases, and of those the
-    earliest.
+    "(2011 Remaster)", then official releases, then releases with the
+    date in the YouTube description, e.g. "Released on: 2025-10-30",
+    and of those the earliest.
     """
     if not releases:
         return None
@@ -266,14 +267,17 @@ def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None
     for album_name in tags.values_from(YOUTUBE, "album") + tags.values_from(ORIGINAL, "album"):
         album_names_in_tags.add(utils.normalize(utils.prune_title(album_name)))
 
-    def preference(release: JsonDict) -> tuple[bool, bool, bool, str]:
+    youtube_dates = tags.values_from(YOUTUBE, "date")
+
+    def preference(release: JsonDict) -> tuple[bool, bool, bool, bool, str]:
         """Sort key that puts the preferred releases first."""
         is_stored = release["id"] in stored_release_ids
         has_album_name = utils.normalize(utils.prune_title(release.get("title", ""))) in album_names_in_tags
         is_official = release.get("status") == "Official"
+        has_youtube_date = release.get("date") in youtube_dates
         date = release.get("date") or "9999"  # Unknown dates last
         # False sorts before True, so releases with a property come first
-        return not is_stored, not has_album_name, not is_official, date
+        return not is_stored, not has_album_name, not is_official, not has_youtube_date, date
 
     # Tuples are compared item by item, so this is the release that's
     # preferred by the first property where the releases differ
