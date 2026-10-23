@@ -17,7 +17,7 @@ from simple_term_menu import TerminalMenu
 
 from retag_opus import constants, messages, styles, utils
 from retag_opus.music_tags import ORIGINAL, YOUTUBE, MusicTags
-from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrainzError
+from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrainzError, exact_title_and_artist_query
 
 Tags = dict[str, list[str]]
 
@@ -521,7 +521,8 @@ class MusicBrainzMatcher:
         main title is among the words searched for and it's as long as
         the song. When searching by words, one of its artists also has
         to be among them, or be the YouTube channel, which is often the
-        artist's own. Otherwise the user picks the result.
+        artist's own. Otherwise the user picks the result, or edits the
+        query that was sent, e.g. 'recording:"Title" AND artist:"Name"'.
 
         :return: The recording, or None if the user skipped the song.
         """
@@ -531,40 +532,53 @@ class MusicBrainzMatcher:
             if recording is not None:
                 return recording
 
+        # The query is what's sent to MusicBrainz, shown in the menu and
+        # edited by the user. The results are matched against
+        # words_to_match instead: the song's title and all its artists.
+        # The two differ for the exact search, which has only the first
+        # artist and is written in the Lucene query language. Without a
+        # description, and after an edit, they're the same.
         words_to_match = song_title_and_artists(tags)
         youtube_titles = tags.values_from(YOUTUBE, "title")
         youtube_artists = tags.values_from(YOUTUBE, "artist")
-        searched_for_artist = False
         if youtube_titles and youtube_artists:
-            results = self.client.search_recordings(utils.prune_title(youtube_titles[0]), youtube_artists[0])
-            searched_for_artist = True
-        elif words_to_match:
-            results = self.client.search_recordings_by_words(words_to_match)
+            query = exact_title_and_artist_query(title=utils.prune_title(youtube_titles[0]), artist=youtube_artists[0])
+            # MusicBrainz only finds recordings whose artist credit has
+            # the artist in the query, e.g. artist:"Name"
+            search_filters_by_song_artist = True
         else:
-            results = []
+            query = words_to_match
+            search_filters_by_song_artist = False
+        # Search until a result is surely the song, or the user picks one
+        # or skips the song
         while True:
+            results = self.client.search_recordings(query) if query else []
             words_to_match_with_channel = " ".join([words_to_match] + tags.values_from(ORIGINAL, "artist"))
             confident_results = []
             for result in results:
                 same_title = title_matches(result.get("title", ""), words_to_match)
                 same_length = length_matches(result.get("length"), tags.length)
-                same_artist = searched_for_artist or artist_matches(result, words_to_match_with_channel)
+                # Results of the exact search are by the song's artist,
+                # since the artist is in the query
+                same_artist = search_filters_by_song_artist or artist_matches(result, words_to_match_with_channel)
                 if same_title and same_length and same_artist:
                     confident_results.append(result)
             if confident_results:
                 # The result that fits the song best, see fit()
                 return min(confident_results, key=lambda result: fit(result, words_to_match))
-            choice = self.ask_for_recording(results, words_to_match, tags.length)
+            choice = self.ask_for_recording(results, query, tags.length)
             if choice is not True:
                 return choice or None
             # Put the previous search on the line, ready to edit
-            readline.set_startup_hook(lambda: readline.insert_text(words_to_match))
+            readline.set_startup_hook(lambda: readline.insert_text(query))
             try:
-                words_to_match = input("Search MusicBrainz: ").strip() or words_to_match
+                query = input("Search MusicBrainz: ").strip() or query
             finally:
                 readline.set_startup_hook()
-            results = self.client.search_recordings_by_words(words_to_match) if words_to_match else []
-            searched_for_artist = False
+            # Match the results against what the user searched for
+            words_to_match = query
+            # An edited query may name any artist, or none
+            search_filters_by_song_artist = False
 
     @staticmethod
     def ask_for_recording(results: list[JsonDict], query: str, song_seconds: float | None) -> JsonDict | bool:

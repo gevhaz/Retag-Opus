@@ -223,7 +223,6 @@ def fake_client() -> MagicMock:
     """Create a client that finds the test recording and release."""
     client = MagicMock()
     client.search_recordings.return_value = [SEARCH_RESULT]
-    client.search_recordings_by_words.return_value = [SEARCH_RESULT]
     client.lookup_recording.return_value = SEARCH_RESULT
     client.lookup_release.return_value = RELEASE
     return client
@@ -335,7 +334,7 @@ def test_match_song_from_description(capsys: pytest.CaptureFixture[str]) -> None
     tags = MusicBrainzMatcher(client).match_song(song(youtube=youtube))
     assert tags["album"] == ["Goodbyes"]
     assert tags["composer"] == ["Com Poser"]
-    client.search_recordings.assert_called_once_with("Proper Goodbyes", "The Global")
+    client.search_recordings.assert_called_once_with('recording:"Proper Goodbyes" AND artist:"The Global"')
     client.lookup_release.assert_called_once_with("rel-1")
     out = capsys.readouterr().out
     assert "Looking up the song on MusicBrainz..." in out
@@ -347,7 +346,7 @@ def test_match_song_from_video_title() -> None:
     client = fake_client()
     tags = MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE], "artist": ["Channel"]}))
     assert tags["title"] == ["Proper Goodbyes"]
-    client.search_recordings_by_words.assert_called_once_with(VIDEO_TITLE)
+    client.search_recordings.assert_called_once_with(VIDEO_TITLE)
     client.lookup_release.assert_called_once_with("single")
 
 
@@ -355,7 +354,7 @@ def test_match_song_prefers_title_that_was_searched_for() -> None:
     """Among results as long as the song, use the one with the searched title."""
     client = fake_client()
     mix = {**SEARCH_RESULT, "id": "mix", "title": "Proper Goodbyes (5.1 mix)"}
-    client.search_recordings_by_words.return_value = [{**SEARCH_RESULT, "length": 100}, mix, SEARCH_RESULT]
+    client.search_recordings.return_value = [{**SEARCH_RESULT, "length": 100}, mix, SEARCH_RESULT]
     tags = MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE]}))
     assert tags["title"] == ["Proper Goodbyes"]
 
@@ -373,7 +372,7 @@ def test_match_song_by_stored_id() -> None:
     tags = MusicBrainzMatcher(client).match_song(song(original=original))
     assert tags["album"] == ["Goodbyes"]
     client.lookup_recording.assert_called_once_with("rec-Proper Goodbyes")
-    client.search_recordings_by_words.assert_not_called()
+    client.search_recordings.assert_not_called()
 
 
 def test_match_song_stored_id_not_found() -> None:
@@ -382,7 +381,7 @@ def test_match_song_stored_id_not_found() -> None:
     client.lookup_recording.return_value = None
     original = {"musicbrainz_trackid": ["gone"], "title": [VIDEO_TITLE]}
     assert MusicBrainzMatcher(client).match_song(song(original=original))
-    client.search_recordings_by_words.assert_called_once()
+    client.search_recordings.assert_called_once()
 
 
 def test_match_song_not_on_release() -> None:
@@ -392,7 +391,7 @@ def test_match_song_not_on_release() -> None:
     assert MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE]})) == {}
     client.lookup_release.return_value = None
     assert MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE]})) == {}
-    client.search_recordings_by_words.return_value = [{**SEARCH_RESULT, "releases": []}]
+    client.search_recordings.return_value = [{**SEARCH_RESULT, "releases": []}]
     assert MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE]})) == {}
 
 
@@ -443,15 +442,18 @@ def test_match_song_user_skips(menu: MagicMock, choice: int | None) -> None:
 
 
 def test_match_song_edit_search(menu: MagicMock, typed: list[str]) -> None:
-    """Let the user search for something else."""
-    menu.return_value.show.side_effect = [0, 0]
-    typed += ["Proper Goodbyes Ben Ivor", ""]
+    """Show the query that was sent, and let the user edit it."""
+    menu.return_value.show.return_value = 0
+    edited_query = 'recording:"Proper Goodbyes" AND artist:"The Global"'
+    typed += [edited_query]
     client = fake_client()
-    client.search_recordings_by_words.side_effect = [[], [SEARCH_RESULT]]
-    tags = MusicBrainzMatcher(client).match_song(song(original={"title": ["Wrong"]}))
+    client.search_recordings.side_effect = [[], [SEARCH_RESULT]]
+    youtube = {"title": ["Proper Goodbyes \u1433"], "artist": ["The Global"]}
+    tags = MusicBrainzMatcher(client).match_song(song(youtube=youtube))
     assert tags["title"] == ["Proper Goodbyes"]
-    assert menu.call_args.kwargs["title"] == "MusicBrainz: Nothing found for 'Wrong'. The song is 3:21 long."
-    client.search_recordings_by_words.assert_called_with("Proper Goodbyes Ben Ivor")
+    sent_query = 'recording:"Proper Goodbyes \u1433" AND artist:"The Global"'
+    assert menu.call_args.kwargs["title"] == f"MusicBrainz: Nothing found for '{sent_query}'. The song is 3:21 long."
+    client.search_recordings.assert_called_with(edited_query)
 
 
 def test_match_song_without_title(menu: MagicMock, typed: list[str]) -> None:
@@ -461,17 +463,17 @@ def test_match_song_without_title(menu: MagicMock, typed: list[str]) -> None:
     client = fake_client()
     assert MusicBrainzMatcher(client).match_song(song()) == {}
     assert menu.call_args.kwargs["title"] == "MusicBrainz: Nothing found for ''. The song is 3:21 long."
-    client.search_recordings_by_words.assert_not_called()
+    client.search_recordings.assert_not_called()
 
 
 def test_match_song_disabled_after_error(capsys: pytest.CaptureFixture[str]) -> None:
     """When MusicBrainz can't be reached, don't try again."""
     client = fake_client()
-    client.search_recordings_by_words.side_effect = MusicBrainzError("Could not get data from MusicBrainz: offline")
+    client.search_recordings.side_effect = MusicBrainzError("Could not get data from MusicBrainz: offline")
     matcher = MusicBrainzMatcher(client)
     assert matcher.match_song(song(original={"title": ["A"]})) == {}
     assert matcher.match_song(song(original={"title": ["A"]})) == {}
-    assert client.search_recordings_by_words.call_count == 1
+    assert client.search_recordings.call_count == 1
     assert "Not using MusicBrainz for the rest of this run." in capsys.readouterr().out
 
 
