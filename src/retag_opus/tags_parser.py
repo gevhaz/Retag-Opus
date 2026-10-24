@@ -11,8 +11,8 @@ from retag_opus import constants, utils
 Tags = dict[str, list[str]]
 
 
-def parse(tags: Tags, split_values: bool = False) -> Tags:
-    """Parse tags for metadata that belongs in other tags.
+def parse_titles(tags: Tags) -> Tags:
+    """Parse the titles in tags for metadata that belongs in other tags.
 
     For example, the title "Song (Live) (feat. Singer)" gives the title
     "Song", the version "Live" and the artist "Singer", and the title
@@ -21,10 +21,6 @@ def parse(tags: Tags, split_values: bool = False) -> Tags:
     title when one side is the existing artist.
 
     :param tags: The tags to parse, e.g. the ones in a song's file.
-    :param split_values: Whether to also split a single artist or
-        genre on predefined separators, e.g. "Rock; Pop" into "Rock"
-        and "Pop". The split values replace those parsed from the
-        title.
 
     :return: Only the tags whose values differ from those in the given
         tags.
@@ -95,10 +91,31 @@ def parse(tags: Tags, split_values: bool = False) -> Tags:
     has_new_featured_artists = set(featured_artists) != set(original_artists) and len(featured_artists) > 0
     if artist_differs_in_title or has_new_featured_artists:
         parsed_tags["artist"] = utils.remove_duplicates(artists_of_song + featured_artists)
-
-    if split_values:
-        parsed_tags.update(split_artists_and_genres(tags))
     return parsed_tags
+
+
+def parse(tags: Tags, split_values: bool = False) -> Tags:
+    """Parse tags for metadata that belongs in other tags.
+
+    See parse_titles() for what is parsed. With split_values, a single
+    artist or genre is first split on predefined separators, and what
+    is parsed from the title is added to the split values. For example,
+    the artist "Singer, Guitarist" and the title "Song (feat. Rapper)"
+    give the artists "Singer", "Guitarist" and "Rapper".
+
+    :param tags: The tags to parse, e.g. the ones in a song's file.
+    :param split_values: Whether to split a single artist or genre,
+        e.g. "Rock; Pop" into "Rock" and "Pop".
+
+    :return: Only the tags whose values differ from those in the given
+        tags.
+    """
+    if not split_values:
+        return parse_titles(tags)
+
+    split_tags = split_artists_and_genres(tags)
+    tags_from_titles = parse_titles(tags | split_tags)
+    return split_tags | tags_from_titles
 
 
 def split_artists_and_genres(tags: Tags) -> Tags:

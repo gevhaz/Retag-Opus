@@ -62,6 +62,23 @@ class TestTagsParser(unittest.TestCase):
         self.assertNotIn("artist", parsed_tags)
         self.assertNotIn("genre", parsed_tags)
 
+    def test_clean_original_tags_split_and_parse_title(self) -> None:
+        """Test keeping what's parsed from the title when splitting.
+
+        Artists and genres parsed from the title should be added to
+        the split values, not be replaced by them.
+        """
+        original_tags = {
+            "artist": ["artist 1, artist 2"],
+            "genre": ["genre 1; genre 2"],
+            "title": ["Song name (feat. artist 3) (instrumental)"],
+        }
+
+        parsed_tags = tags_parser.parse(original_tags, split_values=True)
+        self.assertEqual(["artist 1", "artist 2", "artist 3"], parsed_tags.get("artist"))
+        self.assertEqual(["genre 1", "genre 2", "Instrumental"], parsed_tags.get("genre"))
+        self.assertEqual(["Song name"], parsed_tags.get("title"))
+
     def test_parse_tags_featuring(self) -> None:
         """Test parsing featuring artists."""
         titles = [
