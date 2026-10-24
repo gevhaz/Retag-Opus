@@ -84,6 +84,25 @@ def test_joined_credit() -> None:
     assert musicbrainz.joined_credit([credit("A", " feat. "), credit("B")]) == "A feat. B"
 
 
+def test_album_artist() -> None:
+    """Featured artists are left out of the album artist."""
+    assert musicbrainz.album_artist([credit("A", " & "), credit("B", " feat. "), credit("C")]) == "A & B"
+    assert musicbrainz.album_artist([credit("A", " (featuring "), credit("B", ")")]) == "A"
+    assert musicbrainz.album_artist([credit("A", " & "), credit("B")]) == "A & B"
+
+
+def test_track_tags_album_artist_without_featured_artists() -> None:
+    """A release by "A feat. B" has the album artist "A", but the IDs of both, like in Picard."""
+    release: JsonDict = {
+        **RELEASE,
+        "artist-credit": [credit("The Global", " feat. "), credit("Ben Ivor")],
+    }
+    medium, first_track = musicbrainz.release_tracks(release)[0]
+    tags = musicbrainz.track_tags(release, medium, first_track)
+    assert tags["albumartist"] == ["The Global"]
+    assert tags["musicbrainz_albumartistid"] == ["id-The Global", "id-Ben Ivor"]
+
+
 def test_credits_from_relations() -> None:
     """Relationships, also of works, become credit tags."""
     assert musicbrainz.credits_from_relations(GOODBYES_RELATIONS) == {
