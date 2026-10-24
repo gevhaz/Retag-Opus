@@ -4,12 +4,14 @@
 
 ### Added
 
-- For songs from the same album, the album artist, date, genre and album only
-  have to be chosen once.
 - Look up songs on MusicBrainz, enabled with the `--musicbrainz` flag or
   `musicbrainz = true` in the configuration file. MusicBrainz is used as one
   more source of tags, including track numbers, credits and MusicBrainz IDs.
-  Songs from the same album are looked up together.
+  Songs from the same album are looked up together. A song found by the words
+  of a video title is only used without asking if one of its artists is among
+  the words or is the YouTube channel.
+- For songs from the same album, the album artist, date, genre and album only
+  have to be chosen once.
 - Video titles like "Artist - Title" are split into the artist and the title,
   when one side is the existing artist, which `yt-dlp` sets to the YouTube
   channel.
@@ -18,64 +20,51 @@
 
 ### Changed
 
+- Python 3.13 or newer is now required.
+- `--album` (`-b`) is replaced by `--grouping` (`-g`), which puts songs in a mix
+  of your own by setting the `grouping` tag. The album stays the one the song is
+  from, instead of becoming the disc subtitle.
 - Credits are put in tags named as on MusicBrainz: "Vocals" in YouTube
   descriptions goes in `performer:lead vocals` instead of `performer:vocals`,
   "Drums" in `performer:drums (drum set)` instead of `performer:drums`, and
   "Writer" or "Written by" in `writer` instead of `lyricist`. Tags with the old
   names are left as they are.
+- Credits in YouTube descriptions are recognized when written in more ways,
+  e.g. "Backing Vocals", "Rhythm Guitar" or "Associated Performer, Theremin".
+  Unknown roles, e.g. "Makeup Artist", are no longer read as artists.
+- Programmers are no longer put in `performer:programming`, since programming
+  isn't an instrument.
 - All `performer:` tags are shown as performers, not only the ones parsed from
   YouTube descriptions.
-- Programmers are no longer put in `performer:programming`. Programming isn't
-  an instrument, and neither Quod Libet nor Picard has a tag for it.
-- Credits in YouTube descriptions are read as a role and a name, instead of
-  with one pattern per role. Roles are recognized when written in other ways,
-  e.g. "Backing Vocals" or "Rhythm Guitar", and any role after "Associated
-  Performer" in auto-generated descriptions is a performer's role, e.g.
-  "Associated Performer, Theremin". A role has to be a known one, so e.g.
-  "Makeup Artist" is no longer read as an artist.
 - The result shown before saving only lists performers that have a value or
-  were removed, instead of every performer that can be parsed from YouTube
-  descriptions.
+  were removed.
 - Notes about the YouTube video, like "(Official Video)" or "[Lyric Video]",
   and hashtags at the end are removed from titles.
-- A song found on MusicBrainz by the words of a video title is only used
-  without asking if one of its artists is among the words or is the YouTube
-  channel.
-- Notes about the video, like "(Official Video)", are left out when searching
-  MusicBrainz.
-- The auto-generated part of a YouTube description is read by its layout, also
-  when it's pasted among other text, which is then left out. Only there are the
-  organization, copyright and release date read. Copies whose layout was
-  changed, e.g. with all lines joined into one, no longer give a title or
-  organization made of several lines run together. Conflicts are asked about
-  with the title first.
+- The auto-generated part of a YouTube description is also found when it's
+  pasted among other text, which is then left out. The organization, copyright
+  and release date are only read from that part. Descriptions whose lines were
+  e.g. all joined into one no longer give a title or organization made of
+  several lines run together.
 - The values of a tag are listed in the same order everywhere: the YouTube
   description, tags parsed from the original tags, tags parsed from the YouTube
-  tags, MusicBrainz, and last the existing metadata. If the YouTube description
-  was written by the uploader rather than auto-generated, it and the tags
-  parsed from it come after MusicBrainz instead.
-- Python 3.13 or newer is now required.
-- `--album` (`-b`) is replaced by `--grouping` (`-g`), which puts songs in a mix
-  of your own by setting the `grouping` tag. The album stays the one the song is
-  from, instead of becoming the disc subtitle, and its tags from MusicBrainz,
-  like track numbers, are used.
-- Unset tags are shown in gray instead of black, so they are readable on dark
-  terminal backgrounds.
-- Colors are turned off when the `NO_COLOR` environment variable is set, and
-  can be forced on with `FORCE_COLOR`.
+  tags, MusicBrainz, and last the existing metadata. A YouTube description
+  written by the uploader rather than auto-generated, and the tags parsed from
+  it, come after MusicBrainz instead.
+- When a song has no value for a tag and the sources disagree on it, you are
+  asked which is right, instead of the first source being used.
 - The album artist is resolved like other tags. An existing album artist is
   kept when a source has the same, instead of being asked about for every song
   with several artists, and the choices are the sources' album artists instead
   of all artists. A missing album artist is no longer copied from the artists.
-- When a song has no value for a tag and the sources disagree on it, e.g. the
-  YouTube description and MusicBrainz on the album artist, you are asked which
-  is right, instead of the first source being used.
+- Unset tags are shown in gray instead of black, so they are readable on dark
+  terminal backgrounds.
+- Colors are turned off when the `NO_COLOR` environment variable is set, and
+  can be forced on with `FORCE_COLOR`.
 
 ### Removed
 
 - The `-a`/`--all` option. It never did anything: existing tags are parsed for
   all songs, whether or not they have a YouTube description.
-- The dependency on colorama.
 
 ### Fixed
 
@@ -92,21 +81,9 @@
   artist first, e.g. in "“Song (feat. B)” by A", and then B became the album
   artist.
 
-### Internal
-
-- Run CI and deployment on Python 3.13.
-- Drop the `pydub` test dependency, which doesn't work on Python 3.13, and
-  generate the test audio file with `ffmpeg` directly instead.
-- Update `flake8`, `coverage` and `pytest-cov` to versions that work on Python 3.12+.
-- Lower the required test coverage from 95.73% to 95%.
-- Spellcheck with Word Warden 1.1.0, which runs on Node 24 instead of Node 20.
-
 ## [0.4.1] - 2024-01-28
 
-### Internal
-
-- Update deploy workflow to use Trusted Publisher technology. This doesn't
-  affect users.
+No changes for users. Only the way releases are published changed.
 
 ## [0.4.0] - 2024-01-28
 
@@ -151,16 +128,14 @@
 
 ## [0.3.0] - 2022-05-30
 
-### Modified
+### Added
 
-- Restructure project to use Poetry.
-- Deploy this and future versions to PyPI through GitHub Actions.
+- Retag Opus can be installed from PyPI.
 
 ## [0.2.0] - 2022-05-22
 
 ### Added
 
-- Changelog
 - Suggest splitting `genre` and `artist` tags when appropriate.
 - Parse featuring artist from original `title` tag.
 - Ability to remove tag data when a tag conflict is found.
@@ -170,9 +145,8 @@
   is a live version.
 - Add `instrumental` as genre when data indicates song is instrumental.
 - Allow setting album manually with `--album` flag.
-- Add 'terminal menu' whenever user should select something. This is
-  provided by a separate package. It is more interactive and user
-  friendly than entering a number and pressing enter.
+- Add 'terminal menu' whenever user should select something. It is more
+  interactive and user friendly than entering a number and pressing enter.
 - Add ability to interactively choose the album artist from all known
   artists for song.
 - Add data to `version` tag about whether the song is remastered.
