@@ -214,8 +214,14 @@ def title_matches(title: str, text: str) -> bool:
     also lets e.g. "Requiem: Lacrimosa" match a text with just
     "Requiem", but the length has to match too, and fit() prefers
     results whose whole title is in the text.
+
+    When the title starts with the parenthesis, like "(Untitled)", the
+    parenthesis is the title rather than a note after it, so the whole
+    title has to be in the text.
     """
     main_title = words(re.split(r"[(\[:]", title)[0])
+    if not main_title:
+        main_title = words(title)
     return bool(main_title) and main_title <= words(text)
 
 

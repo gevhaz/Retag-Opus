@@ -265,7 +265,10 @@ def test_song_title_and_artists() -> None:
         ("Don\u2019t Go", "Don't Go", True),
         ("Don\u2019t Go", "Dont Go", False),
         ("Kaun Tujhe Unplugged", "KAUN TUJHE Full Video", False),
-        ("(Untitled)", "Untitled", False),
+        ("(Untitled)", "Untitled", True),
+        ("(Untitled)", "Song", False),
+        ("(;´༎ຶٹ༎ຶ`)", "(;´༎ຶٹ༎ຶ`) Oklou", True),
+        ("()", "Song", False),
     ],
 )
 def test_title_matches(title: str, text: str, expected: bool) -> None:
