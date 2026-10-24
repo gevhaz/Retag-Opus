@@ -24,9 +24,11 @@ def alternatives(tags: Tags) -> Tags:
 
     :return: Only the tags whose values differ from the given ones.
     """
-    tags_from_titles = parse_titles(tags)
+    # Parse the title with the split values, so that e.g. a featured
+    # artist is added to them instead of replaced by them
     split_tags = split_artists_and_genres(tags)
-    return tags_from_titles | split_tags
+    tags_from_titles = parse_titles(tags | split_tags)
+    return split_tags | tags_from_titles
 
 
 def parse_titles(tags: Tags) -> Tags:
