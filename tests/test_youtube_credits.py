@@ -35,7 +35,8 @@ def test_roles_by_category() -> None:
             "Rhythm Guitar, Lead Vocals: Sing Er",
             {"performer:guitar": ["Sing Er"], "performer:lead vocals": ["Sing Er"]},
         ),
-        # Like Picard, mastering and recording engineers aren't put in "engineer"
+        # Like Picard, mastering and recording engineers
+        # aren't put in "engineer"
         ("Studio  Personnel, Mixer, Mastering  Engineer: Engi Neer", {"mixer": ["Engi Neer"]}),
         # A category applies to the roles after it, up to the next one
         (
@@ -43,10 +44,12 @@ def test_roles_by_category() -> None:
             {"producer": ["Dan Nigro"], "performer:piano": ["Dan Nigro"], "performer:bass": ["Dan Nigro"]},
         ),
         ("Producer, Associated  Performer: Pro Ducer", {"producer": ["Pro Ducer"], "performer": ["Pro Ducer"]}),
-        # Programming isn't an instrument, even for an associated performer
+        # Programming isn't an instrument, even for an
+        # associated performer
         ("Associated Performer, Programming: Program Mer", {}),
         ("Associated Performer, Unknown: Some One", {}),
-        # Without "Associated Performer", an unknown role isn't assumed to be an instrument
+        # Without "Associated Performer", an unknown role
+        # isn't assumed to be an instrument
         ("Lacquer Cut: Cut Ter", {}),
         ("Released on: 2020-01-01", {}),
         ("Producer: ", {}),
@@ -55,5 +58,5 @@ def test_roles_by_category() -> None:
     ],
 )
 def test_parse_credit_line(line: str, expected_tags: dict[str, list[str]]) -> None:
-    """Credit lines become tags named after the standards in CLAUDE.md."""
+    """Credit lines become tags named as CLAUDE.md's standards say."""
     assert youtube_credits.parse_credit_line(line) == expected_tags

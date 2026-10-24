@@ -57,6 +57,9 @@ select = ["E", "W", "F", "I", "D", "B", "UP"]
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
 
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 72
+
 [tool.mypy]
 exclude = "^tests/test_app.py"
 disable_error_code = ["import-untyped"]

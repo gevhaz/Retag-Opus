@@ -12,7 +12,7 @@ class TestTagsParser(unittest.TestCase):
 
     @pytest.fixture(autouse=True)
     def store_capsys(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Store pytest's capsys, since unittest test methods can't take fixtures."""
+        """Store capsys, since unittest methods can't take fixtures."""
         self.capsys = capsys
 
     def test_clean_original_tags_no_change(self) -> None:

@@ -1,4 +1,4 @@
-"""Module for identifying songs on MusicBrainz and turning them into tags.
+"""Module for identifying songs on MusicBrainz and getting their tags.
 
 Songs from the same album are identified together as a release, when
 there is a release that has all of them. Other songs are identified by
@@ -140,7 +140,7 @@ def credits_from_relations(relations: list[JsonDict], credits: Tags | None = Non
 
 
 def release_tracks(release: JsonDict) -> list[tuple[JsonDict, JsonDict]]:
-    """Get all tracks on a release together with their medium, e.g. CD."""
+    """Get all tracks on a release with their medium, e.g. CD."""
     tracks = []
     for medium in release.get("media", []):
         for track in medium.get("tracks", []):
@@ -179,13 +179,14 @@ def track_tags(release: JsonDict, medium: JsonDict, track: JsonDict) -> Tags:
 
 
 def song_title_and_artists(tags: MusicTags) -> str:
-    """Get the title and artists of a song, to search for it and match it.
+    """Get a song's title and artists, to search for it and match it.
 
     Those are the title and artists from the YouTube description, e.g.
     "Proper Goodbyes The Global Ben Ivor". Without a description, it's
     the existing title, which is then usually a YouTube video title that
     also names e.g. the artists and the movie the song is from, like
-    "KAUN TUJHE Full Video | M.S. DHONI -THE UNTOLD STORY |Amaal Mallik".
+    "KAUN TUJHE Full Video | M.S. DHONI -THE UNTOLD STORY |Amaal
+    Mallik".
     Notes about the video, like "(Official Video)", are left out, so
     that they aren't taken for the title of a song.
     """
@@ -268,7 +269,11 @@ def format_length(milliseconds: int | None) -> str:
 
 
 def length_matches(milliseconds: int | None, seconds: float | None) -> bool:
-    """Check whether a length in milliseconds from MusicBrainz is the song's length in seconds."""
+    """Check whether a length from MusicBrainz is the song's length.
+
+    MusicBrainz gives the length in milliseconds, and the song's
+    length is in seconds.
+    """
     if milliseconds is None or seconds is None:
         return False
     return abs(milliseconds / 1000 - seconds) <= MAX_LENGTH_DIFFERENCE_SECONDS
@@ -299,7 +304,7 @@ def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None
         is_official = release.get("status") == "Official"
         has_youtube_date = release.get("date") in youtube_dates
         date = release.get("date") or "9999"  # Unknown dates last
-        # False sorts before True, so releases with a property come first
+        # Releases with a property come first, since False < True
         return not is_stored, not has_album_name, not is_official, not has_youtube_date, date
 
     # Tuples are compared item by item, so this is the release that's
@@ -308,7 +313,7 @@ def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None
 
 
 def matching_track_index(tracks: list[tuple[JsonDict, JsonDict]], tags: MusicTags) -> int | None:
-    """Find the track that a song is, by its title and, if known, length.
+    """Find the track that a song is, by title and, if known, length.
 
     :return: The index of the track in tracks, or None if no track is
         the song.
@@ -341,7 +346,7 @@ def match_tracks(release: JsonDict, songs: dict[Path, MusicTags]) -> dict[Path, 
 
 
 def stored_release_ids(songs: dict[Path, MusicTags]) -> list[str]:
-    """Get the IDs of the MusicBrainz releases stored in the songs' files."""
+    """Get the MusicBrainz release IDs stored in the songs' files."""
     release_ids: list[str] = []
     for tags in songs.values():
         for release_id in tags.values_from(ORIGINAL, "musicbrainz_albumid"):
@@ -407,7 +412,7 @@ class MusicBrainzMatcher:
         self.disabled = False
 
     def disable(self, error: MusicBrainzError) -> None:
-        """Stop using MusicBrainz, so that later songs don't wait for it."""
+        """Stop using MusicBrainz, so later songs don't wait for it."""
         messages.error(f"MusicBrainz: {error}. Not using MusicBrainz for the rest of this run.")
         self.disabled = True
 
@@ -492,7 +497,7 @@ class MusicBrainzMatcher:
         search well and have room for all the songs may be the album. Of
         them, those with fewest tracks, and of those the earliest, come
         first, so that the original standard edition is preferred over
-        e.g. a deluxe edition or a later remaster that also has the songs.
+        e.g. a deluxe edition or a later remaster with the same songs.
 
         :return: IDs of the releases.
         """
@@ -511,7 +516,7 @@ class MusicBrainzMatcher:
                 candidates.append(release)
 
         def preference(release: JsonDict) -> tuple[int, str]:
-            """Sort key that puts releases with fewest tracks first, earliest first."""
+            """Sort key for releases: fewest tracks, then earliest."""
             return release.get("track-count", 0), release.get("date") or "9999"
 
         candidates.sort(key=preference)
@@ -556,8 +561,8 @@ class MusicBrainzMatcher:
         else:
             query = words_to_match
             search_filters_by_song_artist = False
-        # Search until a result is surely the song, or the user picks one
-        # or skips the song
+        # Search until a result is surely the song, or the user picks
+        # one or skips the song
         while True:
             results = self.client.search_recordings(query) if query else []
             words_to_match_with_channel = " ".join([words_to_match] + tags.values_from(ORIGINAL, "artist"))

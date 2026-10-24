@@ -39,7 +39,7 @@ def quote_as_phrase(text: str) -> str:
 
 
 def exact_title_and_artist_query(title: str, artist: str) -> str:
-    """Get a query for recordings with exactly the given title and artist.
+    """Get a query for recordings with exactly this title and artist.
 
     E.g. 'recording:"Title" AND artist:"Name"'.
     """
@@ -51,7 +51,7 @@ class MusicBrainzError(Exception):
 
 
 class MusicBrainzClient:
-    """Rate limited and cached client for the MusicBrainz web service."""
+    """Rate limited, cached client for the MusicBrainz web service."""
 
     def __init__(
         self,
@@ -111,7 +111,8 @@ class MusicBrainzClient:
             except urllib.error.HTTPError as e:
                 if e.code == 404:
                     break
-                # When busy, wait for the next delay, unless all delays are used up
+                # When busy, wait for the next delay, unless all delays
+                # are used up
                 retry_delay = next(retry_delays, None)
                 if e.code == 503 and retry_delay is not None:
                     messages.warning(f"MusicBrainz is busy. Trying again in {retry_delay:g} seconds.")
@@ -159,7 +160,7 @@ class MusicBrainzClient:
         return self.get(f"recording/{mbid}", {"inc": "releases"})
 
     def lookup_release(self, mbid: str) -> JsonDict | None:
-        """Get a release with its tracks and everything needed to tag them.
+        """Get a release, its tracks and everything needed to tag them.
 
         The relationships of the recordings and of their works, such as
         performers and composers, are included, so one request is

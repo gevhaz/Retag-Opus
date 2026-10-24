@@ -20,7 +20,7 @@ class TestMusicTags(unittest.TestCase):
 
     @pytest.fixture(autouse=True)
     def store_capsys(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Store pytest's capsys, since unittest test methods can't take fixtures."""
+        """Store capsys, since unittest methods can't take fixtures."""
         self.capsys = capsys
 
     def test_print_metadata_key(self) -> None:
@@ -89,7 +89,7 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(expected, captured.out)
 
     def test_print_metadata_with_performer_tags_without_pattern(self) -> None:
-        """Test printing of performer tags that can't be parsed from descriptions.
+        """Test printing performer tags without a description pattern.
 
         They're printed after the ones that can, in alphabetical order.
         """
@@ -1507,7 +1507,7 @@ class TestMusicTags(unittest.TestCase):
         mock_show: MagicMock,
         mock_menu: MagicMock,
     ) -> None:
-        """Test that a song with several artists isn't asked about its album artist.
+        """Test the album artist of a song with several artists.
 
         The album artist is resolved like other tags, so the existing
         one is kept when a source has the same, however many artists
@@ -1525,7 +1525,7 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(["Singer"], tags.resolved.get("albumartist"))
 
     def test_resolve_metadata_fills_album_artist(self) -> None:
-        """Test that a song without an album artist gets the one a source has."""
+        """Test that a missing album artist is taken from a source."""
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"artist": ["Singer", "Other Singer"]})
         tags.set_tags(YOUTUBE, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]})
@@ -1541,7 +1541,7 @@ class TestMusicTags(unittest.TestCase):
         mock_show: MagicMock,
         mock_menu: MagicMock,
     ) -> None:
-        """Test that the user chooses the album artist when no source has the existing one.
+        """Test choosing an album artist when no source has the file's.
 
         E.g. the existing album artist has two values, which earlier
         versions could set, and the choices are the album artists of
@@ -1567,11 +1567,11 @@ class TestMusicTags(unittest.TestCase):
         mock_show: MagicMock,
         mock_menu: MagicMock,
     ) -> None:
-        """Test that album level tags from an earlier song are not asked about.
+        """Test not asking about an earlier song's album level tags.
 
-        Album level tags chosen for an earlier song on the same album should
-        be used even if they differ from the sources, and only the other
-        tags should be asked about.
+        Album level tags chosen for an earlier song on the same album
+        should be used even if they differ from the sources, and only
+        the other tags should be asked about.
         """
         mock_menu.return_value = None  # constructor requires terminal, not availabe in CI.
         mock_show.side_effect = [0]  # Youtube artist
@@ -1602,7 +1602,7 @@ class TestMusicTags(unittest.TestCase):
         self.assertEqual(["2019-01-01"], tags.resolved.get("date"))
 
     def test_get_album_level_tags(self) -> None:
-        """Test that only set and not removed album level tags are returned."""
+        """Test that album level tags are returned unless removed."""
         tags = MusicTags()
         tags.resolved = {
             "title": ["title 1"],
@@ -1796,7 +1796,7 @@ class TestMusicBrainzSource(unittest.TestCase):
 
     @pytest.fixture(autouse=True)
     def store_capsys(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Store pytest's capsys, since unittest test methods can't take fixtures."""
+        """Store capsys, since unittest methods can't take fixtures."""
         self.capsys = capsys
 
     def test_get_colored_values_from_all_sources_includes_musicbrainz(self) -> None:
@@ -1841,7 +1841,7 @@ class TestMusicBrainzSource(unittest.TestCase):
     @patch("simple_term_menu.TerminalMenu.__init__")
     @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_asks_when_sources_disagree(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
-        """Test that the user chooses a missing value when the sources disagree on it."""
+        """Test choosing a missing value the sources disagree on."""
         mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
         tags = MusicTags()
@@ -1856,7 +1856,11 @@ class TestMusicBrainzSource(unittest.TestCase):
     def test_resolve_metadata_prefers_musicbrainz_to_uploader_description(
         self, mock_show: MagicMock, mock_menu: MagicMock
     ) -> None:
-        """Test that MusicBrainz comes after an auto-generated description, but before an uploader's."""
+        """Test where MusicBrainz is in the order of preference.
+
+        It comes after an auto-generated description, but before one
+        that the uploader wrote.
+        """
         mock_show.return_value = 0
         mock_menu.return_value = None
         tags = MusicTags()
@@ -1899,7 +1903,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(["Don't Go"], tags.resolved["album"])
 
     def test_sources_agree_regardless_of_typography(self) -> None:
-        """Test that sources only differing in typography and case agree."""
+        """Test that typography and case don't make sources disagree."""
         tags = MusicTags()
         tags.set_tags(YOUTUBE, {"title": ["Don't Go"]})
         tags.set_tags(MUSICBRAINZ, {"title": ["Don’t go"]})
@@ -1920,7 +1924,7 @@ class TestMusicBrainzSource(unittest.TestCase):
     @patch("simple_term_menu.TerminalMenu.__init__")
     @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_offers_musicbrainz(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
-        """Test that MusicBrainz is a choice, with its own typography."""
+        """Test that MusicBrainz is a choice, in its own typography."""
         mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
         tags = MusicTags()
@@ -1939,7 +1943,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(["Don’t Go"], tags.resolved["title"])
 
     def test_resolve_metadata_sets_musicbrainz_ids_and_numbers_quietly(self) -> None:
-        """Test that tags that depend on the match are set without messages."""
+        """Test that tags from the match are set without messages."""
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"musicbrainz_trackid": ["old id"], "tracknumber": ["2"]})
         tags.set_tags(
@@ -1959,7 +1963,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual("Tracknumber: Metadata matches MusicBrainz.\n", out)
 
     def test_print_resolved_hides_musicbrainz_ids(self) -> None:
-        """Test that MusicBrainz IDs aren't printed, but track numbers are."""
+        """Test printing track numbers but not MusicBrainz IDs."""
         tags = MusicTags()
         tags.resolved = {"musicbrainz_trackid": ["id"], "tracknumber": ["2"]}
         tags.print_resolved()
@@ -1970,7 +1974,7 @@ class TestMusicBrainzSource(unittest.TestCase):
     @patch("simple_term_menu.TerminalMenu.__init__")
     @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_asks_about_other_release(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
-        """Test that the user chooses the album if MusicBrainz found another release."""
+        """Test asking for the album when MusicBrainz differs."""
         mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
         tags = MusicTags()
@@ -1995,7 +1999,7 @@ class TestMusicBrainzSource(unittest.TestCase):
     @patch("simple_term_menu.TerminalMenu.__init__")
     @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_keeps_release_tags_consistent(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
-        """Test that release tags aren't used if the album is another release."""
+        """Test that release tags aren't used for another release."""
         mock_show.return_value = 2  # Existing metadata
         mock_menu.return_value = None
         tags = MusicTags()
@@ -2024,7 +2028,10 @@ class TestMusicBrainzSource(unittest.TestCase):
     def test_resolve_metadata_keeps_release_tags_of_same_album(
         self, mock_show: MagicMock, mock_menu: MagicMock
     ) -> None:
-        """Test that release tags are kept if the album is the release, e.g. remastered."""
+        """Test keeping release tags if the album is the release.
+
+        That's so even if the album's name has a note like "Remastered".
+        """
         mock_show.return_value = 0  # The album as written in the YouTube description
         mock_menu.return_value = None
         tags = MusicTags()
@@ -2036,11 +2043,11 @@ class TestMusicBrainzSource(unittest.TestCase):
 
 @patch.dict(os.environ, {"FORCE_COLOR": "1", "NO_COLOR": ""})
 class TestMusicTagsColors(unittest.TestCase):
-    """Test that tags are printed in the style that tells what they are."""
+    """Test that tags are printed in a style telling what they are."""
 
     @pytest.fixture(autouse=True)
     def store_capsys(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Store pytest's capsys, since unittest test methods can't take fixtures."""
+        """Store capsys, since unittest methods can't take fixtures."""
         self.capsys = capsys
 
     def test_get_colored_values_from_all_sources_styles_sources(self) -> None:
@@ -2061,7 +2068,7 @@ class TestMusicTagsColors(unittest.TestCase):
         self.assertListEqual(expected, tags.get_colored_values_from_all_sources("artist"))
 
     def test_print_resolved_styles_changes(self) -> None:
-        """Test that changed, removed, unchanged and unset tags are styled."""
+        """Test styling changed, removed, unchanged and unset tags."""
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "title": ["title 1"], "producer": ["someone"]})
         tags.resolved = {"artist": ["artist 1"], "title": ["title 2"], "producer": ["[Removed]"]}
@@ -2073,7 +2080,7 @@ class TestMusicTagsColors(unittest.TestCase):
         self.assertIn("  Album: " + styles.unset("Not found"), lines)
 
     def test_print_all_styles_unset_tags(self) -> None:
-        """Test that tags without a value in any source are styled as unset."""
+        """Test that tags no source has a value for look unset."""
         tags = MusicTags()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
         tags.print_all()

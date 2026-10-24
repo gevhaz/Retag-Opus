@@ -89,7 +89,7 @@ def parse(lines: list[str]) -> Tags:
     title_and_artists = lines[1].strip().split(TITLE_AND_ARTIST_SEPARATOR)
     tags["title"] = [title_and_artists[0]]
     artists = title_and_artists[1:]
-    # Some labels list all artists after one separator, e.g. "Song · A, B"
+    # Some labels put all artists after one separator: "Song · A, B"
     if len(artists) == 1 and ", " in artists[0]:
         artists = utils.split_tag(artists[0])
     if artists:

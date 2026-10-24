@@ -23,7 +23,7 @@ def use_color() -> bool:
 
 
 def ansi(code: str) -> Style:
-    """Create a style that colors text with the given ANSI color code."""
+    """Create a style that colors text with an ANSI color code."""
 
     def apply(text: str) -> str:
         if not use_color():

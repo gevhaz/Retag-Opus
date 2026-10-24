@@ -20,7 +20,10 @@ def test_find() -> None:
 
 
 def test_find_without_layout() -> None:
-    """Without the first, title or last line, there's no auto-generated part."""
+    """No auto-generated part is found without its key lines.
+
+    The key lines are the first line, the title line and the last line.
+    """
     assert auto_generated_description.find(AUTO_GENERATED_LINES[:-1]) is None
     assert auto_generated_description.find(AUTO_GENERATED_LINES[1:]) is None
     changed_title_line = AUTO_GENERATED_LINES.copy()
