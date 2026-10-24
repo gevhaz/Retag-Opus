@@ -11,11 +11,23 @@ from retag_opus import constants, utils
 Tags = dict[str, list[str]]
 
 
-def parse_tags(tags: Tags) -> Tags:
-    """Look through old tags for metadata.
+def parse(tags: Tags, split_values: bool = False) -> Tags:
+    """Parse tags for metadata that belongs in other tags.
 
-    Go through some of the existing tags and see if they contain
-    information that should go into another tag.
+    For example, the title "Song (Live) (feat. Singer)" gives the title
+    "Song", the version "Live" and the artist "Singer", and the title
+    "Song [Instrumental]" gives the genre "Instrumental".
+    A video title like "Artist - Song" is split into the artist and the
+    title when one side is the existing artist.
+
+    :param tags: The tags to parse, e.g. the ones in a song's file.
+    :param split_values: Whether to also split a single artist or
+        genre on predefined separators, e.g. "Rock; Pop" into "Rock"
+        and "Pop". The split values replace those parsed from the
+        title.
+
+    :return: Only the tags whose values differ from those in the given
+        tags.
     """
     parsed_tags: Tags = {}
     original_titles = tags.get("title", [])
@@ -83,15 +95,22 @@ def parse_tags(tags: Tags) -> Tags:
     has_new_featured_artists = set(featured_artists) != set(original_artists) and len(featured_artists) > 0
     if artist_differs_in_title or has_new_featured_artists:
         parsed_tags["artist"] = utils.remove_duplicates(artists_of_song + featured_artists)
+
+    if split_values:
+        parsed_tags.update(split_artists_and_genres(tags))
     return parsed_tags
 
 
-def split_select_original_tags(tags: Tags) -> Tags:
-    """Split certain original tags on predefined separators.
+def split_artists_and_genres(tags: Tags) -> Tags:
+    """Split a single artist or genre on predefined separators.
 
-    Split the genre and artist tag into a list if they contains
-    pre-defined separators. New tags are only set if there is
-    anything that differs from the old tags.
+    For example, the artist "Singer, Guitarist" becomes "Singer" and
+    "Guitarist". Tags that already have several values, or that have
+    nothing to split, are left out.
+
+    :param tags: The tags to split values of.
+
+    :return: The artist and genre tags that were split.
     """
     split_tags: Tags = {}
     tags_to_split = ["genre", "artist"]
@@ -99,7 +118,7 @@ def split_select_original_tags(tags: Tags) -> Tags:
     for tag in tags_to_split:
         original_values = tags.get(tag)
         if original_values is not None and len(original_values) == 1:
-            split_values = utils.split_tag(original_values[0])
-            if split_values != original_values:
-                split_tags[tag] = split_values
+            split_tag_values = utils.split_tag(original_values[0])
+            if split_tag_values != original_values:
+                split_tags[tag] = split_tag_values
     return split_tags
