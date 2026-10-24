@@ -20,3 +20,4 @@ pypi
 reshown
 retag
 uploader
+uv
