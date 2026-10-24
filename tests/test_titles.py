@@ -201,3 +201,9 @@ class TestTitles(unittest.TestCase):
         self.assertTrue(titles.is_instrumental("Song (Instrumental)"))
         self.assertTrue(titles.is_instrumental("Song [instrumental version]"))
         self.assertFalse(titles.is_instrumental("Song (Live)"))
+
+    def test_find_parts(self) -> None:
+        """Test finding the parts that the given patterns find."""
+        title = "Song (Live) - 2007 Remaster"
+        self.assertEqual(["Live", "2007 Remaster"], titles.find_parts(title, ["live", "remaster_after_dash"]))
+        self.assertEqual([], titles.find_parts(title, ["featuring"]))
