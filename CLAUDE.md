@@ -25,6 +25,12 @@
 - Keep the words in `.github/data/project-dictionary.txt` sorted
   alphabetically, with uppercase before lowercase.
 
+# Writing
+
+- Write pull request descriptions and commit messages for a reader who
+  reads them first, to get oriented, and only then looks at the code.
+  Don't assume they already have a specific part of the code in mind.
+
 # Commits
 
 - Write the subject in the imperative mood, capitalized, without a full
