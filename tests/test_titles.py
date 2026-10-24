@@ -184,11 +184,11 @@ class TestTitles(unittest.TestCase):
         self.assertEqual(["Singer"], titles.featured_artists("Song ft. Singer"))
         self.assertEqual([], titles.featured_artists("Song (Live)"))
 
-    def test_text_before_featured_artists(self) -> None:
-        """Test getting the text before the featured artists."""
-        self.assertEqual("A & B", titles.text_before_featured_artists("A & B feat. C"))
-        self.assertEqual("A", titles.text_before_featured_artists("A (featuring C)"))
-        self.assertEqual("A & B", titles.text_before_featured_artists("A & B"))
+    def test_remove_featured_artists(self) -> None:
+        """Test removing the featured artists from a title or credit."""
+        self.assertEqual("A & B", titles.remove_featured_artists("A & B feat. C"))
+        self.assertEqual("A & D", titles.remove_featured_artists("A (feat. C) & D"))
+        self.assertEqual("A & B", titles.remove_featured_artists("A & B"))
 
     def test_versions(self) -> None:
         """Test getting the versions of a song named in its title."""

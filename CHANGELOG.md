@@ -10,6 +10,8 @@
 - When an artist or genre in a song's file is split, e.g. "Singer, Guitarist",
   a featured artist or the "Instrumental" genre from the title is no longer
   dropped.
+- The album artist from MusicBrainz keeps the artists credited after the
+  featured artists, e.g. "A (feat. C) & D" gives "A & D" instead of "A".
 
 ## [0.5.0] - 2026-10-24
 

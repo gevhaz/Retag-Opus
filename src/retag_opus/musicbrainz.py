@@ -72,10 +72,10 @@ def album_artist(album_credit: list[JsonDict]) -> str:
 
     The album artist is the artist the album is by, so featured artists
     are left out, like they are from titles. A release credited to
-    "A & B feat. C" or "A (feat. C)" has the album artist "A & B" or
-    "A".
+    "A & B feat. C" or "A (feat. C) & D" has the album artist "A & B" or
+    "A & D".
     """
-    return titles.text_before_featured_artists(joined_credit(album_credit))
+    return titles.remove_featured_artists(joined_credit(album_credit))
 
 
 def artist_ids(artist_credit: list[JsonDict]) -> list[str]:
