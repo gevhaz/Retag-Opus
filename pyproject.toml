@@ -1,3 +1,38 @@
+[project]
+name = "retag_opus"
+version = "0.5.0"
+description = "An app to tag music files downloaded from Youtube with all the information available in the Youtube description."
+authors = [{ name = "Simon Bengtsson", email = "gevhaz@tutanota.com" }]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+readme = "README.md"
+requires-python = ">=3.13"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "mutagen>=1.45.1",
+    "simple-term-menu>=1.4.1",
+    "shtab>=1.5.4",
+]
+
+[project.scripts]
+retag = "retag_opus.app:run"
+
+[dependency-groups]
+dev = [
+    "black>=26.10.1",
+    "isort[colors]>=9.0.2",
+    "mypy>=2.4.0",
+    "flake8>=7.1",
+    "flake8-docstrings>=1.6.0",
+    "coverage>=7.6",
+    "pytest-cov>=7.1.0",
+    "pytest>=9.1.1",
+]
+
 [tool.coverage.run]
 branch = true
 source = [ "./src/retag_opus/" ]
@@ -27,33 +62,6 @@ line_length = 120
 exclude = "^tests/test_app.py"
 disable_error_code = ["import-untyped"]
 
-[tool.poetry]
-name = "retag_opus"
-version = "0.5.0"
-description = "An app to tag music files downloaded from Youtube with all the information available in the Youtube description."
-authors = ["Simon Bengtsson <gevhaz@tutanota.com>"]
-license = "GPL-3.0-or-later"
-readme = "README.md"
-
-[tool.poetry.scripts]
-retag = "retag_opus.app:run"
-
-[tool.poetry.dependencies]
-python = "^3.13"
-mutagen = "^1.45.1"
-simple-term-menu = "^1.4.1"
-shtab = "^1.5.4"
-
-[tool.poetry.group.dev.dependencies]
-black = "^26.10.1"
-isort = {version = "^9.0.2", extras = ["colors"]}
-mypy = "^2.4.0"
-flake8 = "^7.1"
-flake8-docstrings = "^1.6.0"
-coverage = "^7.6"
-pytest-cov = "^7.1.0"
-pytest = "^9.1.1"
-
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.11.32,<0.12"]
+build-backend = "uv_build"
