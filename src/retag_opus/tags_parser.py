@@ -5,11 +5,8 @@ that the YouTube description.
 """
 
 import re
-from typing import Final
 
 from retag_opus import constants, utils
-
-INTERPUNCT: Final[str] = "\u00b7"
 
 
 class TagsParser:
