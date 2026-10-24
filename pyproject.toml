@@ -23,14 +23,11 @@ retag = "retag_opus.app:run"
 
 [dependency-groups]
 dev = [
-    "black>=26.10.1",
-    "isort[colors]>=9.0.2",
     "mypy>=2.4.0",
-    "flake8>=7.1",
-    "flake8-docstrings>=1.6.0",
     "coverage>=7.6",
     "pytest-cov>=7.1.0",
     "pytest>=9.1.1",
+    "ruff>=0.17.2",
 ]
 
 [tool.coverage.run]
@@ -51,12 +48,14 @@ exclude_lines = [
 pythonVersion = "3.13"
 pythonPlatform = "Linux"
 
-[tool.black]
+[tool.ruff]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-line_length = 120
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
 
 [tool.mypy]
 exclude = "^tests/test_app.py"

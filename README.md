@@ -218,9 +218,8 @@ $ uv run retag --directory /path/to/directory/with/your/opus/files
 Run the same checks as CI:
 
 ```console
-$ uv run flake8
-$ uv run black --check .
-$ uv run isort --check .
+$ uv run ruff check
+$ uv run ruff format --check
 $ uv run mypy --strict .
 $ uv run pytest --cov
 ```
