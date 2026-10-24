@@ -16,7 +16,7 @@ from typing import Final
 
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants, messages, styles, utils
+from retag_opus import constants, messages, styles, titles, utils
 from retag_opus.music_tags import ORIGINAL, YOUTUBE, MusicTags
 from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrainzError, exact_title_and_artist_query
 
@@ -75,11 +75,7 @@ def album_artist(album_credit: list[JsonDict]) -> str:
     "A & B feat. C" or "A (feat. C)" has the album artist "A & B" or
     "A".
     """
-    printed_credit = joined_credit(album_credit)
-    featuring_match = re.match(constants.title_parse_patterns["featuring"], printed_credit)
-    if featuring_match:
-        return featuring_match.group(1).strip()
-    return printed_credit
+    return titles.text_before_featured_artists(joined_credit(album_credit))
 
 
 def artist_ids(artist_credit: list[JsonDict]) -> list[str]:
@@ -197,7 +193,7 @@ def song_title_and_artists(tags: MusicTags) -> str:
         return " ".join([youtube_titles[0]] + youtube_artists)
     existing_titles = tags.values_from(ORIGINAL, "title")
     if existing_titles:
-        return utils.remove_video_notes(existing_titles[0])
+        return titles.remove_video_notes(existing_titles[0])
     return ""
 
 
@@ -293,14 +289,14 @@ def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None
     stored_release_ids = tags.values_from(ORIGINAL, "musicbrainz_albumid")
     album_names_in_tags = set()
     for album_name in tags.values_from(YOUTUBE, "album") + tags.values_from(ORIGINAL, "album"):
-        album_names_in_tags.add(utils.normalize(utils.prune_title(album_name)))
+        album_names_in_tags.add(utils.normalize(titles.prune_title(album_name)))
 
     youtube_dates = tags.values_from(YOUTUBE, "date")
 
     def preference(release: JsonDict) -> tuple[bool, bool, bool, bool, str]:
         """Sort key that puts the preferred releases first."""
         is_stored = release["id"] in stored_release_ids
-        has_album_name = utils.normalize(utils.prune_title(release.get("title", ""))) in album_names_in_tags
+        has_album_name = utils.normalize(titles.prune_title(release.get("title", ""))) in album_names_in_tags
         is_official = release.get("status") == "Official"
         has_youtube_date = release.get("date") in youtube_dates
         date = release.get("date") or "9999"  # Unknown dates last
@@ -509,7 +505,7 @@ class MusicBrainzMatcher:
                 break
 
         candidates = []
-        for release in self.client.search_releases(utils.prune_title(album), artist):
+        for release in self.client.search_releases(titles.prune_title(album), artist):
             matches_search = release.get("score", 0) >= MIN_RELEASE_SEARCH_SCORE
             has_room_for_songs = release.get("track-count", 0) >= len(songs)
             if matches_search and has_room_for_songs:
@@ -554,7 +550,7 @@ class MusicBrainzMatcher:
         youtube_titles = tags.values_from(YOUTUBE, "title")
         youtube_artists = tags.values_from(YOUTUBE, "artist")
         if youtube_titles and youtube_artists:
-            query = exact_title_and_artist_query(title=utils.prune_title(youtube_titles[0]), artist=youtube_artists[0])
+            query = exact_title_and_artist_query(title=titles.prune_title(youtube_titles[0]), artist=youtube_artists[0])
             # MusicBrainz only finds recordings whose artist credit has
             # the artist in the query, e.g. artist:"Name"
             search_filters_by_song_artist = True
