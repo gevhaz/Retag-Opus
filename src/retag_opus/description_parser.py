@@ -55,7 +55,7 @@ def parse_uploader_text(lines: list[str]) -> Tags:
 
 
 def non_empty_lines(description: str) -> list[str]:
-    """Get the lines of a description that aren't empty or only whitespace."""
+    """Get the lines of a description that aren't blank."""
     lines = []
     for line in description.splitlines():
         if line.strip():
@@ -64,7 +64,7 @@ def non_empty_lines(description: str) -> list[str]:
 
 
 def is_auto_generated(description: str) -> bool:
-    """Check whether a YouTube description has a part that YouTube generated.
+    """Check whether a YouTube description has an auto-generated part.
 
     Such a part comes from the label's data, so it's more reliable than
     text written by the uploader. It counts even if the uploader pasted

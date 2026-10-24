@@ -43,12 +43,12 @@ def music_directory():
 
 
 def create_silent_opus_file(path: Path) -> None:
-    """Write one second of silence encoded as opus, without tags, to path."""
+    """Write one second of silent opus audio, without tags, to path."""
     shutil.copyfile(SILENT_OPUS_FILE, path)
 
 
 def test_print_version(capsys):
-    """Test that the version printed is the one in the package metadata."""
+    """Test that --version prints the package metadata's version."""
     with pytest.raises(SystemExit):
         app.run(["--version"])
     out, _ = capsys.readouterr()
@@ -65,7 +65,7 @@ def test_print_help(capsys):
 
 
 def test_print_completion_script(capsys):
-    """Test that the printed completion script completes the app's options.
+    """Test that the completion script completes the app's options.
 
     The rest of the script is shtab's, and changes between its versions.
     """
@@ -607,7 +607,7 @@ def write_opus_file(path: Path, metadata: dict[str, list[str]]) -> None:
 
 
 def test_read_song_notes_whether_description_is_auto_generated():
-    """Whether a description is auto-generated decides how much it's trusted."""
+    """Trust a description more if it's auto-generated."""
     with TemporaryDirectory() as temp_dir:
         auto_generated = Path(temp_dir) / "auto_generated.opus"
         by_uploader = Path(temp_dir) / "by_uploader.opus"
@@ -837,7 +837,7 @@ def test_match_albums():
     ],
 )
 def test_musicbrainz_without_visible_changes(monkeypatch, capsys, found, expected_output, expected_trackid):
-    """Don't ask about saving when nothing the user can check changes."""
+    """Don't ask to save when nothing the user can check changes."""
     menu = Mock()
     monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", menu)
     matcher = Mock()

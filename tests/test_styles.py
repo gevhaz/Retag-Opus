@@ -15,14 +15,14 @@ def force_color(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_no_color_wins_over_force_color(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test that NO_COLOR turns colors off even when FORCE_COLOR is set."""
+    """Test that NO_COLOR turns colors off despite FORCE_COLOR."""
     monkeypatch.setenv("FORCE_COLOR", "1")
     assert not styles.use_color()
 
 
 @pytest.mark.usefixtures("force_color")
 def test_force_color_without_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test that FORCE_COLOR turns colors on when stdout is not a terminal."""
+    """Test that FORCE_COLOR colors output that isn't a terminal."""
     monkeypatch.setattr("sys.stdout", MagicMock(isatty=MagicMock(return_value=False)))
     assert styles.use_color()
 
@@ -38,7 +38,7 @@ def test_terminal_decides_by_default(monkeypatch: pytest.MonkeyPatch, is_termina
 
 @pytest.mark.usefixtures("force_color")
 def test_ansi_colors_and_resets() -> None:
-    """Test that a style wraps text in its color and resets the color after."""
+    """Test that a style colors text and resets the color after."""
     assert styles.ansi("31")("text") == "\x1b[31mtext\x1b[39m"
 
 
@@ -63,6 +63,9 @@ def test_sources_have_different_colors() -> None:
 
 @pytest.mark.usefixtures("force_color")
 def test_changes_have_different_colors() -> None:
-    """Test that changed, removed, unchanged and unset tags look different."""
+    """Test that each kind of tag has its own look.
+
+    The kinds are changed, removed, unchanged and unset.
+    """
     changes = [styles.changed, styles.removed, styles.original, styles.unset]
     assert len({change("text") for change in changes}) == len(changes)

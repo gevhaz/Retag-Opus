@@ -19,7 +19,7 @@ def test_message_prints_line(capsys: pytest.CaptureFixture[str], message: Callab
 def test_message_kinds_have_different_colors(
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Test that errors, warnings, successes and info can be told apart."""
+    """Test that errors, warnings, successes and info differ."""
     monkeypatch.delenv("NO_COLOR")
     monkeypatch.setenv("FORCE_COLOR", "1")
     kinds = [messages.error, messages.warning, messages.success, messages.info]

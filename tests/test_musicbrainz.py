@@ -21,7 +21,7 @@ def credit(name: str, joinphrase: str = "") -> JsonDict:
 
 
 def artist_relation(relation_type: str, name: str, attributes: list[str] | None = None) -> JsonDict:
-    """Create an artist relationship like the ones MusicBrainz returns."""
+    """Create an artist relationship as MusicBrainz returns them."""
     return {
         "type": relation_type,
         "target-type": "artist",
@@ -92,7 +92,10 @@ def test_album_artist() -> None:
 
 
 def test_track_tags_album_artist_without_featured_artists() -> None:
-    """A release by "A feat. B" has the album artist "A", but the IDs of both, like in Picard."""
+    """A release by "A feat. B" has the album artist "A".
+
+    The album artist IDs are still those of both, like in Picard.
+    """
     release: JsonDict = {
         **RELEASE,
         "artist-credit": [credit("The Global", " feat. "), credit("Ben Ivor")],
@@ -119,7 +122,10 @@ def test_credits_from_relations() -> None:
 
 
 def test_relation_tag_names() -> None:
-    """Vocals and instruments get a performer tag each, named as on MusicBrainz."""
+    """Vocals and instruments each get a performer tag.
+
+    The tags are named as on MusicBrainz.
+    """
     assert musicbrainz.relation_tag_names(artist_relation("instrument", "A", ["guest", "electric bass guitar"])) == [
         "performer:electric bass guitar"
     ]
@@ -291,7 +297,11 @@ def test_length_matches() -> None:
 
 
 def test_choose_release() -> None:
-    """Prefer the stored release, the named album, official releases, YouTube's date, then the earliest."""
+    """Pick releases in a fixed order of preference.
+
+    Prefer the stored release, the named album, official releases,
+    YouTube's date, then the earliest.
+    """
     releases = SEARCH_RESULT["releases"]
     stored = song(original={"musicbrainz_albumid": ["bootleg"], "album": ["Goodbyes"]})
     assert musicbrainz.choose_release(releases, stored)["id"] == "bootleg"  # type: ignore[index]
@@ -354,7 +364,7 @@ def test_match_song_from_video_title() -> None:
 
 
 def test_match_song_prefers_title_that_was_searched_for() -> None:
-    """Among results as long as the song, use the one with the searched title."""
+    """Of results as long as the song, prefer the searched title."""
     client = fake_client()
     mix = {**SEARCH_RESULT, "id": "mix", "title": "Proper Goodbyes (5.1 mix)"}
     client.search_recordings.return_value = [{**SEARCH_RESULT, "length": 100}, mix, SEARCH_RESULT]
@@ -422,14 +432,14 @@ def test_match_song_by_channel() -> None:
 
 
 def test_match_song_asks_when_artist_not_in_text(menu: MagicMock) -> None:
-    """Let the user pick a result by another artist with the searched title."""
+    """Let the user pick a same-titled result by another artist."""
     menu.return_value.show.return_value = 0
     MusicBrainzMatcher(fake_client()).match_song(song(original={"title": ["Proper Goodbyes - Someone"]}))
     menu.assert_called_once()
 
 
 def test_match_song_asks_when_title_not_in_text(menu: MagicMock) -> None:
-    """Let the user pick a result when its title isn't what was searched for."""
+    """Let the user pick a result whose title wasn't searched for."""
     menu.return_value.show.return_value = 0
     MusicBrainzMatcher(fake_client()).match_song(song(original={"title": ["Something Else"]}))
     menu.assert_called_once()
@@ -460,7 +470,7 @@ def test_match_song_edit_search(menu: MagicMock, typed: list[str]) -> None:
 
 
 def test_match_song_without_title(menu: MagicMock, typed: list[str]) -> None:
-    """Without a title, nothing is searched for until the user says what."""
+    """Without a title, search only for what the user enters."""
     menu.return_value.show.side_effect = [0, 1]
     typed += [""]
     client = fake_client()
@@ -535,7 +545,7 @@ def test_match_album(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_match_album_no_release(capsys: pytest.CaptureFixture[str]) -> None:
-    """Look up at most a few releases, and give up if none has all songs."""
+    """Give up after a few releases if none has all songs."""
     client = fake_client()
     client.search_releases.return_value = [{"id": str(n), "score": 100, "track-count": 9} for n in range(5)]
     client.lookup_release.return_value = None
@@ -555,7 +565,7 @@ def test_match_album_disabled_after_error() -> None:
 
 
 def test_search_album_releases() -> None:
-    """Search for releases that may be the album, smallest and earliest first."""
+    """Find possible album releases, smallest and earliest first."""
     client = fake_client()
     client.search_releases.return_value = [
         {"id": "remaster", "score": 100, "track-count": 2, "date": "2011"},
@@ -577,7 +587,7 @@ def test_stored_release_ids() -> None:
 
 
 def test_match_album_tries_stored_release_first() -> None:
-    """Search for releases when the stored release doesn't have all songs."""
+    """Search for releases if the stored one lacks some songs."""
     client = fake_client()
     client.search_releases.return_value = RELEASE_RESULTS
     client.lookup_release.side_effect = lambda mbid: RELEASE if mbid == "rel-1" else None

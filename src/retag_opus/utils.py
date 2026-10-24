@@ -65,7 +65,7 @@ def names_artist(text: str, artist: str) -> bool:
 
 
 def remove_quotes(title: str) -> str:
-    """Remove quotes around a title, e.g. "'softscars'" becomes "softscars"."""
+    """Remove quotes around a title: "'softscars'" → "softscars"."""
     if len(title) >= 2 and QUOTE_PAIRS.get(title[0]) == title[-1]:
         return title[1:-1].strip()
     return title
@@ -95,19 +95,19 @@ def split_artist_from_title(title: str, artists: list[str]) -> tuple[str, str, s
     """
     # re.finditer() finds every dash with spaces around it, from left to
     # right. Each match knows where in the title it is: span() gives the
-    # index where the dash and its spaces start and the index right after
-    # them. In "A - B - C", they are (1, 4) and (5, 8).
+    # index where the dash and its spaces start and the index right
+    # after them. In "A - B - C", they are (1, 4) and (5, 8).
     separators = list(re.finditer(ARTIST_TITLE_SEPARATOR, title))
     if not separators:
         return None
     first_separator_start, first_separator_end = separators[0].span()
     last_separator_start, last_separator_end = separators[-1].span()
 
-    # The artist is either before the first dash, as in "Artist - Title",
-    # or after the last one, as in "Title - Artist". The song title is
-    # all the rest, so that it keeps any dash of its own, e.g. "Artist -
-    # Song (Song - 2021)". In "A - B - C", the text before the first dash
-    # is "A", and the text after the last dash is "C".
+    # The artist is either before the first dash, as in "Artist -
+    # Title", or after the last one, as in "Title - Artist". The song
+    # title is all the rest, so that it keeps any dash of its own, e.g.
+    # "Artist - Song (Song - 2021)". In "A - B - C", the text before the
+    # first dash is "A", and the text after the last dash is "C".
     text_before_first_separator = title[:first_separator_start]
     text_after_last_separator = title[last_separator_end:]
     for artist in artists:

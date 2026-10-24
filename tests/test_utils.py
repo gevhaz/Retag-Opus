@@ -98,7 +98,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("A song", utils.prune_title(unpruned_title_4))
 
     def test_prune_video_notes_from_title(self) -> None:
-        """Test that notes about a YouTube video are pruned from title."""
+        """Test pruning notes about a YouTube video from a title."""
         video_titles = [
             "A song (Official Video)",
             "A song (official audio)",
@@ -119,12 +119,12 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("Revolution #9", utils.prune_title("Revolution #9"))
 
     def test_remove_video_notes(self) -> None:
-        """Test that only notes about the video are removed from a video title."""
+        """Test that only video notes are removed from a video title."""
         self.assertEqual("Song (Live)", utils.remove_video_notes("Song (Live) (Official Video) #rock"))
         self.assertEqual("Song ft. Artist", utils.remove_video_notes("Song ft. Artist [Lyric Video]"))
 
     def test_split_artist_from_title(self) -> None:
-        """Test that video titles are split where one side is the artist."""
+        """Test splitting video titles where one side is the artist."""
         self.assertEqual(
             ("James Blunt", "James Blunt", "Bonfire Heart"),
             utils.split_artist_from_title("James Blunt - Bonfire Heart", ["James Blunt"]),
@@ -147,8 +147,8 @@ class TestUtils(unittest.TestCase):
         )
 
     def test_split_artist_from_title_without_artist(self) -> None:
-        """Test that video titles where no side is the artist aren't split."""
-        # The lyricist and the composer of a song Annelie Lockneman sings
+        """Test not splitting video titles without an artist side."""
+        # Lyricist and composer of a song that Annelie Lockneman sings
         self.assertIsNone(utils.split_artist_from_title("Lucia - Karlfeldt & Hazelius", ["Annelie Lockneman"]))
         self.assertIsNone(utils.split_artist_from_title("Naanum Rowdy Dhaan - Thangamey", ["Wunderbar Films"]))
         self.assertIsNone(utils.split_artist_from_title("Love - Live", ["Love Bites"]))

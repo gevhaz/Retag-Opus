@@ -78,8 +78,9 @@ ROLE_TAGS: Final[dict[str, list[str]]] = {
 
 
 def normalize_role(role: str) -> str:
-    """Make a role comparable, e.g. "Associated  Performer" → "associated performer".
+    """Make a role comparable by normalizing spaces and case.
 
+    E.g. "Associated  Performer" becomes "associated performer", since
     YouTube sometimes puts two spaces between the words of a role.
     """
     return " ".join(role.split()).lower()
@@ -158,7 +159,7 @@ def parse_credit_line(line: str) -> Tags:
     tags: Tags = {}
     for category, roles in roles_by_category(roles_text):
         is_performer_category = category in PERFORMER_CATEGORIES
-        # E.g. "Associated Performer: Freddie Mercury", with no instrument
+        # E.g. "Associated Performer: Freddie Mercury", no instrument
         if is_performer_category and not roles:
             tags["performer"] = [contributor_name]
         for role in roles:

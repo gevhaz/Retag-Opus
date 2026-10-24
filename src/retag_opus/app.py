@@ -158,7 +158,7 @@ def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
 
 
 def save_tags(opus_file: OggOpus, tags: Tags) -> None:
-    """Write tags to a song's file, and delete the ones marked as removed."""
+    """Write tags to a song's file, deleting those marked as removed."""
     for tag_name, values in tags.items():
         if values == REMOVED_TAG:
             opus_file.pop(tag_name, None)  # type: ignore
@@ -212,7 +212,7 @@ def run(argv: Sequence[str] | None = None) -> int:
     saved_album_level_tags: dict[str, Tags] = {}
 
     use_musicbrainz = args.musicbrainz if args.musicbrainz is not None else config.get("musicbrainz", False)
-    # One matcher for all songs, so that its cache and rate limit are shared
+    # One matcher for all songs, so they share its cache and rate limit
     matcher = MusicBrainzMatcher() if use_musicbrainz else None
     musicbrainz_tags_per_song = match_albums(matcher, shared_album_per_song) if matcher is not None else {}
     tags_to_delete = config.get("tags_to_delete", [])
@@ -259,8 +259,8 @@ def run(argv: Sequence[str] | None = None) -> int:
                 return 0
 
             # 4.7 Don't ask about saving when nothing that the user can
-            # check would change, but save new MusicBrainz IDs, which the
-            # user can only check by the MusicBrainz match
+            # check would change, but save new MusicBrainz IDs, which
+            # the user can only check by the MusicBrainz match
             changed_tag_names = tags.changed_tags()
             if all(tag.startswith(constants.MUSICBRAINZ_ID_PREFIX) for tag in changed_tag_names):
                 if changed_tag_names:

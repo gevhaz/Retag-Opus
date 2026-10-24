@@ -49,7 +49,7 @@ AUTO_GENERATED_DESCRIPTION = (
 
 
 def test_parse_auto_generated_credits() -> None:
-    """Credits of auto-generated descriptions are read by their roles."""
+    """Auto-generated descriptions' credits are read by their roles."""
     tags = description_parser.parse(AUTO_GENERATED_DESCRIPTION)
     assert tags["title"] == ["Song"]
     assert tags["album"] == ["Album"]
@@ -67,7 +67,7 @@ def test_parse_auto_generated_credits() -> None:
 
 
 def test_parse_credits_in_other_descriptions() -> None:
-    """Lines with known roles are read in descriptions that aren't auto-generated."""
+    """Known roles are read in descriptions the uploader wrote."""
     tags = description_parser.parse(
         "Guitar: Gui Tarist\n"
         "Electric Guitar: Elec Tric\n"
@@ -79,7 +79,7 @@ def test_parse_credits_in_other_descriptions() -> None:
 
 
 def test_parse_auto_generated_part_in_uploader_text() -> None:
-    """An auto-generated part pasted among other text is parsed by its layout."""
+    """An auto-generated part among other text is parsed by layout."""
     tags = description_parser.parse(
         "Our new video of “Other Song” by Singer from ‘Other Album’!\n"
         "\n" + AUTO_GENERATED_DESCRIPTION + "\n"
@@ -95,7 +95,10 @@ def test_parse_auto_generated_part_in_uploader_text() -> None:
 
 
 def test_is_auto_generated() -> None:
-    """A description is auto-generated if it has an auto-generated part, even among other text."""
+    """A description with an auto-generated part is auto-generated.
+
+    That's so even if the part is among other text.
+    """
     assert description_parser.is_auto_generated(AUTO_GENERATED_DESCRIPTION)
     assert description_parser.is_auto_generated("Our new video!\n\n" + AUTO_GENERATED_DESCRIPTION)
     assert not description_parser.is_auto_generated("Listen to “Song” by Singer from ‘Album’\n")
@@ -117,7 +120,10 @@ def test_parse_uploader_text() -> None:
 
 
 def test_parse_no_album_artist_from_uploader_text() -> None:
-    """The uploader's text gives no album artist, since its artists can be in any order."""
+    """The uploader's text gives no album artist.
+
+    The artists in it can be in any order.
+    """
     tags = description_parser.parse("“Song (feat. Featured Singer)” by Singer from ‘Album’\n")
     assert tags["artist"] == ["Featured Singer", "Singer"]
     assert "albumartist" not in tags
