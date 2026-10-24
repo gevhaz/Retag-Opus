@@ -15,8 +15,7 @@ from pathlib import Path
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants, description_parser, messages, styles, utils
-from retag_opus.cli import Cli
+from retag_opus import cli, constants, description_parser, messages, styles, utils
 from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import (
     MUSICBRAINZ,
@@ -189,7 +188,7 @@ def match_albums(matcher: MusicBrainzMatcher, shared_album_per_song: dict[Path, 
 
 def run(argv: Sequence[str] | None = None) -> int:
     """Run all the functionality of the app."""
-    args = Cli.parse_arguments(argv)
+    args = cli.parse_arguments(argv)
     music_dir = Path(args.directory).resolve()
     try:
         with open(get_config_path(), "rb") as config_file:
