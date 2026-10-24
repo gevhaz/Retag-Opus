@@ -8,7 +8,7 @@ not a terminal unless FORCE_COLOR is set.
 
 import os
 import sys
-from typing import Callable
+from collections.abc import Callable
 
 Style = Callable[[str], str]
 

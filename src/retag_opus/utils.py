@@ -3,7 +3,6 @@
 import re
 import unicodedata
 from pathlib import Path
-from typing import List
 
 from retag_opus import constants
 
@@ -136,7 +135,7 @@ def remove_video_notes(video_title: str) -> str:
     return title_without_notes.strip()
 
 
-def split_tag(joined_values: str) -> List[str]:
+def split_tag(joined_values: str) -> list[str]:
     """Split the provided tag by pre-defined delimeters."""
     split_values = re.split(", | and | & |; ", joined_values)
     stripped_values = [value.strip() for value in split_values]

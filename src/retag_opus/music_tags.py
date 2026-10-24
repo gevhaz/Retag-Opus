@@ -27,8 +27,9 @@ result is MusicTags.resolved, the column that will be saved to the file.
 """
 
 import re
+from collections.abc import Callable
 from copy import deepcopy
-from typing import Callable, Final, NamedTuple
+from typing import Final, NamedTuple
 
 from simple_term_menu import TerminalMenu
 

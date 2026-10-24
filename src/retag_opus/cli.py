@@ -2,7 +2,7 @@
 
 import argparse
 from argparse import Namespace
-from typing import Sequence
+from collections.abc import Sequence
 
 import shtab
 

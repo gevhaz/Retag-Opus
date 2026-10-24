@@ -5,7 +5,7 @@ that the YouTube description.
 """
 
 import re
-from typing import Dict, Final, List
+from typing import Final
 
 from retag_opus import constants, utils
 
@@ -21,9 +21,9 @@ class TagsParser:
     delimeters.
     """
 
-    def __init__(self, tags: Dict[str, List[str]]):
+    def __init__(self, tags: dict[str, list[str]]):
         """Set attributes of the TagsParser."""
-        self.tags: Dict[str, List[str]] = {}
+        self.tags: dict[str, list[str]] = {}
         self.original_tags = tags
 
     def parse_tags(self) -> None:

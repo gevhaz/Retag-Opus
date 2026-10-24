@@ -11,7 +11,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Callable, Final
+from collections.abc import Callable
+from typing import Any, Final
 
 from retag_opus import __version__, messages
 
