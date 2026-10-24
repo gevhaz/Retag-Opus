@@ -105,7 +105,7 @@ def find_parts(title: str, pattern_names: list[str]) -> list[str]:
     return parts_found
 
 
-def prune_title(original_title: str) -> str:
+def prune_title(title: str) -> str:
     """Get the name of a song from its title.
 
     Everything that the patterns in PATTERNS find is removed, like the
@@ -114,10 +114,10 @@ def prune_title(original_title: str) -> str:
 
     Example: "Song (Live) (feat. Singer)" becomes "Song".
     """
-    return remove_parts(original_title, list(PATTERNS))
+    return remove_parts(title, list(PATTERNS))
 
 
-def remove_video_notes(video_title: str) -> str:
+def remove_video_notes(title: str) -> str:
     """Remove notes about a YouTube video from its title.
 
     Unlike prune_title(), this keeps everything about the song, like
@@ -125,7 +125,7 @@ def remove_video_notes(video_title: str) -> str:
 
     Example: "Song (Live) (Official Video) #rock" becomes "Song (Live)".
     """
-    return remove_parts(video_title, VIDEO_NOTE_PATTERN_NAMES)
+    return remove_parts(title, VIDEO_NOTE_PATTERN_NAMES)
 
 
 def featured_artists(title: str) -> list[str]:
