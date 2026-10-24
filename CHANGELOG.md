@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Songs whose title on MusicBrainz starts with a parenthesis, like
+  "(Untitled)", are found on MusicBrainz and matched to their track on an
+  album.
+
 ## [0.5.0] - 2026-10-24
 
 ### Added
