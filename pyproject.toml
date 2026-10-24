@@ -35,7 +35,7 @@ dev = [
 
 [tool.coverage.run]
 branch = true
-source = [ "./src/retag_opus/" ]
+source_pkgs = ["retag_opus"]
 
 [tool.coverage.report]
 show_missing = true
