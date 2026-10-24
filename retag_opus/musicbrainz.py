@@ -65,6 +65,21 @@ def joined_credit(artist_credit: list[JsonDict]) -> str:
     return "".join(credit["name"] + credit.get("joinphrase", "") for credit in artist_credit)
 
 
+def album_artist(album_credit: list[JsonDict]) -> str:
+    """Get the album artist from the artist credit of a release.
+
+    The album artist is the artist the album is by, so featured artists
+    are left out, like they are from titles. A release credited to
+    "A & B feat. C" or "A (feat. C)" has the album artist "A & B" or
+    "A".
+    """
+    printed_credit = joined_credit(album_credit)
+    featuring_match = re.match(constants.title_parse_patterns["featuring"], printed_credit)
+    if featuring_match:
+        return featuring_match.group(1).strip()
+    return printed_credit
+
+
 def artist_ids(artist_credit: list[JsonDict]) -> list[str]:
     """Get the MusicBrainz IDs of all credited artists."""
     return [credit["artist"]["id"] for credit in artist_credit]
@@ -144,7 +159,7 @@ def track_tags(release: JsonDict, medium: JsonDict, track: JsonDict) -> Tags:
         "title": [track.get("title") or recording["title"]],
         "artist": credited_names(artist_credit),
         "album": [release["title"]],
-        "albumartist": [joined_credit(album_credit)] if album_credit else [],
+        "albumartist": [album_artist(album_credit)] if album_credit else [],
         "date": [release["date"]] if release.get("date") else [],
         "tracknumber": [str(track["position"])],
         "totaltracks": [str(medium["track-count"])],
