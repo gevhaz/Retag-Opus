@@ -15,7 +15,7 @@ from pathlib import Path
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import cli, constants, description_parser, messages, styles, utils
+from retag_opus import cli, constants, description_parser, messages, styles, tags_parser, utils
 from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import (
     MUSICBRAINZ,
@@ -27,7 +27,6 @@ from retag_opus.music_tags import (
     MusicTags,
 )
 from retag_opus.musicbrainz import MusicBrainzMatcher
-from retag_opus.tags_parser import TagsParser
 
 Tags = dict[str, list[str]]
 
@@ -133,10 +132,9 @@ def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
     tags.discard_upload_date()
     tags.resolved = deepcopy(original_tags)
 
-    original_tags_parser = TagsParser(original_tags)
-    original_tags_parser.parse_tags()
-    original_tags_parser.split_select_original_tags()
-    tags.set_tags(PARSED_FROM_ORIGINAL, original_tags_parser.tags)
+    parsed_from_original = tags_parser.parse_tags(original_tags)
+    parsed_from_original.update(tags_parser.split_select_original_tags(original_tags))
+    tags.set_tags(PARSED_FROM_ORIGINAL, parsed_from_original)
 
     # 2. Get description
     description_lines = get_description(original_tags)
@@ -149,9 +147,7 @@ def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
         tags.youtube_is_auto_generated = description_parser.is_auto_generated(description)
         tags.add_source_tag()
 
-        youtube_tags_parser = TagsParser(youtube_tags)
-        youtube_tags_parser.parse_tags()
-        tags.set_tags(PARSED_FROM_YOUTUBE, youtube_tags_parser.tags)
+        tags.set_tags(PARSED_FROM_YOUTUBE, tags_parser.parse_tags(youtube_tags))
 
     return opus_file, tags
 
