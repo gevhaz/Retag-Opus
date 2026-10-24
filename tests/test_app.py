@@ -1,5 +1,6 @@
 """Tests for app.py and cli.py."""
 
+import importlib.metadata
 import re
 import shutil
 from pathlib import Path
@@ -47,11 +48,12 @@ def create_silent_opus_file(path: Path) -> None:
 
 
 def test_print_version(capsys):
-    """Test printing version."""
+    """Test that the version printed is the one in the package metadata."""
     with pytest.raises(SystemExit):
         app.run(["--version"])
     out, _ = capsys.readouterr()
-    assert re.match(r"^retag \(version 0.5.0\)$", out)
+    package_version = importlib.metadata.version("retag_opus")
+    assert out == f"retag (version {package_version})\n"
 
 
 def test_print_help(capsys):
