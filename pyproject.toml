@@ -1,6 +1,6 @@
 [tool.coverage.run]
 branch = true
-source = [ "./retag_opus/" ]
+source = [ "./src/retag_opus/" ]
 
 [tool.coverage.report]
 show_missing = true
