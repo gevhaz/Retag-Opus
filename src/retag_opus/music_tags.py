@@ -35,7 +35,7 @@ from typing import Final, NamedTuple
 
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants, messages, styles, utils
+from retag_opus import constants, messages, styles, titles, utils
 from retag_opus.exceptions import UserExitException
 
 Tags = dict[str, list[str]]
@@ -590,8 +590,8 @@ class MusicTags:
 
         Notes like "(2011 Remaster)" don't count.
         """
-        pruned_album_1 = [utils.prune_title(name) for name in album_1]
-        pruned_album_2 = [utils.prune_title(name) for name in album_2]
+        pruned_album_1 = [titles.prune_title(name) for name in album_1]
+        pruned_album_2 = [titles.prune_title(name) for name in album_2]
         return utils.is_equal_when_normalized(pruned_album_1, pruned_album_2)
 
     def differs_from_musicbrainz_album(self) -> bool:
