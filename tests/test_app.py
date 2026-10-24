@@ -399,7 +399,8 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
         )
         + r".*"
         # # One of the resolved status prints
-        + re.escape("Artist(s): The Global | Ben Ivor") + ".*"
+        + re.escape("Artist(s): The Global | Ben Ivor")
+        + ".*"
         # # Reset status print (same as first)
         + re.escape(
             "Artist(s): The Global | Ben Ivor | artist 1 | artist 2 | The Global | Ben Ivor | artist 1 and artist 2"

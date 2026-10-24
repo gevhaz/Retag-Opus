@@ -35,7 +35,7 @@ class Cli:
             action="store",
             required=True,
             dest="directory",
-            help="directory in which the files to be retagged are " "located",
+            help="directory in which the files to be retagged are located",
         ).complete = shtab.DIRECTORY  # type: ignore
 
         parser.add_argument(
