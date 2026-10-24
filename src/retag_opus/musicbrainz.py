@@ -8,6 +8,7 @@ is in what was searched for and its length is the song's, and, when
 searching by words, one of its artists is in them too.
 """
 
+import functools
 import re
 import readline
 from pathlib import Path
@@ -576,7 +577,7 @@ class MusicBrainzMatcher:
             if choice is not True:
                 return choice or None
             # Put the previous search on the line, ready to edit
-            readline.set_startup_hook(lambda: readline.insert_text(query))
+            readline.set_startup_hook(functools.partial(readline.insert_text, query))
             try:
                 query = input("Search MusicBrainz: ").strip() or query
             finally:
