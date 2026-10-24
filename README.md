@@ -228,8 +228,8 @@ be done in usability.
 
 Latest workflow status:
 
-![Check pipeline status badge](https://github.com/gevhaz/Retag-Opus/actions/workflows/check.yml/badge.svg)
-![Deploy pipeline status badge](https://github.com/gevhaz/Retag-Opus/actions/workflows/deploy.yml/badge.svg)
+![Check pipeline status badge](https://github.com/gevhaz/Retag-Opus/actions/workflows/check.yaml/badge.svg)
+![Deploy pipeline status badge](https://github.com/gevhaz/Retag-Opus/actions/workflows/deploy.yaml/badge.svg)
 
 Latest version:
 
