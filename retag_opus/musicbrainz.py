@@ -176,8 +176,8 @@ def track_tags(release: JsonDict, medium: JsonDict, track: JsonDict) -> Tags:
     return {tag_name: value for tag_name, value in tags.items() if value}
 
 
-def song_text(tags: MusicTags) -> str:
-    """Get the words a song is known by, to search for it and match it.
+def song_title_and_artists(tags: MusicTags) -> str:
+    """Get the title and artists of a song, to search for it and match it.
 
     Those are the title and artists from the YouTube description, e.g.
     "Proper Goodbyes The Global Ben Ivor". Without a description, it's
@@ -305,9 +305,9 @@ def matching_track_index(tracks: list[tuple[JsonDict, JsonDict]], tags: MusicTag
     :return: The index of the track in tracks, or None if no track is
         the song.
     """
-    text = song_text(tags)
+    words_to_match = song_title_and_artists(tags)
     for index, (_, track) in enumerate(tracks):
-        same_title = title_matches(track["title"], text)
+        same_title = title_matches(track["title"], words_to_match)
         same_length = tags.length is None or length_matches(track.get("length"), tags.length)
         if same_title and same_length:
             return index
@@ -530,38 +530,38 @@ class MusicBrainzMatcher:
             if recording is not None:
                 return recording
 
-        text = song_text(tags)
+        words_to_match = song_title_and_artists(tags)
         youtube_titles = tags.values_from(YOUTUBE, "title")
         youtube_artists = tags.values_from(YOUTUBE, "artist")
         searched_for_artist = False
         if youtube_titles and youtube_artists:
             results = self.client.search_recordings(utils.prune_title(youtube_titles[0]), youtube_artists[0])
             searched_for_artist = True
-        elif text:
-            results = self.client.search_recordings_by_words(text)
+        elif words_to_match:
+            results = self.client.search_recordings_by_words(words_to_match)
         else:
             results = []
         while True:
-            text_with_channel = " ".join([text] + tags.values_from(ORIGINAL, "artist"))
+            words_to_match_with_channel = " ".join([words_to_match] + tags.values_from(ORIGINAL, "artist"))
             confident_results = []
             for result in results:
-                same_title = title_matches(result.get("title", ""), text)
+                same_title = title_matches(result.get("title", ""), words_to_match)
                 same_length = length_matches(result.get("length"), tags.length)
-                same_artist = searched_for_artist or artist_matches(result, text_with_channel)
+                same_artist = searched_for_artist or artist_matches(result, words_to_match_with_channel)
                 if same_title and same_length and same_artist:
                     confident_results.append(result)
             if confident_results:
                 # The result that fits the song best, see fit()
-                return min(confident_results, key=lambda result: fit(result, text))
-            choice = self.ask_for_recording(results, text, tags.length)
+                return min(confident_results, key=lambda result: fit(result, words_to_match))
+            choice = self.ask_for_recording(results, words_to_match, tags.length)
             if choice is not True:
                 return choice or None
-            text = input(f"Search MusicBrainz for [{text}]: ").strip() or text
-            results = self.client.search_recordings_by_words(text) if text else []
+            words_to_match = input(f"Search MusicBrainz for [{words_to_match}]: ").strip() or words_to_match
+            results = self.client.search_recordings_by_words(words_to_match) if words_to_match else []
             searched_for_artist = False
 
     @staticmethod
-    def ask_for_recording(results: list[JsonDict], text: str, song_seconds: float | None) -> JsonDict | bool:
+    def ask_for_recording(results: list[JsonDict], query: str, song_seconds: float | None) -> JsonDict | bool:
         """Let the user pick a recording from search results.
 
         :return: The chosen recording, True if the user wants to search
@@ -569,7 +569,7 @@ class MusicBrainzMatcher:
         """
         song_length = format_length(round(song_seconds * 1000)) if song_seconds is not None else "?:??"
         result_summary = "Results" if results else "Nothing found"
-        menu_title = f"MusicBrainz: {result_summary} for '{text}'. The song is {song_length} long."
+        menu_title = f"MusicBrainz: {result_summary} for '{query}'. The song is {song_length} long."
         entries = [search_result_entry(recording) for recording in results]
         entries += ["[e] Edit search", "[s] Skip MusicBrainz for this song"]
         choice = TerminalMenu(entries, title=menu_title).show()

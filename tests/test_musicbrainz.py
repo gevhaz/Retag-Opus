@@ -245,15 +245,15 @@ def typed(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return answers
 
 
-def test_song_text() -> None:
+def test_song_title_and_artists() -> None:
     """Describe songs by the description, or else the existing title."""
     youtube = {"title": ["Song"], "artist": ["A", "B"]}
-    assert musicbrainz.song_text(song(original={"title": ["Video"]}, youtube=youtube)) == "Song A B"
-    assert musicbrainz.song_text(song(original={"title": ["Video"], "artist": ["Channel"]})) == "Video"
-    assert musicbrainz.song_text(song(original={"title": ["Artist - Song (Live) (Official Video)"]})) == (
+    assert musicbrainz.song_title_and_artists(song(original={"title": ["Video"]}, youtube=youtube)) == "Song A B"
+    assert musicbrainz.song_title_and_artists(song(original={"title": ["Video"], "artist": ["Channel"]})) == "Video"
+    assert musicbrainz.song_title_and_artists(song(original={"title": ["Artist - Song (Live) (Official Video)"]})) == (
         "Artist - Song (Live)"
     )
-    assert musicbrainz.song_text(song()) == ""
+    assert musicbrainz.song_title_and_artists(song()) == ""
 
 
 @pytest.mark.parametrize(
