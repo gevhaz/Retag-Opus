@@ -12,6 +12,15 @@ Retag requires
 [simple-term-menu](https://github.com/IngoMeyer441/simple-term-menu) to
 be installed.
 
+# Installation
+
+```
+$ pipx install retag-opus
+```
+
+> [!CAUTION]
+> The pip package is retag-opus, not retag. Retag is someone else's project.
+
 # Usage
 
 Run the script like so:
