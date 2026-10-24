@@ -195,6 +195,31 @@ tag that matches the last regex, such as `test_delete_any_partial_match_test`.
 - **Release**: One edition of an album on MusicBrainz, e.g. the original,
   a deluxe edition or a remaster. An album usually has several.
 
+# Development
+
+The project is managed with [uv](https://docs.astral.sh/uv/). Install
+the dependencies, including the development tools, into `.venv`:
+
+```console
+$ uv sync
+```
+
+Run the app from the source tree:
+
+```console
+$ uv run retag --directory /path/to/directory/with/your/opus/files
+```
+
+Run the same checks as CI:
+
+```console
+$ uv run flake8
+$ uv run black --check .
+$ uv run isort --check .
+$ uv run mypy --strict .
+$ uv run pytest --cov
+```
+
 # Project status
 
 The project is still under development. The most common tags can be
