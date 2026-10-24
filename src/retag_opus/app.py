@@ -132,9 +132,7 @@ def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
     tags.discard_upload_date()
     tags.resolved = deepcopy(original_tags)
 
-    parsed_from_original = tags_parser.parse_tags(original_tags)
-    parsed_from_original.update(tags_parser.split_select_original_tags(original_tags))
-    tags.set_tags(PARSED_FROM_ORIGINAL, parsed_from_original)
+    tags.set_tags(PARSED_FROM_ORIGINAL, tags_parser.alternatives(original_tags))
 
     # 2. Get description
     description_lines = get_description(original_tags)
@@ -147,7 +145,7 @@ def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
         tags.youtube_is_auto_generated = description_parser.is_auto_generated(description)
         tags.add_source_tag()
 
-        tags.set_tags(PARSED_FROM_YOUTUBE, tags_parser.parse_tags(youtube_tags))
+        tags.set_tags(PARSED_FROM_YOUTUBE, tags_parser.alternatives(youtube_tags))
 
     return opus_file, tags
 

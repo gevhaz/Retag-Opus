@@ -28,8 +28,7 @@ class TestTagsParser(unittest.TestCase):
             "album": ["album name"],
             "genre": ["Rock", "Pop", "Alternative", "Jazz"],
         }
-        parsed_tags = tags_parser.parse_tags(original_tags)
-        parsed_tags.update(tags_parser.split_select_original_tags(original_tags))
+        parsed_tags = tags_parser.alternatives(original_tags)
         self.assertEqual(0, len(parsed_tags))
 
     def test_clean_original_tags_split_tags(self) -> None:
@@ -41,7 +40,7 @@ class TestTagsParser(unittest.TestCase):
             "title": ["title, with a comma in it"],
         }
 
-        parsed_tags = tags_parser.split_select_original_tags(original_tags)
+        parsed_tags = tags_parser.split_artists_and_genres(original_tags)
         self.assertEqual(["artist 1", "artist 2"], parsed_tags.get("artist"))
         self.assertEqual(["genre 1", "genre 2"], parsed_tags.get("genre"))
         self.assertNotIn("album", parsed_tags)
@@ -59,11 +58,11 @@ class TestTagsParser(unittest.TestCase):
             "genre": ["only genre"],
         }
 
-        parsed_tags = tags_parser.split_select_original_tags(original_tags)
+        parsed_tags = tags_parser.split_artists_and_genres(original_tags)
         self.assertNotIn("artist", parsed_tags)
         self.assertNotIn("genre", parsed_tags)
 
-    def test_parse_tags_featuring(self) -> None:
+    def test_parse_titles_featuring(self) -> None:
         """Test parsing featuring artists."""
         titles = [
             "title featuring artist name",
@@ -85,12 +84,12 @@ class TestTagsParser(unittest.TestCase):
         ]
 
         for title in titles:
-            parsed_tags = tags_parser.parse_tags({"title": [title]})
+            parsed_tags = tags_parser.parse_titles({"title": [title]})
             self.assertEqual(["artist name"], parsed_tags.get("artist"))
 
-    def test_parse_tags_featuring_artist_in_addition_to_existing(self) -> None:
+    def test_parse_titles_featuring_artist_in_addition_to_existing(self) -> None:
         """Test adding featuring artist to existing artist."""
-        parsed_tags = tags_parser.parse_tags(
+        parsed_tags = tags_parser.parse_titles(
             {
                 "title": ["Song name (ft. Third Artist)"],
                 "artist": ["First Artist, Second Artist"],
@@ -99,26 +98,26 @@ class TestTagsParser(unittest.TestCase):
         self.assertEqual(["First Artist", "Second Artist", "Third Artist"], parsed_tags.get("artist"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-    def test_parse_tags_artist_in_title(self) -> None:
+    def test_parse_titles_artist_in_title(self) -> None:
         """Test splitting the artist from a video title."""
-        parsed_tags = tags_parser.parse_tags(
+        parsed_tags = tags_parser.parse_titles(
             {"title": ["Ellen Allien - Love (Official Video)"], "artist": ["Ellen Allien UFO"]}
         )
         self.assertEqual(["Love"], parsed_tags.get("title"))
         self.assertEqual(["Ellen Allien"], parsed_tags.get("artist"))
 
-        parsed_tags = tags_parser.parse_tags(
+        parsed_tags = tags_parser.parse_titles(
             {"title": ["B.o.B - Airplanes (feat. Hayley Williams) [Official Video]"], "artist": ["B.o.B"]}
         )
         self.assertEqual(["Airplanes"], parsed_tags.get("title"))
         self.assertEqual(["B.o.B", "Hayley Williams"], parsed_tags.get("artist"))
 
-        parsed_tags = tags_parser.parse_tags(
+        parsed_tags = tags_parser.parse_titles(
             {"title": ["Lucia - Karlfeldt & Hazelius"], "artist": ["Annelie Lockneman"]}
         )
         self.assertEqual({}, parsed_tags)
 
-    def test_parse_tags_albumversion(self) -> None:
+    def test_parse_titles_albumversion(self) -> None:
         """Test parsing "Album version" data."""
         titles = [
             "title of a Song (Album Version)",
@@ -126,11 +125,11 @@ class TestTagsParser(unittest.TestCase):
         ]
 
         for title in titles:
-            parsed_tags = tags_parser.parse_tags({"title": [title]})
+            parsed_tags = tags_parser.parse_titles({"title": [title]})
             self.assertEqual(["Album Version"], parsed_tags.get("version"))
             self.assertEqual(["title of a Song"], parsed_tags.get("title"))
 
-    def test_parse_tags_live(self) -> None:
+    def test_parse_titles_live(self) -> None:
         """Test parsing live version."""
         titles = [
             "title (live at the famous arena)",
@@ -138,19 +137,19 @@ class TestTagsParser(unittest.TestCase):
         ]
 
         for title in titles:
-            parsed_tags = tags_parser.parse_tags({"title": [title]})
+            parsed_tags = tags_parser.parse_titles({"title": [title]})
             self.assertEqual(["live at the famous arena"], parsed_tags.get("version"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["title (Live at the famous arena)"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["title (Live at the famous arena)"]})
         self.assertEqual(["Live at the famous arena"], parsed_tags.get("version"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song (Live)"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song (Live)"]})
         self.assertEqual(["Live"], parsed_tags.get("version"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Wing [Live: Paris, 2001]"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Wing [Live: Paris, 2001]"]})
         self.assertEqual(["Live: Paris, 2001"], parsed_tags.get("version"))
 
-    def test_parse_tags_remaster(self) -> None:
+    def test_parse_titles_remaster(self) -> None:
         """Test parsing remaster version."""
         test_cases = [
             {
@@ -192,111 +191,111 @@ class TestTagsParser(unittest.TestCase):
         ]
 
         for test_case in test_cases:
-            parsed_tags = tags_parser.parse_tags({"title": [test_case["original_title"]]})
+            parsed_tags = tags_parser.parse_titles({"title": [test_case["original_title"]]})
             self.assertEqual([test_case["expected_version"]], parsed_tags.get("version"))
             self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-        parsed_tags = tags_parser.parse_tags(
+        parsed_tags = tags_parser.parse_titles(
             {"title": ["Song name (With another paretheses) (1996 Remastered Version)"]}
         )
         self.assertEqual(["1996 Remastered Version"], parsed_tags.get("version"))
         self.assertEqual(["Song name (With another paretheses)"], parsed_tags.get("title"))
 
-    def test_parse_tags_instrumental(self) -> None:
+    def test_parse_titles_instrumental(self) -> None:
         """Test parsing instrumental version."""
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (instrumental)"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (instrumental)"]})
         self.assertEqual(["Instrumental"], parsed_tags.get("genre"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (Instrumental)"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (Instrumental)"]})
         self.assertEqual(["Instrumental"], parsed_tags.get("genre"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name [Instrumental]"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name [Instrumental]"]})
         self.assertEqual(["Instrumental"], parsed_tags.get("genre"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (continued) [Extended Instrumental Version]"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (continued) [Extended Instrumental Version]"]})
         self.assertEqual(["Instrumental"], parsed_tags.get("genre"))
         self.assertEqual(["Song name (continued)"], parsed_tags.get("title"))
 
-    def test_parse_tags_instrumental_and_keep_old_genre(self) -> None:
+    def test_parse_titles_instrumental_and_keep_old_genre(self) -> None:
         """Test that old genres are kept when parsing instrumental."""
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (instrumental)"], "genre": ["Rock"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (instrumental)"], "genre": ["Rock"]})
         self.assertEqual(["Rock", "Instrumental"], parsed_tags.get("genre"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-    def test_parse_tags_remix(self) -> None:
+    def test_parse_titles_remix(self) -> None:
         """Test parsing songs as remixed."""
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (Artist Remix)"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (Artist Remix)"]})
         self.assertEqual(["Artist Remix"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (Remix) [feat. Second Artist]"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (Remix) [feat. Second Artist]"]})
         self.assertEqual(["Remix"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
         self.assertEqual(["Second Artist"], parsed_tags.get("artist"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name - Second Artist Remix"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name - Second Artist Remix"]})
         self.assertEqual(["Second Artist Remix"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name Remix"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name Remix"]})
         self.assertNotIn("version", parsed_tags)
         self.assertNotIn("title", parsed_tags)
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (Artist remix)"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (Artist remix)"]})
         self.assertEqual(["Artist remix"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-    def test_parse_tags_of_multiple_types(self) -> None:
+    def test_parse_titles_of_multiple_types(self) -> None:
         """Test parsing tags of multiple types.
 
         Test that when there is multiple sources of information in a
         song title, all the data is used to prune the title and append
         to the correct tag.
         """
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (Artist Remix) (instrumental)"]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (Artist Remix) (instrumental)"]})
         self.assertEqual(["Artist Remix"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
         self.assertEqual(["Instrumental"], parsed_tags.get("genre"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (instrumental) (Artist Remix) "]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (instrumental) (Artist Remix) "]})
         self.assertEqual(["Artist Remix"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
         self.assertEqual(["Instrumental"], parsed_tags.get("genre"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (instrumental) (Live at famous arena) "]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (instrumental) (Live at famous arena) "]})
         self.assertEqual(["Live at famous arena"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
         self.assertEqual(["Instrumental"], parsed_tags.get("genre"))
 
-        parsed_tags = tags_parser.parse_tags({"title": ["Song name (Artist remix) (Live at famous arena) "]})
+        parsed_tags = tags_parser.parse_titles({"title": ["Song name (Artist remix) (Live at famous arena) "]})
         self.assertEqual(["Live at famous arena", "Artist remix"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-        parsed_tags = tags_parser.parse_tags(
+        parsed_tags = tags_parser.parse_titles(
             {"title": ["Song name (Artist remix) (Live at famous arena) ft. Second Artist"]}
         )
         self.assertEqual(["Live at famous arena", "Artist remix"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
         self.assertEqual(["Second Artist"], parsed_tags.get("artist"))
 
-        parsed_tags = tags_parser.parse_tags(
+        parsed_tags = tags_parser.parse_titles(
             {"title": ["Song name ft. Second Artist (Artist remix) (Live at famous arena) "]}
         )
         self.assertEqual(["Live at famous arena", "Artist remix"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
         self.assertEqual(["Second Artist"], parsed_tags.get("artist"))
 
-        parsed_tags = tags_parser.parse_tags(
+        parsed_tags = tags_parser.parse_titles(
             {"title": ["Song name (Artist remix) (Live at famous arena) (2022 remaster)"]}
         )
         self.assertEqual(["Live at famous arena", "Artist remix", "2022 remaster"], parsed_tags.get("version"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
-    def test_parse_tags_no_title(self) -> None:
+    def test_parse_titles_no_title(self) -> None:
         """Test that everything works fine with no title."""
-        parsed_tags = tags_parser.parse_tags({"artist": ["artist 1, artist 2"]})
+        parsed_tags = tags_parser.parse_titles({"artist": ["artist 1, artist 2"]})
         self.assertNotIn("title", parsed_tags)
         self.assertNotIn("artist", parsed_tags)
