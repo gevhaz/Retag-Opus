@@ -99,6 +99,7 @@
   generate the test audio file with `ffmpeg` directly instead.
 - Update `flake8`, `coverage` and `pytest-cov` to versions that work on Python 3.12+.
 - Lower the required test coverage from 95.73% to 95%.
+- Spellcheck with Word Warden 1.1.0, which runs on Node 24 instead of Node 20.
 
 ## [0.4.1] - 2024-01-28
 
