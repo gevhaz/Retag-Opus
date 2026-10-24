@@ -85,6 +85,26 @@ def remove_parts(title: str, pattern_names: list[str]) -> str:
     return remaining_title.strip()
 
 
+def find_parts(title: str, pattern_names: list[str]) -> list[str]:
+    """Find the parts of a title that the given patterns find.
+
+    Example: find_parts("Song (Live) - 2007 Remaster", ["live",
+    "remaster_after_dash"]) returns ["Live", "2007 Remaster"].
+
+    :param title: The title to find parts in.
+    :param pattern_names: Keys of PATTERNS, tried in the given order.
+
+    :return: The part found by each pattern that matches, without
+        leading and trailing whitespace.
+    """
+    parts_found = []
+    for pattern_name in pattern_names:
+        part_match = re.match(PATTERNS[pattern_name], title)
+        if part_match is not None:
+            parts_found.append(part_match.group("part").strip())
+    return parts_found
+
+
 def prune_title(original_title: str) -> str:
     """Get the name of a song from its title.
 
@@ -117,11 +137,10 @@ def featured_artists(title: str) -> list[str]:
     :return: The featured artists, or an empty list if the title names
         none.
     """
-    featuring_match = re.match(PATTERNS["featuring"], title)
-    if featuring_match is None:
-        return []
-    featured_artists_text = featuring_match.group("part").strip()
-    return utils.split_tag(featured_artists_text)
+    featured_artists_in_title = []
+    for featured_artists_text in find_parts(title, ["featuring"]):
+        featured_artists_in_title += utils.split_tag(featured_artists_text)
+    return featured_artists_in_title
 
 
 def remove_featured_artists(text: str) -> str:
@@ -142,12 +161,7 @@ def versions(title: str) -> list[str]:
 
     :return: The versions, or an empty list if the title names none.
     """
-    versions_in_title = []
-    for pattern_name in VERSION_PATTERN_NAMES:
-        version_match = re.match(PATTERNS[pattern_name], title)
-        if version_match is not None:
-            versions_in_title.append(version_match.group("part").strip())
-    return versions_in_title
+    return find_parts(title, VERSION_PATTERN_NAMES)
 
 
 def is_instrumental(title: str) -> bool:
@@ -155,10 +169,8 @@ def is_instrumental(title: str) -> bool:
 
     Example: is_instrumental("Song [Instrumental]") is True.
     """
-    for pattern_name in INSTRUMENTAL_PATTERN_NAMES:
-        if re.match(PATTERNS[pattern_name], title):
-            return True
-    return False
+    instrumental_parts = find_parts(title, INSTRUMENTAL_PATTERN_NAMES)
+    return len(instrumental_parts) > 0
 
 
 def names_artist(text: str, artist: str) -> bool:
