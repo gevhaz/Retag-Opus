@@ -52,7 +52,7 @@ pythonPlatform = "Linux"
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "D", "B"]
+select = ["E", "W", "F", "I", "D", "B", "UP"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"

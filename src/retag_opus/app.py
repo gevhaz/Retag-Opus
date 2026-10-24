@@ -8,9 +8,9 @@ like "2020 Remix" from the title tag to the version tag.
 
 import os
 import tomllib
+from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Sequence
 
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu

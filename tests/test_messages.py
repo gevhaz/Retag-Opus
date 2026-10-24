@@ -1,6 +1,6 @@
 """Tests for messages.py."""
 
-from typing import Callable
+from collections.abc import Callable
 
 import pytest
 
