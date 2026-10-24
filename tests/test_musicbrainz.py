@@ -89,6 +89,7 @@ def test_album_artist() -> None:
     assert musicbrainz.album_artist([credit("A", " & "), credit("B", " feat. "), credit("C")]) == "A & B"
     assert musicbrainz.album_artist([credit("A", " (featuring "), credit("B", ")")]) == "A"
     assert musicbrainz.album_artist([credit("A", " & "), credit("B")]) == "A & B"
+    assert musicbrainz.album_artist([credit("A", " (feat. "), credit("C", ") & "), credit("D")]) == "A & D"
 
 
 def test_track_tags_album_artist_without_featured_artists() -> None:

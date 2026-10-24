@@ -122,19 +122,14 @@ def featured_artists(title: str) -> list[str]:
     return utils.split_tag(featured_artists_text)
 
 
-def text_before_featured_artists(text: str) -> str:
-    """Get the text before the featured artists in a title or credit.
+def remove_featured_artists(text: str) -> str:
+    """Remove the featured artists from a title or an artist credit.
 
-    Example: text_before_featured_artists("A & B feat. C") returns
-    "A & B", and so does text_before_featured_artists("A & B").
-
-    :return: The text before the featured artists, or the whole text if
-        it names none.
+    Example: remove_featured_artists("A (feat. C) & D") returns
+    "A & D", and remove_featured_artists("A & B feat. C") returns
+    "A & B".
     """
-    featuring_match = re.match(PATTERNS["featuring"], text)
-    if featuring_match is None:
-        return text
-    return featuring_match.group(1).strip()
+    return remove_parts(text, ["featuring"])
 
 
 def versions(title: str) -> list[str]:
