@@ -12,31 +12,33 @@ from typing import Final
 from retag_opus import utils
 
 # Regular expressions for the parts of a title that aren't the name of
-# the song, e.g. "(Live)" or "feat. Singer". Each captures three groups
-# from the title it matches: the title up to the part, the part itself,
-# and the title after it. In "Song (Live) [HD]", the "live" expression
-# captures "Song", "Live" and "[HD]". Code that removes a part keeps the
-# first and third groups, and code that reads a part, e.g. the version,
-# takes the second.
+# the song, e.g. "(Live)" or "feat. Singer". Each captures three named
+# groups from the title it matches: "before", the title up to the part,
+# "part", the part itself, and "after", the title after it. In "Song
+# (Live) [HD]", the "live" expression captures "Song", "Live" and
+# "[HD]". Code that removes a part keeps "before" and "after", and code
+# that reads a part, e.g. the version, takes "part".
 PATTERNS: Final[dict[str, str]] = {
-    "featuring": r"(?i)(.*?)\s*[\(\[\ ](?:feat|ft|featuring)\.?\s+([^\]\)\(\[]+)[\)\]]*\s*(.*)",
-    "remaster_in_brackets": r"(?i)(.*?)\s*[\(\[](\d{0,4}\s*remaster.*)[\)\]]\s*(.*)",
-    "remaster_after_dash": r"(?i)(.*?)\s*-\s*(\d{0,4}.*remaster.*)(.*)",
-    "live": r"(?i)(.*?)\s*[\(\[](live.*?)[\)\]]\s*(.*)",
-    "instrumental_in_parentheses": r"(?i)(.*?)\s*\((.*instrumental.*)\)\s*(.*)",
-    "instrumental_in_square_brackets": r"(?i)(.*?)\s*\[(.*instrumental.*)\]\s*(.*)",
-    "remix_in_parentheses": r"(?i)(.+)\s*\((.*remix.*?)\)\s*(.*)",
-    "remix_after_dash": r"(?i)(.+)\s*-\s*(.*remix.*)\s*(.*)",
-    "albumversion": r"(?i)(.*?)\s*[\(\[](album version.*?)[\)\]]\s*(.*)",
+    "featuring": (
+        r"(?i)(?P<before>.*?)\s*[\(\[\ ](?:feat|ft|featuring)\.?\s+(?P<part>[^\]\)\(\[]+)[\)\]]*\s*(?P<after>.*)"
+    ),
+    "remaster_in_brackets": r"(?i)(?P<before>.*?)\s*[\(\[](?P<part>\d{0,4}\s*remaster.*)[\)\]]\s*(?P<after>.*)",
+    "remaster_after_dash": r"(?i)(?P<before>.*?)\s*-\s*(?P<part>\d{0,4}.*remaster.*)(?P<after>.*)",
+    "live": r"(?i)(?P<before>.*?)\s*[\(\[](?P<part>live.*?)[\)\]]\s*(?P<after>.*)",
+    "instrumental_in_parentheses": r"(?i)(?P<before>.*?)\s*\((?P<part>.*instrumental.*)\)\s*(?P<after>.*)",
+    "instrumental_in_square_brackets": r"(?i)(?P<before>.*?)\s*\[(?P<part>.*instrumental.*)\]\s*(?P<after>.*)",
+    "remix_in_parentheses": r"(?i)(?P<before>.+)\s*\((?P<part>.*remix.*?)\)\s*(?P<after>.*)",
+    "remix_after_dash": r"(?i)(?P<before>.+)\s*-\s*(?P<part>.*remix.*)\s*(?P<after>.*)",
+    "albumversion": r"(?i)(?P<before>.*?)\s*[\(\[](?P<part>album version.*?)[\)\]]\s*(?P<after>.*)",
     # Notes about a YouTube video rather than the song, e.g. "(Official
     # Music Video)", "[Audio]" or "(Lyric Video)"
     "video_note": (
-        r"(?i)(.*?)\s*[\(\[]"
-        r"((?:official\s+)?(?:music\s+|lyrics?\s+)?(?:video|audio|visuali[sz]er|lyrics?)|official)"
-        r"[\)\]]\s*(.*)"
+        r"(?i)(?P<before>.*?)\s*[\(\[]"
+        r"(?P<part>(?:official\s+)?(?:music\s+|lyrics?\s+)?(?:video|audio|visuali[sz]er|lyrics?)|official)"
+        r"[\)\]]\s*(?P<after>.*)"
     ),
     # Hashtags at the end of a video title, e.g. "#hiphop #india"
-    "hashtags": r"(.*?)\s*((?:#[^\W\d_]\w*\s*)+)()$",
+    "hashtags": r"(?P<before>.*?)\s*(?P<part>(?:#[^\W\d_]\w*\s*)+)(?P<after>)$",
 }
 
 # Patterns for versions of a song, e.g. "Live" or "2007 Remaster"
@@ -79,7 +81,7 @@ def remove_parts(title: str, pattern_names: list[str]) -> str:
     remaining_title = title
     for pattern_name in pattern_names:
         # Keep the text before and after the part
-        remaining_title = re.sub(PATTERNS[pattern_name], r"\1 \3", remaining_title)
+        remaining_title = re.sub(PATTERNS[pattern_name], r"\g<before> \g<after>", remaining_title)
     return remaining_title.strip()
 
 
@@ -118,7 +120,7 @@ def featured_artists(title: str) -> list[str]:
     featuring_match = re.match(PATTERNS["featuring"], title)
     if featuring_match is None:
         return []
-    featured_artists_text = featuring_match.group(2).strip()
+    featured_artists_text = featuring_match.group("part").strip()
     return utils.split_tag(featured_artists_text)
 
 
@@ -144,7 +146,7 @@ def versions(title: str) -> list[str]:
     for pattern_name in VERSION_PATTERN_NAMES:
         version_match = re.match(PATTERNS[pattern_name], title)
         if version_match is not None:
-            versions_in_title.append(version_match.group(2).strip())
+            versions_in_title.append(version_match.group("part").strip())
     return versions_in_title
 
 
