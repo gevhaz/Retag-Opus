@@ -7,6 +7,9 @@
 - Songs whose title on MusicBrainz starts with a parenthesis, like
   "(Untitled)", are found on MusicBrainz and matched to their track on an
   album.
+- When an artist or genre in a song's file is split, e.g. "Singer, Guitarist",
+  a featured artist or the "Instrumental" genre from the title is no longer
+  dropped.
 
 ## [0.5.0] - 2026-10-24
 
