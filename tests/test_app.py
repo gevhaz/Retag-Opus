@@ -51,7 +51,7 @@ def test_print_version(capsys):
     with pytest.raises(SystemExit):
         app.run(["--version"])
     out, _ = capsys.readouterr()
-    assert re.match(r"^retag \(version 0.4.1\)$", out)
+    assert re.match(r"^retag \(version 0.5.0\)$", out)
 
 
 def test_print_help(capsys):
