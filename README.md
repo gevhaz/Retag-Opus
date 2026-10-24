@@ -26,27 +26,32 @@ $ pipx install retag-opus
 Run the script like so:
 
 ```console
-$ python3 retag --directory /path/to/directory/with/your/opus/files.opus
+$ retag --directory /path/to/directory/with/your/opus/files
 ```
 
 There is also a help (`-h`) flag:
 
 ```console
 $ retag -h
-usage: main.py [-h] [-d DIRECTORY] [-v] [-V]
+usage: retag [-h] [-s {bash,zsh,tcsh,fish,powershell}] [-g GROUPING]
+             -d DIRECTORY [-i] [-m | --musicbrainz | --no-musicbrainz] [-V]
 
 options:
--h, --help            show this help message and exit
--s {bash,zsh,tcsh}, --print-completion {bash,zsh,tcsh}
-                      print shell completion script
--g GROUPING, --grouping GROUPING
-                      Sets the grouping tag to the given value, e.g. to put the songs in a mix of your own
--d DIRECTORY, --directory DIRECTORY
-                      directory in which the files to be retagged are located
--i, --individual      Choose album level tags separately for each song, even for songs that are from the same album
--m, --musicbrainz, --no-musicbrainz
-                      Look up songs on MusicBrainz, overriding the configuration file
--V, --version         show program's version number and exit
+  -h, --help            show this help message and exit
+  -s, --print-completion {bash,zsh,tcsh,fish,powershell}
+                        print shell completion script
+  -g, --grouping GROUPING
+                        Sets the grouping tag to the given value, e.g. to put
+                        the songs in a mix of your own
+  -d, --directory DIRECTORY
+                        directory in which the files to be retagged are
+                        located
+  -i, --individual      Choose album level tags separately for each song, even
+                        for songs that are from the same album
+  -m, --musicbrainz, --no-musicbrainz
+                        Look up songs on MusicBrainz, overriding the
+                        configuration file
+  -V, --version         show program's version number and exit
 ```
 
 Retag will go through the opus file in the root of the directory you
