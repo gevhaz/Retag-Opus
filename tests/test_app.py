@@ -109,6 +109,42 @@ def test_config_path_default(monkeypatch, xdg_config_home):
     assert app.get_config_path() == Path.home() / ".config" / "retag.toml"
 
 
+def test_playlist_file_path_to_song_name():
+    """Paths on playlist format give the artist and title."""
+    playlist = Path("<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
+    playlist_nested = Path("path/to/<01> - <Artist - Topic> - <Title of Song> - <zTByLCLu6NI>.opus")
+
+    assert app.file_path_to_song_name(playlist) == "Artist - Title of Song"
+    assert app.file_path_to_song_name(playlist_nested) == "Artist - Title of Song"
+
+
+def test_title_only_file_path_to_song_name():
+    """Paths on title only format give the title."""
+    only_title = Path("<a song title>.opus")
+    no_angle_brackets = Path("a song title.opus")
+
+    assert app.file_path_to_song_name(only_title) == "a song title"
+    assert app.file_path_to_song_name(no_angle_brackets) == "a song title"
+
+
+def test_artist_title_file_path_to_song_name():
+    """Paths on artist-title format give the artist and title."""
+    song = Path("<artist> - <title>.opus")
+    song_nested = Path("path/to/<artist> - <title>.opus")
+    song_topic = Path("<artist - Topic> - <title>.opus")
+
+    assert app.file_path_to_song_name(song) == "artist - title"
+    assert app.file_path_to_song_name(song_nested) == "artist - title"
+    assert app.file_path_to_song_name(song_topic) == "artist - title"
+
+
+def test_file_path_without_basename_is_kept():
+    """A path that isn't an opus file is returned as it is."""
+    song = Path("test/<artist> - <title>.mp3")
+
+    assert app.file_path_to_song_name(song) == "test/<artist> - <title>.mp3"
+
+
 def test_file_without_metadata(capsys, music_directory, monkeypatch):
     """If a file without metadata is found, say that and exit."""
     monkeypatch.setattr(oggopus.OggOpus, "__init__", lambda *_: None)

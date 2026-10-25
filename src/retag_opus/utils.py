@@ -2,7 +2,6 @@
 
 import re
 import unicodedata
-from pathlib import Path
 
 
 def remove_duplicates(values: list[str]) -> list[str]:
@@ -45,28 +44,6 @@ def split_manual_value(tag_name: str, value: str) -> list[str]:
     else:
         values = value.split(" | ")
     return [v.strip() for v in values if v.strip()]
-
-
-def file_path_to_song_name(file_path: Path) -> str:
-    """Convert file name to readable string.
-
-    Produce a string with song title and artist on a readable format
-    from the name of the file being worked with.
-    """
-    text_to_print = str(file_path)
-    basename_match = re.match(r"(.+/)*(.*).opus", text_to_print)
-    if basename_match:
-        text_to_print = basename_match.group(2)
-        playlist_match = re.match(r"<(.*)> - <(.*?)(?: - Topic)*> - <(.*)> - <(.*)>", text_to_print)
-        artist_title_match = re.match("<(.*?)(?: - Topic)*> - <(.*)>", text_to_print)
-        title_only_match = re.match("<(.*)>", text_to_print)
-        if playlist_match:
-            text_to_print = playlist_match.group(2) + " - " + playlist_match.group(3)
-        elif artist_title_match:
-            text_to_print = artist_title_match.group(1) + " - " + artist_title_match.group(2)
-        elif title_only_match:
-            text_to_print = title_only_match.group(1)
-    return text_to_print
 
 
 def is_equal_when_stripped(values_1: list[str], values_2: list[str]) -> bool:
