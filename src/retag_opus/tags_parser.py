@@ -81,10 +81,16 @@ def parse_titles(tags: Tags) -> Tags:
         if original_titles[0] != pruned_title:
             parsed_tags["title"] = [pruned_title]
 
+    # Featured artists are often credited already, e.g. in "Song (feat.
+    # X)" by "A" and "X"
+    new_featured_artists = []
+    for artist in featured_artists:
+        if artist not in artists_of_song:
+            new_featured_artists.append(artist)
+
     artist_differs_in_title = artists_of_song != original_artists
-    has_new_featured_artists = set(featured_artists) != set(original_artists) and len(featured_artists) > 0
-    if artist_differs_in_title or has_new_featured_artists:
-        parsed_tags["artist"] = remove_duplicates(artists_of_song + featured_artists)
+    if artist_differs_in_title or len(new_featured_artists) > 0:
+        parsed_tags["artist"] = remove_duplicates(artists_of_song + new_featured_artists)
     return parsed_tags
 
 

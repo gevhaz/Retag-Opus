@@ -300,7 +300,7 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         "\n  Album: Proper Goodbyes (feat. Ben Ivor)"
         "\n  Album Artist: The Global"
         "\n  Artist(s): The Global | Ben Ivor | artist 1 | artist 2 | Benny Ivor"
-        " | The Global | Ben Ivor | artist 1 and artist 2"
+        " | artist 1 and artist 2"
         "\n  Date: 2029-08-22"
         "\n  Genre: Not found"
         "\n  Version: 2039 Remaster | 2036 Remaster"
@@ -431,19 +431,13 @@ def test_resetting_tags(capsys, music_directory, monkeypatch):
     actual_output = capsys.readouterr().out
     expected_regex = re.compile(
         # Original status print
-        re.escape(
-            "Artist(s): The Global | Ben Ivor | artist 1 | artist 2 | Benny Ivor"
-            " | The Global | Ben Ivor | artist 1 and artist 2"
-        )
+        re.escape("Artist(s): The Global | Ben Ivor | artist 1 | artist 2 | Benny Ivor | artist 1 and artist 2")
         + r".*"
         # # One of the resolved status prints
         + re.escape("Artist(s): The Global | Ben Ivor")
         + ".*"
         # # Reset status print (same as first)
-        + re.escape(
-            "Artist(s): The Global | Ben Ivor | artist 1 | artist 2 | Benny Ivor"
-            " | The Global | Ben Ivor | artist 1 and artist 2"
-        )
+        + re.escape("Artist(s): The Global | Ben Ivor | artist 1 | artist 2 | Benny Ivor | artist 1 and artist 2")
         + ".*",
         re.DOTALL,
     )

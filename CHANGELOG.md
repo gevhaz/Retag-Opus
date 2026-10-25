@@ -12,6 +12,9 @@
   dropped.
 - The album artist from MusicBrainz keeps the artists credited after the
   featured artists, e.g. "A (feat. C) & D" gives "A & D" instead of "A".
+- A featured artist in the title who is already among the artists, as in
+  auto-generated YouTube descriptions, no longer makes the same artists show
+  up a second time as "Tags parsed from YouTube tags".
 
 ## [0.5.0] - 2026-10-24
 
