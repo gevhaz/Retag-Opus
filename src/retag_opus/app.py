@@ -7,6 +7,7 @@ like "2020 Remix" from the title tag to the version tag.
 """
 
 import os
+import re
 import tomllib
 from collections.abc import Sequence
 from copy import deepcopy
@@ -15,7 +16,7 @@ from pathlib import Path
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import cli, constants, description_parser, messages, styles, tags_parser, utils
+from retag_opus import cli, constants, description_parser, messages, styles, tags_parser
 from retag_opus.exceptions import UserExitException
 from retag_opus.music_tags import (
     MUSICBRAINZ,
@@ -35,6 +36,28 @@ def get_config_path() -> Path:
     """Return the path to the configuration file."""
     config_dir = os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config"
     return Path(config_dir) / "retag.toml"
+
+
+def file_path_to_song_name(file_path: Path) -> str:
+    """Convert file name to readable string.
+
+    Produce a string with song title and artist on a readable format
+    from the name of the file being worked with.
+    """
+    text_to_print = str(file_path)
+    basename_match = re.match(r"(.+/)*(.*).opus", text_to_print)
+    if basename_match:
+        text_to_print = basename_match.group(2)
+        playlist_match = re.match(r"<(.*)> - <(.*?)(?: - Topic)*> - <(.*)> - <(.*)>", text_to_print)
+        artist_title_match = re.match("<(.*?)(?: - Topic)*> - <(.*)>", text_to_print)
+        title_only_match = re.match("<(.*)>", text_to_print)
+        if playlist_match:
+            text_to_print = playlist_match.group(2) + " - " + playlist_match.group(3)
+        elif artist_title_match:
+            text_to_print = artist_title_match.group(1) + " - " + artist_title_match.group(2)
+        elif title_only_match:
+            text_to_print = title_only_match.group(1)
+    return text_to_print
 
 
 def get_description(tags: Tags) -> list[str] | None:
@@ -111,7 +134,7 @@ def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
                 any_tag_changed = True
         if any_tag_changed:
             opus_file.save()
-            messages.success(f"Album level tags saved for file: {utils.file_path_to_song_name(file_path)}")
+            messages.success(f"Album level tags saved for file: {file_path_to_song_name(file_path)}")
 
 
 def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
@@ -214,7 +237,7 @@ def run(argv: Sequence[str] | None = None) -> int:
     for song_index, file_path in enumerate(opus_files):
         redo = True
         shared_album = shared_album_per_song.get(file_path)
-        song_name = utils.file_path_to_song_name(file_path)
+        song_name = file_path_to_song_name(file_path)
         while redo:
             redo = False
             # Print info about file and progress
