@@ -16,11 +16,10 @@ from typing import Final
 
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants, messages, styles, titles, utils
+from retag_opus import constants, messages, styles, titles
 from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrainzError, exact_title_and_artist_query
 from retag_opus.tag_table import ORIGINAL, YOUTUBE, TagTable
-
-Tags = dict[str, list[str]]
+from retag_opus.tags import Tags, normalize
 
 MIN_RELEASE_SEARCH_SCORE: Final[int] = 90
 MAX_LENGTH_DIFFERENCE_SECONDS: Final[float] = 3.0
@@ -199,7 +198,7 @@ def song_title_and_artists(tags: TagTable) -> str:
 
 def words(text: str) -> set[str]:
     """Get the words in text, regardless of typography and case."""
-    return set(re.findall(r"\w+", utils.normalize(text)))
+    return set(re.findall(r"\w+", normalize(text)))
 
 
 def title_matches(title: str, text: str) -> bool:
@@ -289,14 +288,14 @@ def choose_release(releases: list[JsonDict], tags: TagTable) -> JsonDict | None:
     stored_release_ids = tags.values_from(ORIGINAL, "musicbrainz_albumid")
     album_names_in_tags = set()
     for album_name in tags.values_from(YOUTUBE, "album") + tags.values_from(ORIGINAL, "album"):
-        album_names_in_tags.add(utils.normalize(titles.prune_title(album_name)))
+        album_names_in_tags.add(normalize(titles.prune_title(album_name)))
 
     youtube_dates = tags.values_from(YOUTUBE, "date")
 
     def preference(release: JsonDict) -> tuple[bool, bool, bool, bool, str]:
         """Sort key that puts the preferred releases first."""
         is_stored = release["id"] in stored_release_ids
-        has_album_name = utils.normalize(titles.prune_title(release.get("title", ""))) in album_names_in_tags
+        has_album_name = normalize(titles.prune_title(release.get("title", ""))) in album_names_in_tags
         is_official = release.get("status") == "Official"
         has_youtube_date = release.get("date") in youtube_dates
         date = release.get("date") or "9999"  # Unknown dates last

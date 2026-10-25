@@ -4,9 +4,8 @@ This module is for parsing text in the existing metadata keys, rather
 that the YouTube description.
 """
 
-from retag_opus import titles, utils
-
-Tags = dict[str, list[str]]
+from retag_opus import titles
+from retag_opus.tags import Tags, remove_duplicates, split_tag
 
 
 def alternatives(tags: Tags) -> Tags:
@@ -47,7 +46,7 @@ def parse_titles(tags: Tags) -> Tags:
 
     original_artists = tags.get("artist", [])
     if len(original_artists) == 1:
-        original_artists = utils.split_tag(original_artists[0])
+        original_artists = split_tag(original_artists[0])
     featured_artists = []
 
     original_versions = tags.get("version", [])
@@ -63,10 +62,10 @@ def parse_titles(tags: Tags) -> Tags:
             genres_from_titles.append("Instrumental")
 
     if set(versions_from_titles) != set(original_versions) and len(versions_from_titles) > 0:
-        parsed_tags["version"] = utils.remove_duplicates(original_versions + versions_from_titles)
+        parsed_tags["version"] = remove_duplicates(original_versions + versions_from_titles)
 
     if set(genres_from_titles) != set(original_genres) and len(genres_from_titles) > 0:
-        parsed_tags["genre"] = utils.remove_duplicates(original_genres + genres_from_titles)
+        parsed_tags["genre"] = remove_duplicates(original_genres + genres_from_titles)
 
     artists_of_song = original_artists
     if len(original_titles) > 0:
@@ -85,7 +84,7 @@ def parse_titles(tags: Tags) -> Tags:
     artist_differs_in_title = artists_of_song != original_artists
     has_new_featured_artists = set(featured_artists) != set(original_artists) and len(featured_artists) > 0
     if artist_differs_in_title or has_new_featured_artists:
-        parsed_tags["artist"] = utils.remove_duplicates(artists_of_song + featured_artists)
+        parsed_tags["artist"] = remove_duplicates(artists_of_song + featured_artists)
     return parsed_tags
 
 
@@ -106,7 +105,7 @@ def split_artists_and_genres(tags: Tags) -> Tags:
     for tag in tags_to_split:
         original_values = tags.get(tag)
         if original_values is not None and len(original_values) == 1:
-            split_tag_values = utils.split_tag(original_values[0])
+            split_tag_values = split_tag(original_values[0])
             if split_tag_values != original_values:
                 split_tags[tag] = split_tag_values
     return split_tags

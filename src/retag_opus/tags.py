@@ -1,7 +1,14 @@
-"""Module with helper functions for the rest of the app."""
+"""Module for the type of a song's tags and basic operations on them.
+
+A song's tags map each tag name to its values, since a tag can have
+several, e.g. {"artist": ["Queen", "David Bowie"]}. The functions here
+split joined values, add values to tags and compare values.
+"""
 
 import re
 import unicodedata
+
+Tags = dict[str, list[str]]
 
 
 def remove_duplicates(values: list[str]) -> list[str]:
@@ -9,7 +16,7 @@ def remove_duplicates(values: list[str]) -> list[str]:
     return list(dict.fromkeys(values))
 
 
-def add_values(tags_to_update: dict[str, list[str]], tag_name: str, new_values: list[str]) -> None:
+def add_values(tags_to_update: Tags, tag_name: str, new_values: list[str]) -> None:
     """Add values to a tag, leaving out the ones it already has.
 
     Example: with tags_to_update {"artist": ["A"]}, adding ["A", "B"]

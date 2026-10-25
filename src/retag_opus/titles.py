@@ -9,7 +9,7 @@ parts and removes them.
 import re
 from typing import Final
 
-from retag_opus import utils
+from retag_opus.tags import normalize, split_tag
 
 # Regular expressions for the parts of a title that aren't the name of
 # the song, e.g. "(Live)" or "feat. Singer". Each captures three named
@@ -133,7 +133,7 @@ def featured_artists(title: str) -> list[str]:
     """
     featured_artists_in_title = []
     for featured_artists_text in find_parts(title, [FEATURING_PATTERN]):
-        featured_artists_in_title += utils.split_tag(featured_artists_text)
+        featured_artists_in_title += split_tag(featured_artists_text)
     return featured_artists_in_title
 
 
@@ -166,8 +166,8 @@ def names_artist(text: str, artist: str) -> bool:
     at the end, e.g. "Ellen Allien" names "Ellen Allien UFO". A single
     word must be the whole name, so "Love" doesn't name "Love Bites".
     """
-    text_words = utils.normalize(text).split()
-    artist_words = utils.normalize(artist).split()
+    text_words = normalize(text).split()
+    artist_words = normalize(artist).split()
     if text_words == artist_words:
         return True
     word_count = len(text_words)

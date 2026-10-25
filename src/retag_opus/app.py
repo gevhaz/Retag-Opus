@@ -28,8 +28,7 @@ from retag_opus.tag_table import (
     YOUTUBE,
     TagTable,
 )
-
-Tags = dict[str, list[str]]
+from retag_opus.tags import Tags
 
 
 def get_config_path() -> Path:

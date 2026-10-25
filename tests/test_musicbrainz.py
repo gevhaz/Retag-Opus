@@ -10,9 +10,9 @@ from retag_opus import musicbrainz
 from retag_opus.musicbrainz import MusicBrainzMatcher
 from retag_opus.musicbrainz_client import MusicBrainzError
 from retag_opus.tag_table import ORIGINAL, YOUTUBE, TagTable
+from retag_opus.tags import Tags
 
 JsonDict = dict[str, Any]
-Tags = dict[str, list[str]]
 
 
 def credit(name: str, joinphrase: str = "") -> JsonDict:
