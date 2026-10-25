@@ -15,47 +15,64 @@ from retag_opus import utils
 # the song, e.g. "(Live)" or "feat. Singer". Each captures three named
 # groups from the title it matches: "before", the title up to the part,
 # "part", the part itself, and "after", the title after it. In "Song
-# (Live) [HD]", the "live" expression captures "Song", "Live" and
-# "[HD]". Code that removes a part keeps "before" and "after", and code
-# that reads a part, e.g. the version, takes "part".
-PATTERNS: Final[dict[str, str]] = {
-    "featuring": (
-        r"(?i)(?P<before>.*?)\s*[\(\[\ ](?:feat|ft|featuring)\.?\s+(?P<part>[^\]\)\(\[]+)[\)\]]*\s*(?P<after>.*)"
-    ),
-    "remaster_in_brackets": r"(?i)(?P<before>.*?)\s*[\(\[](?P<part>\d{0,4}\s*remaster.*)[\)\]]\s*(?P<after>.*)",
-    "remaster_after_dash": r"(?i)(?P<before>.*?)\s*-\s*(?P<part>\d{0,4}.*remaster.*)(?P<after>.*)",
-    "live": r"(?i)(?P<before>.*?)\s*[\(\[](?P<part>live.*?)[\)\]]\s*(?P<after>.*)",
-    "instrumental_in_parentheses": r"(?i)(?P<before>.*?)\s*\((?P<part>.*instrumental.*)\)\s*(?P<after>.*)",
-    "instrumental_in_square_brackets": r"(?i)(?P<before>.*?)\s*\[(?P<part>.*instrumental.*)\]\s*(?P<after>.*)",
-    "remix_in_parentheses": r"(?i)(?P<before>.+)\s*\((?P<part>.*remix.*?)\)\s*(?P<after>.*)",
-    "remix_after_dash": r"(?i)(?P<before>.+)\s*-\s*(?P<part>.*remix.*)\s*(?P<after>.*)",
-    "albumversion": r"(?i)(?P<before>.*?)\s*[\(\[](?P<part>album version.*?)[\)\]]\s*(?P<after>.*)",
-    # Notes about a YouTube video rather than the song, e.g. "(Official
-    # Music Video)", "[Audio]" or "(Lyric Video)"
-    "video_note": (
-        r"(?i)(?P<before>.*?)\s*[\(\[]"
-        r"(?P<part>(?:official\s+)?(?:music\s+|lyrics?\s+)?(?:video|audio|visuali[sz]er|lyrics?)|official)"
-        r"[\)\]]\s*(?P<after>.*)"
-    ),
-    # Hashtags at the end of a video title, e.g. "#hiphop #india"
-    "hashtags": r"(?P<before>.*?)\s*(?P<part>(?:#[^\W\d_]\w*\s*)+)(?P<after>)$",
-}
+# (Live) [HD]", LIVE_PATTERN captures "Song", "Live" and "[HD]". Code
+# that removes a part keeps "before" and "after", and code that reads a
+# part, e.g. the version, takes "part".
+FEATURING_PATTERN: Final = (
+    r"(?i)(?P<before>.*?)\s*[\(\[\ ](?:feat|ft|featuring)\.?\s+(?P<part>[^\]\)\(\[]+)[\)\]]*\s*(?P<after>.*)"
+)
+REMASTER_IN_BRACKETS_PATTERN: Final = (
+    r"(?i)(?P<before>.*?)\s*[\(\[](?P<part>\d{0,4}\s*remaster.*)[\)\]]\s*(?P<after>.*)"
+)
+REMASTER_AFTER_DASH_PATTERN: Final = r"(?i)(?P<before>.*?)\s*-\s*(?P<part>\d{0,4}.*remaster.*)(?P<after>.*)"
+LIVE_PATTERN: Final = r"(?i)(?P<before>.*?)\s*[\(\[](?P<part>live.*?)[\)\]]\s*(?P<after>.*)"
+INSTRUMENTAL_IN_PARENTHESES_PATTERN: Final = r"(?i)(?P<before>.*?)\s*\((?P<part>.*instrumental.*)\)\s*(?P<after>.*)"
+INSTRUMENTAL_IN_SQUARE_BRACKETS_PATTERN: Final = r"(?i)(?P<before>.*?)\s*\[(?P<part>.*instrumental.*)\]\s*(?P<after>.*)"
+REMIX_IN_PARENTHESES_PATTERN: Final = r"(?i)(?P<before>.+)\s*\((?P<part>.*remix.*?)\)\s*(?P<after>.*)"
+REMIX_AFTER_DASH_PATTERN: Final = r"(?i)(?P<before>.+)\s*-\s*(?P<part>.*remix.*)\s*(?P<after>.*)"
+ALBUM_VERSION_PATTERN: Final = r"(?i)(?P<before>.*?)\s*[\(\[](?P<part>album version.*?)[\)\]]\s*(?P<after>.*)"
+# Notes about a YouTube video rather than the song, e.g. "(Official
+# Music Video)", "[Audio]" or "(Lyric Video)"
+VIDEO_NOTE_PATTERN: Final = (
+    r"(?i)(?P<before>.*?)\s*[\(\[]"
+    r"(?P<part>(?:official\s+)?(?:music\s+|lyrics?\s+)?(?:video|audio|visuali[sz]er|lyrics?)|official)"
+    r"[\)\]]\s*(?P<after>.*)"
+)
+# Hashtags at the end of a video title, e.g. "#hiphop #india"
+HASHTAGS_PATTERN: Final = r"(?P<before>.*?)\s*(?P<part>(?:#[^\W\d_]\w*\s*)+)(?P<after>)$"
 
-# Patterns for versions of a song, e.g. "Live" or "2007 Remaster"
-VERSION_PATTERN_NAMES: Final = [
-    "live",
-    "albumversion",
-    "remix_in_parentheses",
-    "remix_after_dash",
-    "remaster_in_brackets",
-    "remaster_after_dash",
+# Every pattern, in the order prune_title() removes their parts in.
+# Removing a part changes the text the next pattern is matched against,
+# so the order can matter.
+ALL_PATTERNS: Final = [
+    FEATURING_PATTERN,
+    REMASTER_IN_BRACKETS_PATTERN,
+    REMASTER_AFTER_DASH_PATTERN,
+    LIVE_PATTERN,
+    INSTRUMENTAL_IN_PARENTHESES_PATTERN,
+    INSTRUMENTAL_IN_SQUARE_BRACKETS_PATTERN,
+    REMIX_IN_PARENTHESES_PATTERN,
+    REMIX_AFTER_DASH_PATTERN,
+    ALBUM_VERSION_PATTERN,
+    VIDEO_NOTE_PATTERN,
+    HASHTAGS_PATTERN,
 ]
 
-INSTRUMENTAL_PATTERN_NAMES: Final = ["instrumental_in_parentheses", "instrumental_in_square_brackets"]
+# Patterns for versions of a song, e.g. "Live" or "2007 Remaster"
+VERSION_PATTERNS: Final = [
+    LIVE_PATTERN,
+    ALBUM_VERSION_PATTERN,
+    REMIX_IN_PARENTHESES_PATTERN,
+    REMIX_AFTER_DASH_PATTERN,
+    REMASTER_IN_BRACKETS_PATTERN,
+    REMASTER_AFTER_DASH_PATTERN,
+]
+
+INSTRUMENTAL_PATTERNS: Final = [INSTRUMENTAL_IN_PARENTHESES_PATTERN, INSTRUMENTAL_IN_SQUARE_BRACKETS_PATTERN]
 
 # Patterns for notes about a YouTube video, which say nothing about the
 # song
-VIDEO_NOTE_PATTERN_NAMES: Final = ["video_note", "hashtags"]
+VIDEO_NOTE_PATTERNS: Final = [VIDEO_NOTE_PATTERN, HASHTAGS_PATTERN]
 
 # Separates the artist and the title in a video title, e.g. "Artist -
 # Title". Dashes inside words, like in "Jay-Z", have no spaces around.
@@ -66,40 +83,40 @@ ARTIST_TITLE_SEPARATOR: Final = r"\s+(?:-|–|—|--)\s+"
 QUOTE_PAIRS: Final = {"'": "'", '"': '"', "“": "”", "‘": "’", "「": "」"}
 
 
-def remove_parts(title: str, pattern_names: list[str]) -> str:
+def remove_parts(title: str, patterns: list[str]) -> str:
     """Remove the parts of a title that the given patterns find.
 
-    Example: remove_parts("Song (Live) [HD]", ["live"]) returns
+    Example: remove_parts("Song (Live) [HD]", [LIVE_PATTERN]) returns
     "Song [HD]".
 
     :param title: The title to remove parts from.
-    :param pattern_names: Keys of PATTERNS, tried in the given order.
+    :param patterns: E.g. LIVE_PATTERN, tried in the given order.
 
     :return: The title without the parts, and without leading and
         trailing whitespace.
     """
     remaining_title = title
-    for pattern_name in pattern_names:
+    for pattern in patterns:
         # Keep the text before and after the part
-        remaining_title = re.sub(PATTERNS[pattern_name], r"\g<before> \g<after>", remaining_title)
+        remaining_title = re.sub(pattern, r"\g<before> \g<after>", remaining_title)
     return remaining_title.strip()
 
 
-def find_parts(title: str, pattern_names: list[str]) -> list[str]:
+def find_parts(title: str, patterns: list[str]) -> list[str]:
     """Find the parts of a title that the given patterns find.
 
-    Example: find_parts("Song (Live) - 2007 Remaster", ["live",
-    "remaster_after_dash"]) returns ["Live", "2007 Remaster"].
+    Example: find_parts("Song (Live) - 2007 Remaster", [LIVE_PATTERN,
+    REMASTER_AFTER_DASH_PATTERN]) returns ["Live", "2007 Remaster"].
 
     :param title: The title to find parts in.
-    :param pattern_names: Keys of PATTERNS, tried in the given order.
+    :param patterns: E.g. LIVE_PATTERN, tried in the given order.
 
     :return: The part found by each pattern that matches, without
         leading and trailing whitespace.
     """
     parts_found = []
-    for pattern_name in pattern_names:
-        part_match = re.match(PATTERNS[pattern_name], title)
+    for pattern in patterns:
+        part_match = re.match(pattern, title)
         if part_match is not None:
             parts_found.append(part_match.group("part").strip())
     return parts_found
@@ -108,13 +125,13 @@ def find_parts(title: str, pattern_names: list[str]) -> list[str]:
 def prune_title(title: str) -> str:
     """Get the name of a song from its title.
 
-    Everything that the patterns in PATTERNS find is removed, like the
+    Everything that a pattern in ALL_PATTERNS finds is removed, like the
     version of the song, its featured artists and notes about a YouTube
     video, and so are leading and trailing whitespace.
 
     Example: "Song (Live) (feat. Singer)" becomes "Song".
     """
-    return remove_parts(title, list(PATTERNS))
+    return remove_parts(title, ALL_PATTERNS)
 
 
 def remove_video_notes(title: str) -> str:
@@ -125,7 +142,7 @@ def remove_video_notes(title: str) -> str:
 
     Example: "Song (Live) (Official Video) #rock" becomes "Song (Live)".
     """
-    return remove_parts(title, VIDEO_NOTE_PATTERN_NAMES)
+    return remove_parts(title, VIDEO_NOTE_PATTERNS)
 
 
 def featured_artists(title: str) -> list[str]:
@@ -138,7 +155,7 @@ def featured_artists(title: str) -> list[str]:
         none.
     """
     featured_artists_in_title = []
-    for featured_artists_text in find_parts(title, ["featuring"]):
+    for featured_artists_text in find_parts(title, [FEATURING_PATTERN]):
         featured_artists_in_title += utils.split_tag(featured_artists_text)
     return featured_artists_in_title
 
@@ -150,7 +167,7 @@ def remove_featured_artists(text: str) -> str:
     "A & D", and remove_featured_artists("A & B feat. C") returns
     "A & B".
     """
-    return remove_parts(text, ["featuring"])
+    return remove_parts(text, [FEATURING_PATTERN])
 
 
 def versions(title: str) -> list[str]:
@@ -161,7 +178,7 @@ def versions(title: str) -> list[str]:
 
     :return: The versions, or an empty list if the title names none.
     """
-    return find_parts(title, VERSION_PATTERN_NAMES)
+    return find_parts(title, VERSION_PATTERNS)
 
 
 def is_instrumental(title: str) -> bool:
@@ -169,7 +186,7 @@ def is_instrumental(title: str) -> bool:
 
     Example: is_instrumental("Song [Instrumental]") is True.
     """
-    instrumental_parts = find_parts(title, INSTRUMENTAL_PATTERN_NAMES)
+    instrumental_parts = find_parts(title, INSTRUMENTAL_PATTERNS)
     return len(instrumental_parts) > 0
 
 
