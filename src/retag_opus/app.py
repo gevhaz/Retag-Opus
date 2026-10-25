@@ -9,6 +9,7 @@ like "2020 Remix" from the title tag to the version tag.
 import os
 import re
 import tomllib
+from collections import Counter
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
@@ -233,9 +234,12 @@ def run(argv: Sequence[str] | None = None) -> int:
     tags_to_delete = config.get("tags_to_delete", [])
     strings_to_delete_tags_based_on = config.get("strings_to_delete_tags_based_on", [])
 
+    song_count_per_album = Counter(shared_album_per_song.values())
+
     for song_index, file_path in enumerate(opus_files):
         redo = True
         shared_album = shared_album_per_song.get(file_path)
+        album_song_count = song_count_per_album[shared_album] if shared_album is not None else None
         song_name = file_path_to_song_name(file_path)
         while redo:
             redo = False
@@ -248,7 +252,7 @@ def run(argv: Sequence[str] | None = None) -> int:
             description_lines = get_description(tags.tags_from(ORIGINAL))
             if matcher is not None:
                 if file_path not in musicbrainz_tags_per_song:
-                    musicbrainz_tags_per_song[file_path] = matcher.match_song(tags)
+                    musicbrainz_tags_per_song[file_path] = matcher.match_song(tags, album_song_count)
                 tags.set_tags(MUSICBRAINZ, musicbrainz_tags_per_song[file_path])
 
             # 4.5 Get rid of shady tags

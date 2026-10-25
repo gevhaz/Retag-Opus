@@ -274,14 +274,19 @@ def length_matches(milliseconds: int | None, seconds: float | None) -> bool:
     return abs(milliseconds / 1000 - seconds) <= MAX_LENGTH_DIFFERENCE_SECONDS
 
 
-def choose_release(releases: list[JsonDict], tags: TagTable) -> JsonDict | None:
+def choose_release(releases: list[JsonDict], tags: TagTable, album_song_count: int | None = None) -> JsonDict | None:
     """Choose which of the releases of a recording a song is from.
 
     The release whose ID is in the song's file is preferred, then
     releases with the album name in the song's tags, ignoring e.g.
-    "(2011 Remaster)", then official releases, then releases with the
-    date in the YouTube description, e.g. "Released on: 2025-10-30",
-    and of those the earliest.
+    "(2011 Remaster)", then releases with album_song_count tracks, then
+    official releases, then releases with the date in the YouTube
+    description, e.g. "Released on: 2025-10-30", and of those the
+    earliest.
+
+    album_song_count is how many songs, including this one, are from
+    the song's album. When they're the whole album, a release with that
+    many tracks is likelier the album than e.g. a deluxe edition.
     """
     if not releases:
         return None
@@ -292,15 +297,25 @@ def choose_release(releases: list[JsonDict], tags: TagTable) -> JsonDict | None:
 
     youtube_dates = tags.values_from(YOUTUBE, "date")
 
-    def preference(release: JsonDict) -> tuple[bool, bool, bool, bool, str]:
+    def preference(release: JsonDict) -> tuple[bool, bool, bool, bool, bool, str]:
         """Sort key that puts the preferred releases first."""
         is_stored = release["id"] in stored_release_ids
         has_album_name = normalize(titles.prune_title(release.get("title", ""))) in album_names_in_tags
+        # Releases from a recording search have their track count, but
+        # those from a recording lookup don't
+        has_album_song_count = album_song_count is not None and release.get("track-count") == album_song_count
         is_official = release.get("status") == "Official"
         has_youtube_date = release.get("date") in youtube_dates
         date = release.get("date") or "9999"  # Unknown dates last
         # Releases with a property come first, since False < True
-        return not is_stored, not has_album_name, not is_official, not has_youtube_date, date
+        return (
+            not is_stored,
+            not has_album_name,
+            not has_album_song_count,
+            not is_official,
+            not has_youtube_date,
+            date,
+        )
 
     # Tuples are compared item by item, so this is the release that's
     # preferred by the first property where the releases differ
@@ -411,8 +426,12 @@ class MusicBrainzMatcher:
         messages.error(f"MusicBrainz: {error}. Not using MusicBrainz for the rest of this run.")
         self.disabled = True
 
-    def match_song(self, tags: TagTable) -> Tags:
+    def match_song(self, tags: TagTable, album_song_count: int | None = None) -> Tags:
         """Get tags for a song from MusicBrainz.
+
+        album_song_count is how many songs, including this one, are from
+        the song's album, if it shares its album with other songs. It
+        helps choose the release, see choose_release().
 
         :return: Tags from MusicBrainz, or no tags if the song wasn't
             found, the user skipped it, or MusicBrainz can't be used.
@@ -422,7 +441,8 @@ class MusicBrainzMatcher:
         messages.info("Looking up the song on MusicBrainz...")
         try:
             recording = self.find_recording(tags)
-            release_summary = choose_release(recording.get("releases", []), tags) if recording else None
+            releases = recording.get("releases", []) if recording else []
+            release_summary = choose_release(releases, tags, album_song_count)
             release = self.client.lookup_release(release_summary["id"]) if release_summary else None
         except MusicBrainzError as e:
             self.disable(e)

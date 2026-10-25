@@ -858,6 +858,30 @@ def test_match_albums():
     assert all(tags.length is not None for tags in songs.values())
 
 
+@pytest.mark.parametrize(("individual", "expected_counts"), [(False, [2, 2]), (True, [None, None])])
+def test_match_song_with_album_song_count(monkeypatch, individual, expected_counts):
+    """Songs that weren't found as an album are told its song count."""
+    # Each song: Youtube artist, pass
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "__init__", lambda *_, **__: None)
+    monkeypatch.setattr(simple_term_menu.TerminalMenu, "show", Mock(side_effect=[0, 0, 0, 0]))
+    matcher = Mock()
+    matcher.match_album.return_value = {}
+    matcher.match_song.return_value = {}
+    monkeypatch.setattr(app, "MusicBrainzMatcher", lambda: matcher)
+    with TemporaryDirectory() as temp_dir:
+        first = Path(temp_dir) / "first.opus"
+        second = Path(temp_dir) / "second.opus"
+        write_opus_file(first, album_song_metadata("Song 1", "The Album", "Pop") | {"artist": ["The Global"]})
+        write_opus_file(second, album_song_metadata("Song 2", "The Album", "Pop") | {"artist": ["The Global"]})
+
+        argv = ["--directory", temp_dir, "--musicbrainz"] + (["--individual"] if individual else [])
+        exit_code = app.run(argv)
+
+    assert exit_code == 0
+    album_song_counts = [call.args[1] for call in matcher.match_song.call_args_list]
+    assert album_song_counts == expected_counts
+
+
 @pytest.mark.parametrize(
     ("found", "expected_output", "expected_trackid"),
     [

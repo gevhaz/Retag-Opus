@@ -322,6 +322,26 @@ def test_choose_release() -> None:
     assert musicbrainz.choose_release([], song()) is None
 
 
+def test_choose_release_by_track_count() -> None:
+    """Prefer releases with as many tracks as the album has songs.
+
+    The album name in the tags still comes first, and the track count
+    before official releases.
+    """
+    releases = [
+        {"id": "deluxe", "title": "Goodbyes (deluxe)", "status": "Official", "date": "2022", "track-count": 16},
+        {"id": "pack", "title": "Goodbyes (expansion pack)", "status": "Official", "date": "2022", "track-count": 4},
+        {"id": "bootleg", "title": "Live Bootleg", "status": "Bootleg", "date": "2023", "track-count": 17},
+        {"id": "named", "title": "Goodbyes", "status": "Official", "date": "2024", "track-count": 13},
+    ]
+    assert musicbrainz.choose_release(releases, song(), 4)["id"] == "pack"  # type: ignore[index]
+    assert musicbrainz.choose_release(releases, song(), 17)["id"] == "bootleg"  # type: ignore[index]
+    assert musicbrainz.choose_release(releases, song(), 5)["id"] == "deluxe"  # type: ignore[index]
+    assert musicbrainz.choose_release(releases, song())["id"] == "deluxe"  # type: ignore[index]
+    named = song(youtube={"album": ["Goodbyes"]})
+    assert musicbrainz.choose_release(releases, named, 4)["id"] == "named"  # type: ignore[index]
+
+
 def test_match_message() -> None:
     """Describe a match with the version and release."""
     live = track(1, "Song", 1000)
@@ -423,6 +443,18 @@ def test_artist_matches() -> None:
     assert musicbrainz.artist_matches(SEARCH_RESULT, "Proper Goodbyes Ben Ivor")
     assert not musicbrainz.artist_matches(SEARCH_RESULT, "Proper Goodbyes Ben")
     assert not musicbrainz.artist_matches({"title": "X"}, "X")
+
+
+def test_match_song_with_album_song_count() -> None:
+    """Choose the release with as many tracks as the album has songs."""
+    client = fake_client()
+    releases_with_counts = [
+        {**SEARCH_RESULT["releases"][1], "track-count": 1},
+        {**SEARCH_RESULT["releases"][2], "track-count": 3},
+    ]
+    client.search_recordings.return_value = [{**SEARCH_RESULT, "releases": releases_with_counts}]
+    MusicBrainzMatcher(client).match_song(song(original={"title": [VIDEO_TITLE]}), album_song_count=3)
+    client.lookup_release.assert_called_once_with("rel-1")
 
 
 def test_match_song_by_channel() -> None:
