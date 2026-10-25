@@ -13,6 +13,7 @@ YouTube
 YouTube's
 changelog
 colorama
+docstring
 docstrings
 else's
 md
