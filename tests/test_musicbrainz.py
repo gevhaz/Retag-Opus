@@ -7,9 +7,9 @@ from unittest.mock import MagicMock
 import pytest
 
 from retag_opus import musicbrainz
-from retag_opus.music_tags import ORIGINAL, YOUTUBE, MusicTags
 from retag_opus.musicbrainz import MusicBrainzMatcher
 from retag_opus.musicbrainz_client import MusicBrainzError
+from retag_opus.tag_table import ORIGINAL, YOUTUBE, TagTable
 
 JsonDict = dict[str, Any]
 Tags = dict[str, list[str]]
@@ -217,9 +217,9 @@ def song(
     original: Tags | None = None,
     youtube: Tags | None = None,
     length: float | None = 201.0,
-) -> MusicTags:
+) -> TagTable:
     """Create tags for a song from the given sources."""
-    tags = MusicTags()
+    tags = TagTable()
     tags.set_tags(ORIGINAL, original or {})
     tags.set_tags(YOUTUBE, youtube or {})
     tags.length = length
@@ -505,7 +505,7 @@ RELEASE_RESULTS: list[JsonDict] = [
 ]
 
 
-def album_songs(goodbyes_length: float | None = 201.0, hello_length: float | None = 180.0) -> dict[Path, MusicTags]:
+def album_songs(goodbyes_length: float | None = 201.0, hello_length: float | None = 180.0) -> dict[Path, TagTable]:
     """Create two songs from the test release."""
     return {
         Path("2.opus"): song(original={"title": ["Hello Again (Official Audio)"]}, length=hello_length),

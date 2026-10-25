@@ -25,7 +25,7 @@ Most methods look at one column at a time. found_values() gives the
 found values of a tag, leaving out the file and sources without any.
 resolve_metadata() goes through the columns with found values, and keeps
 the file's value if a source agrees with it, or else asks the user. The
-result is MusicTags.resolved, the row that will be saved to the file.
+result is TagTable.resolved, the row that will be saved to the file.
 """
 
 import re
@@ -75,7 +75,7 @@ MUSICBRAINZ: Final = Source("MusicBrainz", styles.musicbrainz, utils.is_equal_wh
 ORIGINAL: Final = Source("existing metadata", styles.original)
 
 
-class MusicTags:
+class TagTable:
     """Store tags from different sources for a song.
 
     Stores tags for one song as a dictionary on the same format as the
