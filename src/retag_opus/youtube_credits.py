@@ -16,8 +16,7 @@ list of roles, but the lines always have the same form.
 from typing import Final
 
 from retag_opus import constants
-
-Tags = dict[str, list[str]]
+from retag_opus.tags import Tags
 
 # Roles that say what kind of contributor someone is, and that come
 # before their actual roles, e.g. "Associated Performer, Drums"

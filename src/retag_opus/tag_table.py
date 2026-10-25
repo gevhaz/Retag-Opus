@@ -35,10 +35,15 @@ from typing import Final, NamedTuple
 
 from simple_term_menu import TerminalMenu
 
-from retag_opus import constants, messages, styles, titles, utils
+from retag_opus import constants, messages, styles, titles
 from retag_opus.exceptions import UserExitException
-
-Tags = dict[str, list[str]]
+from retag_opus.tags import (
+    Tags,
+    is_equal_when_normalized,
+    is_equal_when_stripped,
+    remove_duplicates,
+    split_manual_value,
+)
 
 REMOVED_TAG: Final[list[str]] = ["[Removed]"]
 
@@ -58,7 +63,7 @@ class Source(NamedTuple):
 
     name: str
     style: styles.Style
-    is_equal: Callable[[list[str], list[str]], bool] = utils.is_equal_when_stripped
+    is_equal: Callable[[list[str], list[str]], bool] = is_equal_when_stripped
 
     def capitalized_name(self) -> str:
         """Get the name, capitalized like "Existing metadata"."""
@@ -70,7 +75,7 @@ PARSED_FROM_ORIGINAL: Final = Source("tags parsed from original tags", styles.pa
 PARSED_FROM_YOUTUBE: Final = Source("tags parsed from YouTube tags", styles.parsed_from_youtube)
 # MusicBrainz uses typographic apostrophes, quotes and dashes, which
 # don't make its values differ from the file's
-MUSICBRAINZ: Final = Source("MusicBrainz", styles.musicbrainz, utils.is_equal_when_normalized)
+MUSICBRAINZ: Final = Source("MusicBrainz", styles.musicbrainz, is_equal_when_normalized)
 # The song's file
 ORIGINAL: Final = Source("existing metadata", styles.original)
 
@@ -165,7 +170,7 @@ class TagTable:
         """
         values_per_source = [values for _, values in self.found_values(tag_name)]
         for values in values_per_source[1:]:
-            if not utils.is_equal_when_normalized(values, values_per_source[0]):
+            if not is_equal_when_normalized(values, values_per_source[0]):
                 return False
         return True
 
@@ -436,7 +441,7 @@ class TagTable:
         for _, source_values in self.found_values(tag_name):
             values += source_values
         values += self.values_from(ORIGINAL, tag_name)
-        return utils.remove_duplicates(values)
+        return remove_duplicates(values)
 
     def modify_resolved_field(self) -> None:
         """Manually add key-value pairs to the set of resolved tags."""
@@ -447,7 +452,7 @@ class TagTable:
             tag_name = input("  Key: ")
             value = input("  Value: ")
             if tag_name and value:
-                self.resolved[tag_name] = utils.split_manual_value(tag_name, value)
+                self.resolved[tag_name] = split_manual_value(tag_name, value)
 
     def delete_tag_item(self) -> None:
         """Present a menu for removing tags and remove selected ones.
@@ -533,7 +538,7 @@ class TagTable:
         for source, source_tags in self._tags_by_source.items():
             if source != ORIGINAL:
                 tag_names.extend(source_tags.keys())
-        return utils.remove_duplicates(tag_names)
+        return remove_duplicates(tag_names)
 
     def changed_tags(self) -> list[str]:
         """Get the names of the tags that would change in the file."""
@@ -559,7 +564,7 @@ class TagTable:
         """
         for tag_name in pruned_tags:
             resolved_values = self.resolved.get(tag_name, [])
-            if utils.is_equal_when_stripped(resolved_values, self.values_from(ORIGINAL, tag_name)):
+            if is_equal_when_stripped(resolved_values, self.values_from(ORIGINAL, tag_name)):
                 self.resolved[tag_name] = REMOVED_TAG
 
     def apply_album_level_tags(self, album_level_tags: Tags) -> None:
@@ -592,7 +597,7 @@ class TagTable:
         """
         pruned_album_1 = [titles.prune_title(name) for name in album_1]
         pruned_album_2 = [titles.prune_title(name) for name in album_2]
-        return utils.is_equal_when_normalized(pruned_album_1, pruned_album_2)
+        return is_equal_when_normalized(pruned_album_1, pruned_album_2)
 
     def differs_from_musicbrainz_album(self) -> bool:
         """Check whether a source's album differs from MusicBrainz's."""
@@ -640,7 +645,7 @@ class TagTable:
             case "[m] Manually fill in tag":
                 entered_value = input("Value: ")
                 if entered_value:
-                    self.resolved[tag_name] = utils.split_manual_value(tag_name, entered_value)
+                    self.resolved[tag_name] = split_manual_value(tag_name, entered_value)
                 else:
                     print("No input, not changing tag")
                     return True

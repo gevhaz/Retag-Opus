@@ -11,8 +11,7 @@ import pytest
 from retag_opus import styles
 from retag_opus.exceptions import UserExitException
 from retag_opus.tag_table import MUSICBRAINZ, ORIGINAL, PARSED_FROM_ORIGINAL, PARSED_FROM_YOUTUBE, YOUTUBE, TagTable
-
-Tags = dict[str, list[str]]
+from retag_opus.tags import Tags
 
 
 class TestTagTable(unittest.TestCase):

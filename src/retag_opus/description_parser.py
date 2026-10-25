@@ -10,9 +10,8 @@ way, so only a few common patterns and credits with known roles, e.g.
 import re
 from typing import Final
 
-from retag_opus import auto_generated_description, utils, youtube_credits
-
-Tags = dict[str, list[str]]
+from retag_opus import auto_generated_description, youtube_credits
+from retag_opus.tags import Tags, add_values, remove_duplicates, split_tag
 
 # Patterns for tags in text written by uploaders. The value is the last
 # group of the pattern.
@@ -42,10 +41,10 @@ def parse_uploader_text(lines: list[str]) -> Tags:
                 pattern_match = re.match(pattern, line)
                 if pattern_match:
                     parsed_value = pattern_match.groups()[-1].strip()
-                    utils.add_values(tags_to_update=tags, tag_name=tag_name, new_values=[parsed_value])
+                    add_values(tags_to_update=tags, tag_name=tag_name, new_values=[parsed_value])
         if ": " in line:
             for tag_name, names in youtube_credits.parse_credit_line(line).items():
-                utils.add_values(tags_to_update=tags, tag_name=tag_name, new_values=names)
+                add_values(tags_to_update=tags, tag_name=tag_name, new_values=names)
 
     # A song has one title, so the first one found is used
     titles = tags.get("title")
@@ -99,6 +98,6 @@ def parse(description: str) -> Tags:
     if artists:
         single_artists: list[str] = []
         for joined_artists in artists:
-            single_artists += utils.split_tag(joined_artists)
-        tags["artist"] = utils.remove_duplicates(single_artists)
+            single_artists += split_tag(joined_artists)
+        tags["artist"] = remove_duplicates(single_artists)
     return tags
