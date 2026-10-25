@@ -12,7 +12,7 @@ import simple_term_menu
 from mutagen import oggopus
 
 from retag_opus import app
-from retag_opus.music_tags import YOUTUBE
+from retag_opus.tag_table import YOUTUBE
 
 SILENT_OPUS_FILE = Path(__file__).parent / "data" / "silence.opus"
 

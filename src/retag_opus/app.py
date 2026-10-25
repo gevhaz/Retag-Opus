@@ -18,16 +18,16 @@ from simple_term_menu import TerminalMenu
 
 from retag_opus import cli, constants, description_parser, messages, styles, tags_parser
 from retag_opus.exceptions import UserExitException
-from retag_opus.music_tags import (
+from retag_opus.musicbrainz import MusicBrainzMatcher
+from retag_opus.tag_table import (
     MUSICBRAINZ,
     ORIGINAL,
     PARSED_FROM_ORIGINAL,
     PARSED_FROM_YOUTUBE,
     REMOVED_TAG,
     YOUTUBE,
-    MusicTags,
+    TagTable,
 )
-from retag_opus.musicbrainz import MusicBrainzMatcher
 
 Tags = dict[str, list[str]]
 
@@ -137,7 +137,7 @@ def update_album_level_tags(files: list[Path], album_level_tags: Tags) -> None:
             messages.success(f"Album level tags saved for file: {file_path_to_song_name(file_path)}")
 
 
-def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
+def read_song(file_path: Path) -> tuple[OggOpus, TagTable]:
     """Read the tags of a song and parse new tags from them.
 
     :param file_path: The song to read.
@@ -148,7 +148,7 @@ def read_song(file_path: Path) -> tuple[OggOpus, MusicTags]:
     # 1. Read the data and make basic improvements
     opus_file: OggOpus = OggOpus(file_path)  # type: ignore
     original_tags: Tags = dict(opus_file.items())  # type: ignore
-    tags = MusicTags()
+    tags = TagTable()
     tags.length = getattr(getattr(opus_file, "info", None), "length", None)
 
     tags.set_tags(ORIGINAL, original_tags)
@@ -192,7 +192,7 @@ def match_albums(matcher: MusicBrainzMatcher, shared_album_per_song: dict[Path, 
 
     :return: Tags from MusicBrainz for each song whose album was found.
     """
-    songs_per_album: dict[str, dict[Path, MusicTags]] = {}
+    songs_per_album: dict[str, dict[Path, TagTable]] = {}
     for file_path, album in shared_album_per_song.items():
         _, tags = read_song(file_path)
         songs_per_album.setdefault(album, {})[file_path] = tags

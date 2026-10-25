@@ -17,8 +17,8 @@ from typing import Final
 from simple_term_menu import TerminalMenu
 
 from retag_opus import constants, messages, styles, titles, utils
-from retag_opus.music_tags import ORIGINAL, YOUTUBE, MusicTags
 from retag_opus.musicbrainz_client import JsonDict, MusicBrainzClient, MusicBrainzError, exact_title_and_artist_query
+from retag_opus.tag_table import ORIGINAL, YOUTUBE, TagTable
 
 Tags = dict[str, list[str]]
 
@@ -174,7 +174,7 @@ def track_tags(release: JsonDict, medium: JsonDict, track: JsonDict) -> Tags:
     return {tag_name: value for tag_name, value in tags.items() if value}
 
 
-def song_title_and_artists(tags: MusicTags) -> str:
+def song_title_and_artists(tags: TagTable) -> str:
     """Get a song's title and artists, to search for it and match it.
 
     Those are the title and artists from the YouTube description, e.g.
@@ -275,7 +275,7 @@ def length_matches(milliseconds: int | None, seconds: float | None) -> bool:
     return abs(milliseconds / 1000 - seconds) <= MAX_LENGTH_DIFFERENCE_SECONDS
 
 
-def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None:
+def choose_release(releases: list[JsonDict], tags: TagTable) -> JsonDict | None:
     """Choose which of the releases of a recording a song is from.
 
     The release whose ID is in the song's file is preferred, then
@@ -308,7 +308,7 @@ def choose_release(releases: list[JsonDict], tags: MusicTags) -> JsonDict | None
     return min(releases, key=preference)
 
 
-def matching_track_index(tracks: list[tuple[JsonDict, JsonDict]], tags: MusicTags) -> int | None:
+def matching_track_index(tracks: list[tuple[JsonDict, JsonDict]], tags: TagTable) -> int | None:
     """Find the track that a song is, by title and, if known, length.
 
     :return: The index of the track in tracks, or None if no track is
@@ -323,7 +323,7 @@ def matching_track_index(tracks: list[tuple[JsonDict, JsonDict]], tags: MusicTag
     return None
 
 
-def match_tracks(release: JsonDict, songs: dict[Path, MusicTags]) -> dict[Path, Tags]:
+def match_tracks(release: JsonDict, songs: dict[Path, TagTable]) -> dict[Path, Tags]:
     """Match each song to its own track on the release.
 
     :return: Tags for each song, or no tags if any song isn't on the
@@ -341,7 +341,7 @@ def match_tracks(release: JsonDict, songs: dict[Path, MusicTags]) -> dict[Path, 
     return tags_per_song
 
 
-def stored_release_ids(songs: dict[Path, MusicTags]) -> list[str]:
+def stored_release_ids(songs: dict[Path, TagTable]) -> list[str]:
     """Get the MusicBrainz release IDs stored in the songs' files."""
     release_ids: list[str] = []
     for tags in songs.values():
@@ -412,7 +412,7 @@ class MusicBrainzMatcher:
         messages.error(f"MusicBrainz: {error}. Not using MusicBrainz for the rest of this run.")
         self.disabled = True
 
-    def match_song(self, tags: MusicTags) -> Tags:
+    def match_song(self, tags: TagTable) -> Tags:
         """Get tags for a song from MusicBrainz.
 
         :return: Tags from MusicBrainz, or no tags if the song wasn't
@@ -437,7 +437,7 @@ class MusicBrainzMatcher:
                 return track_tags(release, medium, track)
         return {}
 
-    def match_album(self, album: str, songs: dict[Path, MusicTags]) -> dict[Path, Tags]:
+    def match_album(self, album: str, songs: dict[Path, TagTable]) -> dict[Path, Tags]:
         """Get tags for songs from the same album from MusicBrainz.
 
         The songs are matched to the tracks of releases that may be the
@@ -470,7 +470,7 @@ class MusicBrainzMatcher:
         messages.warning(f"MusicBrainz: No release of '{album}' has all {len(songs)} songs.")
         return {}
 
-    def match_release(self, release_id: str, album: str, songs: dict[Path, MusicTags]) -> dict[Path, Tags]:
+    def match_release(self, release_id: str, album: str, songs: dict[Path, TagTable]) -> dict[Path, Tags]:
         """Match the songs of an album to the tracks of a release.
 
         :return: Tags for each song, or no tags if any song isn't on the
@@ -485,7 +485,7 @@ class MusicBrainzMatcher:
             print(styles.musicbrainz(found))
         return tags_per_song
 
-    def search_album_releases(self, album: str, songs: dict[Path, MusicTags]) -> list[str]:
+    def search_album_releases(self, album: str, songs: dict[Path, TagTable]) -> list[str]:
         """Search for releases that may be the album, likeliest first.
 
         Releases with the album's name, ignoring e.g. "(2011 Remaster)",
@@ -518,7 +518,7 @@ class MusicBrainzMatcher:
         candidates.sort(key=preference)
         return [release["id"] for release in candidates]
 
-    def find_recording(self, tags: MusicTags) -> JsonDict | None:
+    def find_recording(self, tags: TagTable) -> JsonDict | None:
         """Find the recording of a song, with the releases it's on.
 
         A MusicBrainz ID in the file is used if there is one. Otherwise
