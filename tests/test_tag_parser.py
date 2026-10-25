@@ -115,6 +115,14 @@ class TestTagsParser(unittest.TestCase):
         self.assertEqual(["First Artist", "Second Artist", "Third Artist"], parsed_tags.get("artist"))
         self.assertEqual(["Song name"], parsed_tags.get("title"))
 
+    def test_parse_titles_featuring_artist_already_credited(self) -> None:
+        """Test that a featured artist already credited adds nothing."""
+        parsed_tags = tags_parser.parse_titles(
+            {"title": ["Song name (feat. Second Artist)"], "artist": ["First Artist", "Second Artist"]}
+        )
+        self.assertNotIn("artist", parsed_tags)
+        self.assertEqual(["Song name"], parsed_tags.get("title"))
+
     def test_parse_titles_artist_in_title(self) -> None:
         """Test splitting the artist from a video title."""
         parsed_tags = tags_parser.parse_titles(
