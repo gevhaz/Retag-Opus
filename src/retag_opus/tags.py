@@ -8,6 +8,8 @@ split joined values, add values to tags and compare values.
 import re
 import unicodedata
 
+from retag_opus import constants
+
 Tags = dict[str, list[str]]
 
 
@@ -49,7 +51,7 @@ def split_manual_value(tag_name: str, value: str) -> list[str]:
     if tag_name == "genre":
         values = re.split(r"\s*[,;|]\s*", value)
     else:
-        values = value.split(" | ")
+        values = value.split(constants.VALUE_SEPARATOR)
     return [v.strip() for v in values if v.strip()]
 
 

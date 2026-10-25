@@ -277,9 +277,9 @@ class TagTable:
         original_values = self.values_from(ORIGINAL, tag_name)
         for source, values in self.found_values(tag_name):
             if values != original_values:
-                colored_values.append(source.style(" | ".join(values)))
+                colored_values.append(source.style(constants.VALUE_SEPARATOR.join(values)))
         if original_values:
-            colored_values.append(ORIGINAL.style(" | ".join(original_values)))
+            colored_values.append(ORIGINAL.style(constants.VALUE_SEPARATOR.join(original_values)))
         return colored_values
 
     def print_all(self) -> None:
@@ -339,7 +339,7 @@ class TagTable:
             print("  Other tags:")
             for tag_name in other_tag_names:
                 resolved_values = self.resolved.get(tag_name, [])
-                joined_resolved_values = " | ".join(resolved_values).replace("\n", " ")
+                joined_resolved_values = constants.VALUE_SEPARATOR.join(resolved_values).replace("\n", " ")
                 if resolved_values == REMOVED_TAG:
                     self.print_metadata_key(f"- {tag_name}", tag_name, styles.removed, self.tags_from(ORIGINAL))
                 elif resolved_values != self.values_from(ORIGINAL, tag_name):
@@ -773,7 +773,7 @@ class TagTable:
         while redo:
             messages.conflict(f"{tag_name.title()}: Mismatch between values in description and metadata:")
             for source, values in candidates:
-                print(f"{source.capitalized_name()}: " + source.style(" | ".join(values)))
+                print(f"{source.capitalized_name()}: " + source.style(constants.VALUE_SEPARATOR.join(values)))
 
             choice = TerminalMenu(menu_entries).show()
             if not isinstance(choice, int) or choice > other_action_index:
