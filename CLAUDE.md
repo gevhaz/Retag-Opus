@@ -3,11 +3,28 @@
 - Use very descriptive variable names, even if they're long.
 - Don't cram logic into one line. Prefer a plain loop or a named
   variable over a dense comprehension or a long expression.
-- Write docstrings that can be understood without reading the code
-  around them. Add an example when it helps.
 - Follow PEP 8 and PEP 257 and write idiomatic Python, e.g. plain
   functions in a module rather than a class of static methods. Where
   the rules here differ from them, the rules here win.
+
+# Docstrings
+
+- Write for the caller: give enough to call the function without
+  reading its code. Say what it returns, or what it does if it's
+  called for its effect, and the special cases and constraints that
+  its name and signature don't show.
+- Don't restate the signature, e.g. `:param title: The title.` Leave
+  out the parameter and return sections when a sentence covers them.
+- Use a single line when the name and signature say the rest. An
+  example often says more than another sentence would.
+- Explain how the function works in comments in its body, so that the
+  docstring stays true when the implementation changes. Leave out
+  background that the caller doesn't need.
+- Whatever a docstring repeats from the code has to be kept in sync by
+  hand, and no check notices when it isn't. Prefer saying less to
+  saying something that can go stale.
+- Shorter doesn't mean fewer: public functions and functions with
+  non-obvious behavior still get a docstring.
 
 # Platforms
 
