@@ -139,7 +139,7 @@ class TestTagTable(unittest.TestCase):
         """Test getting tags from two source."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         actual = tags.get_colored_values_from_all_sources("artist")
         expected = ["artist 2", "artist 1"]
         self.assertListEqual(expected, actual)
@@ -148,7 +148,7 @@ class TestTagTable(unittest.TestCase):
         """Test get tags from two sources where a value is in both."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 1", "artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 1", "artist 2"]}, is_auto_generated=True)
         actual = tags.get_colored_values_from_all_sources("artist")
         expected = ["artist 1 | artist 2", "artist 1"]
         self.assertListEqual(expected, actual)
@@ -164,7 +164,7 @@ class TestTagTable(unittest.TestCase):
         """Test getting tags from two source."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
         actual = tags.get_colored_values_from_all_sources("artist")
@@ -180,7 +180,7 @@ class TestTagTable(unittest.TestCase):
         """Test printing the combined metadata of all sources."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
         tags.print_all()
@@ -211,7 +211,7 @@ class TestTagTable(unittest.TestCase):
         """Test printing combined data when there are performer tags."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"performer:lead vocals": ["artist 4"]})
         tags.print_all()
@@ -252,7 +252,7 @@ class TestTagTable(unittest.TestCase):
         """Test printing data from youtube tags."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]})
+        tags.set_youtube_tags({"artist": ["artist 2"], "performer:lead vocals": ["artist 5"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"performer:lead vocals": ["artist 4"]})
         tags.print_youtube()
@@ -397,11 +397,11 @@ class TestTagTable(unittest.TestCase):
                 "performer:keyboard": ["the keyboard master"],
             },
         )
-        tags.set_tags(
-            YOUTUBE,
+        tags.set_youtube_tags(
             {
                 "performer:guitar": ["artist 4"],
             },
+            is_auto_generated=True,
         )
         tags.resolved = {
             "performer:lead vocals": ["artist 1"],
@@ -453,12 +453,12 @@ class TestTagTable(unittest.TestCase):
                 "performer:keyboard": ["artist 5"],
             },
         )
-        tags.set_tags(
-            YOUTUBE,
+        tags.set_youtube_tags(
             {
                 "performer:guitar": ["artist 4"],
                 "performer:keyboard": ["artist 6"],
             },
+            is_auto_generated=True,
         )
         tags.resolved = {
             "performer:lead vocals": ["artist 1"],
@@ -509,11 +509,11 @@ class TestTagTable(unittest.TestCase):
                 "arranger": ["artist 1"],
             },
         )
-        tags.set_tags(
-            YOUTUBE,
+        tags.set_youtube_tags(
             {
                 "arranger": ["artist 2"],
             },
+            is_auto_generated=True,
         )
         tags.resolved = {
             "artist": ["artist 1", "artist 2"],
@@ -560,11 +560,11 @@ class TestTagTable(unittest.TestCase):
                 "arranger": ["artist 1"],
             },
         )
-        tags.set_tags(
-            YOUTUBE,
+        tags.set_youtube_tags(
             {
                 "arranger": ["artist 2"],
             },
+            is_auto_generated=True,
         )
         tags.resolved = {
             "artist": ["artist 1", "artist 2"],
@@ -672,7 +672,7 @@ class TestTagTable(unittest.TestCase):
         """Test getting data from all sources for a given tag."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
         actual_tags = tags.get_values_from_all_sources("artist")
@@ -685,7 +685,7 @@ class TestTagTable(unittest.TestCase):
         """Test getting data from all sources for a non-existent tag."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
         actual_tags = tags.get_values_from_all_sources("title")
@@ -706,13 +706,13 @@ class TestTagTable(unittest.TestCase):
         self.assertFalse(tags.check_any_new_data_exists())
 
         # Other sources have same value for tag as original
-        tags.set_tags(YOUTUBE, {"artist": ["artist 1"]})
+        tags.set_youtube_tags({"artist": ["artist 1"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 1"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 1"]})
         self.assertFalse(tags.check_any_new_data_exists())
 
         # There actually are new values for the tag
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         self.assertTrue(tags.check_any_new_data_exists())
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         self.assertTrue(tags.check_any_new_data_exists())
@@ -1038,7 +1038,7 @@ class TestTagTable(unittest.TestCase):
 
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1, artist 2"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 1", "artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 1", "artist 2"]}, is_auto_generated=True)
 
         mock_show.side_effect = [0, 0]  # Second menu
         repeat = tags.manually_adjust_tag_when_resolving("artist")
@@ -1082,7 +1082,7 @@ class TestTagTable(unittest.TestCase):
         """
         # Parsed from description
         tags = TagTable()
-        tags.set_tags(YOUTUBE, {"artist": ["artist 1"]})
+        tags.set_youtube_tags({"artist": ["artist 1"]}, is_auto_generated=True)
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()
@@ -1133,7 +1133,7 @@ class TestTagTable(unittest.TestCase):
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]})
         tags.resolved = {"artist": ["[Removed]"], "albumartist": ["[Removed]"]}
-        tags.set_tags(YOUTUBE, {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]})
+        tags.set_youtube_tags({"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]}, is_auto_generated=True)
 
         tags.resolve_metadata()
         self.assertEqual({"artist": ["[Removed]"], "albumartist": ["[Removed]"]}, tags.resolved)
@@ -1155,7 +1155,7 @@ class TestTagTable(unittest.TestCase):
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["Junk Artist"], "albumartist": ["Junk Artist"]})
         tags.resolved = {"artist": ["[Removed]"], "albumartist": ["[Removed]"]}
-        tags.set_tags(YOUTUBE, {"artist": ["Real Artist"]})
+        tags.set_youtube_tags({"artist": ["Real Artist"]}, is_auto_generated=True)
 
         tags.resolve_metadata()
         self.assertEqual(["Real Artist"], tags.resolved.get("artist"))
@@ -1184,7 +1184,7 @@ class TestTagTable(unittest.TestCase):
         # Youtube
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 1 "]})
+        tags.set_youtube_tags({"artist": ["artist 1 "]}, is_auto_generated=True)
 
         tags.resolve_metadata()
         captured = self.capsys.readouterr()
@@ -1229,7 +1229,7 @@ class TestTagTable(unittest.TestCase):
 
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 2"]})
 
@@ -1277,7 +1277,7 @@ class TestTagTable(unittest.TestCase):
         # With only youtube
         tags_only_youtube = TagTable()
         tags_only_youtube.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags_only_youtube.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags_only_youtube.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
 
         tags_only_youtube.resolve_metadata()
         captured = self.capsys.readouterr()
@@ -1357,7 +1357,7 @@ class TestTagTable(unittest.TestCase):
 
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 2"]})
 
@@ -1445,7 +1445,7 @@ class TestTagTable(unittest.TestCase):
 
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 2"]})
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 2"]})
 
@@ -1461,7 +1461,7 @@ class TestTagTable(unittest.TestCase):
 
         tags_youtube = TagTable()
         tags_youtube.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags_youtube.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags_youtube.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags_youtube.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
         tags_youtube.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 4"]})
 
@@ -1471,7 +1471,7 @@ class TestTagTable(unittest.TestCase):
 
         tags_fromtags = TagTable()
         tags_fromtags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags_fromtags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags_fromtags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags_fromtags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
         tags_fromtags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 4"]})
 
@@ -1481,7 +1481,7 @@ class TestTagTable(unittest.TestCase):
 
         tags_original = TagTable()
         tags_original.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags_original.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags_original.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags_original.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
         tags_original.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 4"]})
 
@@ -1491,7 +1491,7 @@ class TestTagTable(unittest.TestCase):
 
         tags_fromdesc = TagTable()
         tags_fromdesc.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags_fromdesc.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags_fromdesc.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags_fromdesc.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 3"]})
         tags_fromdesc.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 4"]})
 
@@ -1516,7 +1516,7 @@ class TestTagTable(unittest.TestCase):
 
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]})
-        tags.set_tags(YOUTUBE, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]})
+        tags.set_youtube_tags({"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]}, is_auto_generated=True)
 
         tags.resolve_metadata()
 
@@ -1527,7 +1527,7 @@ class TestTagTable(unittest.TestCase):
         """Test that a missing album artist is taken from a source."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["Singer", "Other Singer"]})
-        tags.set_tags(YOUTUBE, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]})
+        tags.set_youtube_tags({"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]}, is_auto_generated=True)
 
         tags.resolve_metadata()
 
@@ -1551,7 +1551,7 @@ class TestTagTable(unittest.TestCase):
 
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer", "Other Singer"]})
-        tags.set_tags(YOUTUBE, {"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]})
+        tags.set_youtube_tags({"artist": ["Singer", "Other Singer"], "albumartist": ["Singer"]}, is_auto_generated=True)
         tags.set_tags(MUSICBRAINZ, {"albumartist": ["Singer & Other Singer"]})
 
         tags.resolve_metadata()
@@ -1577,13 +1577,13 @@ class TestTagTable(unittest.TestCase):
 
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"], "genre": ["genre 1"]})
-        tags.set_tags(
-            YOUTUBE,
+        tags.set_youtube_tags(
             {
                 "artist": ["artist 2", "artist 3"],
                 "album": ["album 1"],
                 "date": ["2020-01-01"],
             },
+            is_auto_generated=True,
         )
         tags.set_tags(PARSED_FROM_ORIGINAL, {"genre": ["genre 1", "Instrumental"]})
         tags.resolved = deepcopy(tags.tags_from(ORIGINAL))
@@ -1635,7 +1635,7 @@ class TestTagTable(unittest.TestCase):
 
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
 
         with self.assertRaisesRegex(UserExitException, "Skipping this and all later songs"):
             tags.resolve_metadata()
@@ -1832,7 +1832,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         is used, as it's written there.
         """
         tags = TagTable()
-        tags.set_tags(YOUTUBE, {"title": ["title 1"]})
+        tags.set_youtube_tags({"title": ["title 1"]}, is_auto_generated=True)
         tags.set_tags(MUSICBRAINZ, {"title": ["Title 1"], "tracknumber": ["3"]})
         tags.resolve_metadata()
         self.assertEqual({"title": ["title 1"], "tracknumber": ["3"]}, tags.resolved)
@@ -1844,7 +1844,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         mock_show.return_value = 1  # MusicBrainz
         mock_menu.return_value = None
         tags = TagTable()
-        tags.set_tags(YOUTUBE, {"albumartist": ["Jane Paknia"]})
+        tags.set_youtube_tags({"albumartist": ["Jane Paknia"]}, is_auto_generated=True)
         tags.set_tags(MUSICBRAINZ, {"albumartist": ["Jane Paknia & Hagop Tchaparian"]})
         tags.resolve_metadata()
         mock_show.assert_called_once()
@@ -1863,8 +1863,8 @@ class TestMusicBrainzSource(unittest.TestCase):
         mock_show.return_value = 0
         mock_menu.return_value = None
         tags = TagTable()
-        tags.youtube_is_auto_generated = False
-        tags.set_tags(YOUTUBE, {"title": ["Song (Official Video)"], "album": ["Don't Go"]})
+        youtube_tags = {"title": ["Song (Official Video)"], "album": ["Don't Go"]}
+        tags.set_youtube_tags(youtube_tags, is_auto_generated=False)
         tags.set_tags(PARSED_FROM_YOUTUBE, {"title": ["Song (Official)"]})
         tags.set_tags(MUSICBRAINZ, {"title": ["Song"], "album": ["Don’t Go"]})
 
@@ -1885,7 +1885,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         # Where the sources agree, MusicBrainz's value is used
         self.assertEqual(["Don’t Go"], tags.resolved["album"])
 
-        tags.youtube_is_auto_generated = True
+        tags.set_youtube_tags(youtube_tags, is_auto_generated=True)
         tags.resolve_metadata()
         self.assertEqual(
             [
@@ -1901,10 +1901,26 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(["Song (Official Video)"], tags.resolved["title"])
         self.assertEqual(["Don't Go"], tags.resolved["album"])
 
+    def test_youtube_description_is_not_trusted_until_set(self) -> None:
+        """Test that MusicBrainz comes first without a description."""
+        tags = TagTable()
+        self.assertFalse(tags.youtube_is_auto_generated)
+        self.assertEqual(
+            [PARSED_FROM_ORIGINAL, MUSICBRAINZ, YOUTUBE, PARSED_FROM_YOUTUBE],
+            tags.sources_in_order_of_preference(),
+        )
+
+    def test_set_tags_refuses_youtube(self) -> None:
+        """Test that the YouTube tags need to say who wrote them."""
+        tags = TagTable()
+        with self.assertRaises(ValueError):
+            tags.set_tags(YOUTUBE, {"title": ["Song"]})
+        self.assertEqual({}, tags.tags_from(YOUTUBE))
+
     def test_sources_agree_regardless_of_typography(self) -> None:
         """Test that typography and case don't make sources disagree."""
         tags = TagTable()
-        tags.set_tags(YOUTUBE, {"title": ["Don't Go"]})
+        tags.set_youtube_tags({"title": ["Don't Go"]}, is_auto_generated=True)
         tags.set_tags(MUSICBRAINZ, {"title": ["Don’t go"]})
         self.assertTrue(tags.sources_agree("title"))
         tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go (Live)"]})
@@ -1928,7 +1944,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         mock_menu.return_value = None
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"title": ["Dont Go"]})
-        tags.set_tags(YOUTUBE, {"title": ["Don't Go"]})
+        tags.set_youtube_tags({"title": ["Don't Go"]}, is_auto_generated=True)
         tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go"]})
 
         tags.resolve_metadata()
@@ -1979,7 +1995,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"album": ["Single"]})
         tags.resolved = {"album": ["Single"]}
-        tags.set_tags(YOUTUBE, {"album": ["Single"]})
+        tags.set_youtube_tags({"album": ["Single"]}, is_auto_generated=True)
         tags.set_tags(MUSICBRAINZ, {"album": ["Album"], "tracknumber": ["5"]})
         tags.resolve_metadata()
         self.assertEqual(
@@ -1990,7 +2006,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(["5"], tags.resolved["tracknumber"])
 
         tags = TagTable()
-        tags.set_tags(YOUTUBE, {"album": ["Single"]})
+        tags.set_youtube_tags({"album": ["Single"]}, is_auto_generated=True)
         tags.set_tags(MUSICBRAINZ, {"album": ["Album"]})
         tags.resolve_metadata()
         self.assertEqual(["Album"], tags.resolved["album"])
@@ -2004,7 +2020,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"album": ["Single"], "totaltracks": ["1"]})
         tags.resolved = {"album": ["Single"], "totaltracks": ["1"]}
-        tags.set_tags(YOUTUBE, {"album": ["Single"]})
+        tags.set_youtube_tags({"album": ["Single"]}, is_auto_generated=True)
         tags.set_tags(
             MUSICBRAINZ,
             {
@@ -2034,7 +2050,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         mock_show.return_value = 0  # The album as written in the YouTube description
         mock_menu.return_value = None
         tags = TagTable()
-        tags.set_tags(YOUTUBE, {"album": ["Album (2011 Remaster)"]})
+        tags.set_youtube_tags({"album": ["Album (2011 Remaster)"]}, is_auto_generated=True)
         tags.set_tags(MUSICBRAINZ, {"album": ["album"], "tracknumber": ["5"]})
         tags.resolve_metadata()
         self.assertEqual(["5"], tags.resolved["tracknumber"])
@@ -2053,7 +2069,7 @@ class TestTagTableColors(unittest.TestCase):
         """Test that each source of a tag has its own style."""
         tags = TagTable()
         tags.set_tags(ORIGINAL, {"artist": ["artist 1"]})
-        tags.set_tags(YOUTUBE, {"artist": ["artist 2"]})
+        tags.set_youtube_tags({"artist": ["artist 2"]}, is_auto_generated=True)
         tags.set_tags(PARSED_FROM_ORIGINAL, {"artist": ["artist 3"]})
         tags.set_tags(PARSED_FROM_YOUTUBE, {"artist": ["artist 4"]})
         tags.set_tags(MUSICBRAINZ, {"artist": ["artist 5"]})

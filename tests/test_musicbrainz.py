@@ -9,7 +9,7 @@ import pytest
 from retag_opus import musicbrainz
 from retag_opus.musicbrainz import MusicBrainzMatcher
 from retag_opus.musicbrainz_client import MusicBrainzError
-from retag_opus.tag_table import ORIGINAL, YOUTUBE, TagTable
+from retag_opus.tag_table import ORIGINAL, TagTable
 from retag_opus.tags import Tags
 
 JsonDict = dict[str, Any]
@@ -221,7 +221,7 @@ def song(
     """Create tags for a song from the given sources."""
     tags = TagTable()
     tags.set_tags(ORIGINAL, original or {})
-    tags.set_tags(YOUTUBE, youtube or {})
+    tags.set_youtube_tags(youtube or {}, is_auto_generated=True)
     tags.length = length
     return tags
 
