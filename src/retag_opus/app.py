@@ -25,7 +25,6 @@ from retag_opus.tag_table import (
     PARSED_FROM_ORIGINAL,
     PARSED_FROM_YOUTUBE,
     REMOVED_TAG,
-    YOUTUBE,
     TagTable,
 )
 from retag_opus.tags import Tags
@@ -163,8 +162,7 @@ def read_song(file_path: Path) -> tuple[OggOpus, TagTable]:
     if description_lines:
         description = "\n".join(description_lines)
         youtube_tags = description_parser.parse(description)
-        tags.set_tags(YOUTUBE, youtube_tags)
-        tags.youtube_is_auto_generated = description_parser.is_auto_generated(description)
+        tags.set_youtube_tags(youtube_tags, is_auto_generated=description_parser.is_auto_generated(description))
         tags.add_source_tag()
 
         tags.set_tags(PARSED_FROM_YOUTUBE, tags_parser.alternatives(youtube_tags))
