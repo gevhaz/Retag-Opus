@@ -1088,7 +1088,7 @@ class TestTagTable(unittest.TestCase):
         captured = self.capsys.readouterr()
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            "Artist: No value exists in metadata. Using YouTube description: ['artist 1'].\n",
+            "Artist: No value exists in metadata. Using auto-generated YouTube description: ['artist 1'].\n",
             captured.out,
         )
 
@@ -1190,7 +1190,7 @@ class TestTagTable(unittest.TestCase):
         captured = self.capsys.readouterr()
         self.assertEqual(["artist 1"], tags.resolved.get("artist"))
         self.assertEqual(
-            "Artist: Metadata matches YouTube description.\n",
+            "Artist: Metadata matches auto-generated YouTube description.\n",
             captured.out,
         )
 
@@ -1257,7 +1257,7 @@ class TestTagTable(unittest.TestCase):
                 "  Lyricist: Not found\n"
                 "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
-                "YouTube description: artist 2\n"
+                "Auto-generated YouTube description: artist 2\n"
                 "Tags parsed from original tags: artist 2\n"
                 "Tags parsed from YouTube tags: artist 2\n"
                 "Existing metadata: artist 1\n"
@@ -1303,7 +1303,7 @@ class TestTagTable(unittest.TestCase):
                 "  Lyricist: Not found\n"
                 "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
-                "YouTube description: artist 2\n"
+                "Auto-generated YouTube description: artist 2\n"
                 "Existing metadata: artist 1\n"
             ),
             captured.out,
@@ -1387,7 +1387,7 @@ class TestTagTable(unittest.TestCase):
                 "  Lyricist: Not found\n"
                 "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
-                "YouTube description: artist 2\n"
+                "Auto-generated YouTube description: artist 2\n"
                 "Tags parsed from original tags: artist 2\n"
                 "Tags parsed from YouTube tags: artist 2\n"
                 "Existing metadata: artist 1\n"
@@ -1422,7 +1422,7 @@ class TestTagTable(unittest.TestCase):
                 "  Lyricist: Not found\n"
                 "  Writer: Not found\n\n"
                 "Artist: Mismatch between values in description and metadata:\n"
-                "YouTube description: artist 2\n"
+                "Auto-generated YouTube description: artist 2\n"
                 "Tags parsed from original tags: artist 2\n"
                 "Tags parsed from YouTube tags: artist 2\n"
                 "Existing metadata: artist 1\n"
@@ -1873,7 +1873,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         self.assertEqual(
             [
                 "MusicBrainz",
-                "YouTube description",
+                "Uploader's YouTube description",
                 "Tags parsed from YouTube tags",
                 "Existing metadata",
                 "Other action",
@@ -1889,7 +1889,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.resolve_metadata()
         self.assertEqual(
             [
-                "YouTube description",
+                "Auto-generated YouTube description",
                 "Tags parsed from YouTube tags",
                 "MusicBrainz",
                 "Existing metadata",
@@ -1952,7 +1952,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         out = self.capsys.readouterr().out
         self.assertIn("MusicBrainz: Don’t Go\n", out)
         self.assertEqual(
-            ["YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
+            ["Auto-generated YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
             mock_menu.call_args.args[0],
         )
         self.assertEqual(["Don’t Go"], tags.resolved["title"])
@@ -1999,7 +1999,7 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.set_tags(MUSICBRAINZ, {"album": ["Album"], "tracknumber": ["5"]})
         tags.resolve_metadata()
         self.assertEqual(
-            ["YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
+            ["Auto-generated YouTube description", "MusicBrainz", "Existing metadata", "Other action", "Quit"],
             mock_menu.call_args.args[0],
         )
         self.assertEqual(["Album"], tags.resolved["album"])
