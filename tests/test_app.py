@@ -233,9 +233,9 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         "\nSong 1 of 1"
         "\n----- Song: test -----"
         "\nOrganization: No value exists in metadata. "
-        'Using YouTube description: ["Rich Men\'s Group Digital Ltd."].'
+        'Using auto-generated YouTube description: ["Rich Men\'s Group Digital Ltd."].'
         "\nTitle: No value exists in metadata. "
-        "Using YouTube description: ['Proper Goodbyes']."
+        "Using auto-generated YouTube description: ['Proper Goodbyes']."
         "\n-----------------------------------------------"
         "\n  Other tags:"
         "\n  - synopsis: [Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]"
@@ -258,7 +258,7 @@ def test_file_with_new_metadata(capsys, music_directory, monkeypatch):
         "\n  Lyricist: Not found"
         "\n  Writer: Not found"
         "\n\nArtist: Mismatch between values in description and metadata:"
-        "\nYouTube description: The Global | Ben Ivor"
+        "\nAuto-generated YouTube description: The Global | Ben Ivor"
         "\nExisting metadata: artist 1"
         "\nRetagOpus exited successfully: Skipping this and all later songs\n"
     )
@@ -291,7 +291,7 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         "\nSong 1 of 1"
         "\n----- Song: test -----"
         "\nOrganization: No value exists in metadata. "
-        'Using YouTube description: ["Rich Men\'s Group Digital Ltd."].'
+        'Using auto-generated YouTube description: ["Rich Men\'s Group Digital Ltd."].'
         "\n-----------------------------------------------"
         "\n  Other tags:"
         "\n  - synopsis: [Provided to YouTube by Rich Men's Group Digital Ltd.  Proper Good...]"
@@ -317,7 +317,7 @@ def test_file_with_new_metadata_from_many_sources(capsys, music_directory, monke
         "\n  Writer: Not found"
         # All sources should show up here
         "\n\nTitle: Mismatch between values in description and metadata:"
-        "\nYouTube description: Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"
+        "\nAuto-generated YouTube description: Proper Goodbyes (feat. Ben Ivor) (2036 Remaster)"
         "\nTags parsed from original tags: Proper Goodbyes"
         "\nTags parsed from YouTube tags: Proper Goodbyes"
         "\nExisting metadata: Proper Goodbyes (feat. Benny Ivor) (2039 Remaster)"

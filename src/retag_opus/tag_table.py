@@ -20,8 +20,8 @@ it's what the others are compared with.
 A YouTube description that YouTube generated from the label's data, and
 the tags parsed from it, are preferred over MusicBrainz, but if the
 uploader wrote it, they come after MusicBrainz. The Source of a row says
-what it's called, which style its values are printed in, and how they're
-compared with the file's.
+which style its values are printed in and how they're compared with the
+file's, and name_of() gives what it's called in messages and menus.
 
 Most methods look at one column at a time. found_values() gives the
 found values of a tag, leaving out the file and sources without any.
@@ -56,20 +56,16 @@ ALBUM_LEVEL_TAGS: Final[list[str]] = ["album", "albumartist", "date", "genre"]
 class Source(NamedTuple):
     """A source of a song's tag values, e.g. the YouTube description.
 
-    The name is used in messages, e.g. "Metadata matches tags parsed
-    from original tags", and with a capital first letter in menus. The
-    values of the source are printed in its style, and is_equal checks
-    whether they agree with the values the song's file has, by default
-    ignoring whitespace around them.
+    The values of the source are printed in its style, and is_equal
+    checks whether they agree with the values the song's file has, by
+    default ignoring whitespace around them. Messages and menus show
+    the source by TagTable.name_of(), which is the name, except for the
+    YouTube description.
     """
 
     name: str
     style: styles.Style
     is_equal: Callable[[list[str], list[str]], bool] = is_equal_when_stripped
-
-    def capitalized_name(self) -> str:
-        """Get the name, capitalized like "Existing metadata"."""
-        return self.name[:1].upper() + self.name[1:]
 
 
 YOUTUBE: Final = Source("YouTube description", styles.youtube)
@@ -80,6 +76,11 @@ PARSED_FROM_YOUTUBE: Final = Source("tags parsed from YouTube tags", styles.pars
 MUSICBRAINZ: Final = Source("MusicBrainz", styles.musicbrainz, is_equal_when_normalized)
 # The song's file
 ORIGINAL: Final = Source("existing metadata", styles.original)
+
+
+def capitalize_first_letter(text: str) -> str:
+    """Make the first letter uppercase, e.g. "Existing metadata"."""
+    return text[:1].upper() + text[1:]
 
 
 class TagTable:
@@ -148,6 +149,20 @@ class TagTable:
         that's called.
         """
         return self._youtube_is_auto_generated
+
+    def name_of(self, source: Source) -> str:
+        """Get the name of a source to show in messages and menus.
+
+        It's the source's name, except that the YouTube description's
+        name says who wrote it: "auto-generated YouTube description" or
+        "uploader's YouTube description". Menus show it with a capital
+        first letter.
+        """
+        if source != YOUTUBE:
+            return source.name
+        if self.youtube_is_auto_generated:
+            return "auto-generated " + YOUTUBE.name
+        return "uploader's " + YOUTUBE.name
 
     def tags_from(self, source: Source) -> Tags:
         """Get all tags of a source, e.g. the YouTube description's.
@@ -762,10 +777,10 @@ class TagTable:
                 if tag_name not in constants.track_position_tags:
                     messages.warning(
                         f"{tag_name.title()}: No value exists in metadata. "
-                        f"Using {preferred_source.name}: {preferred_values}."
+                        f"Using {self.name_of(preferred_source)}: {preferred_values}."
                     )
             elif agreeing_source is not None:
-                messages.success(f"{tag_name.title()}: Metadata matches {agreeing_source.name}.")
+                messages.success(f"{tag_name.title()}: Metadata matches {self.name_of(agreeing_source)}.")
                 self.resolved[tag_name] = [value.strip() for value in original_values]
             else:
                 self.ask_for_value(tag_name)
@@ -792,7 +807,7 @@ class TagTable:
 
         menu_entries = []
         for source, _ in candidates:
-            menu_entries.append(source.capitalized_name())
+            menu_entries.append(capitalize_first_letter(self.name_of(source)))
         other_action_index = len(menu_entries)
         menu_entries += ["Other action", "Quit"]
 
@@ -800,7 +815,8 @@ class TagTable:
         while redo:
             messages.conflict(f"{tag_name.title()}: Mismatch between values in description and metadata:")
             for source, values in candidates:
-                print(f"{source.capitalized_name()}: " + source.style(constants.VALUE_SEPARATOR.join(values)))
+                shown_name = capitalize_first_letter(self.name_of(source))
+                print(f"{shown_name}: " + source.style(constants.VALUE_SEPARATOR.join(values)))
 
             choice = TerminalMenu(menu_entries).show()
             if not isinstance(choice, int) or choice > other_action_index:

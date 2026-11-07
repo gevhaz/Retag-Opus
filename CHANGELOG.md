@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Menus and messages say whether a YouTube description is auto-generated or
+  written by the uploader, e.g. "Auto-generated YouTube description" instead of
+  "YouTube description".
+
 ### Fixed
 
 - Songs whose title on MusicBrainz starts with a parenthesis, like
