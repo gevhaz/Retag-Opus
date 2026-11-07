@@ -2055,6 +2055,53 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.resolve_metadata()
         self.assertEqual(["5"], tags.resolved["tracknumber"])
 
+    def test_agreeing_source_is_the_most_preferred(self) -> None:
+        """Test that each source compares with the file in its own way.
+
+        MusicBrainz ignores typography, the others only whitespace.
+        """
+        tags = TagTable()
+        tags.set_tags(ORIGINAL, {"title": ["Don't Go"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"title": ["Dont Go"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go"]})
+        self.assertEqual(MUSICBRAINZ, tags.agreeing_source("title"))
+        tags.set_youtube_tags({"title": [" Don't Go "]}, is_auto_generated=True)
+        self.assertEqual(YOUTUBE, tags.agreeing_source("title"))
+
+    def test_agreeing_source_needs_a_value_in_the_file(self) -> None:
+        """Test that no source agrees with a missing or other value."""
+        tags = TagTable()
+        tags.set_tags(MUSICBRAINZ, {"title": ["Song"]})
+        self.assertIsNone(tags.agreeing_source("title"))
+        tags.set_tags(ORIGINAL, {"title": ["Song (Live)"]})
+        self.assertIsNone(tags.agreeing_source("title"))
+
+    def test_agreeing_source_ignores_album_unlike_musicbrainz(self) -> None:
+        """Test keeping the album only if MusicBrainz agrees."""
+        tags = TagTable()
+        tags.set_tags(ORIGINAL, {"album": ["Single"]})
+        tags.set_youtube_tags({"album": ["Single"]}, is_auto_generated=True)
+        self.assertEqual(YOUTUBE, tags.agreeing_source("album"))
+        tags.set_tags(MUSICBRAINZ, {"album": ["Album"]})
+        self.assertIsNone(tags.agreeing_source("album"))
+
+    def test_should_resolve_release_tags_of_the_release(self) -> None:
+        """Test that track numbers are only taken for the same album."""
+        tags = TagTable()
+        tags.set_tags(MUSICBRAINZ, {"album": ["Album"], "tracknumber": ["5"]})
+        tags.resolved = {"album": ["Single"]}
+        self.assertTrue(tags.should_resolve("title"))
+        self.assertFalse(tags.should_resolve("tracknumber"))
+        tags.resolved["album"] = ["Album (2011 Remaster)"]
+        self.assertTrue(tags.should_resolve("tracknumber"))
+
+    def test_should_resolve_skips_album_level_tags(self) -> None:
+        """Test that tags chosen for an earlier song are left alone."""
+        tags = TagTable()
+        tags.apply_album_level_tags({"genre": ["Pop"]})
+        self.assertFalse(tags.should_resolve("genre"))
+        self.assertTrue(tags.should_resolve("title"))
+
 
 @patch.dict(os.environ, {"FORCE_COLOR": "1", "NO_COLOR": ""})
 class TestTagTableColors(unittest.TestCase):

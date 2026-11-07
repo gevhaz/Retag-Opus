@@ -656,6 +656,42 @@ class TagTable:
         """Check whether the album is the release MusicBrainz found."""
         return self.is_same_album(self.resolved.get("album", []), self.values_from(MUSICBRAINZ, "album"))
 
+    def should_resolve(self, tag_name: str) -> bool:
+        """Check whether resolving should choose a value for a tag.
+
+        Album level tags taken from an earlier song on the album are
+        left as they are, and so are release tags like the track number
+        unless the resolved album is the release MusicBrainz found.
+        Since that depends on the album chosen so far, check right
+        before choosing the tag's value.
+        """
+        if tag_name in self.album_level_tags:
+            return False
+        # E.g. a single on YouTube may only be on an album on
+        # MusicBrainz, and then its track number would be wrong
+        return tag_name not in constants.release_tags or self.album_is_musicbrainz_release()
+
+    def agreeing_source(self, tag_name: str) -> Source | None:
+        """Get the most preferred source that agrees with the file.
+
+        Each source compares by its own is_equal. It's None if no source
+        agrees, if the file has no value, or for the album when a source
+        has another album than MusicBrainz, so that the file's value
+        isn't kept without asking.
+        """
+        original_values = self.values_from(ORIGINAL, tag_name)
+        if not original_values:
+            return None
+        # MusicBrainz may have found the song on another release than
+        # the album that the other sources say, e.g. on an album rather
+        # than a single, and then the user chooses which is right
+        if tag_name == "album" and self.differs_from_musicbrainz_album():
+            return None
+        for source, values in self.found_values(tag_name):
+            if source.is_equal(values, original_values):
+                return source
+        return None
+
     def manually_adjust_tag_when_resolving(self, tag_name: str) -> bool:
         """Perform a manual action on a tag when no source is right.
 
@@ -746,28 +782,12 @@ class TagTable:
             )
 
         for tag_name in self.tags_with_new_data():
-            if tag_name in self.album_level_tags:
-                continue
-            if tag_name in constants.release_tags and not self.album_is_musicbrainz_release():
-                # E.g. a single on YouTube may only be on an album on
-                # MusicBrainz, and then its track number would be wrong
+            if not self.should_resolve(tag_name):
                 continue
             original_values = self.values_from(ORIGINAL, tag_name)
             found_values = self.found_values(tag_name)
             musicbrainz_values = self.values_from(MUSICBRAINZ, tag_name)
-
-            # MusicBrainz may have found the song on another release
-            # than the album that the other sources say, e.g. on an
-            # album rather than a single, and then the user chooses
-            # which is right
-            album_differs_from_musicbrainz = tag_name == "album" and self.differs_from_musicbrainz_album()
-            # The existing value can be kept if a source agrees with it
-            agreeing_source = None
-            if original_values and not album_differs_from_musicbrainz:
-                for source, values in found_values:
-                    if source.is_equal(values, original_values):
-                        agreeing_source = source
-                        break
+            agreeing_source = self.agreeing_source(tag_name)
 
             if tag_name.startswith(constants.MUSICBRAINZ_ID_PREFIX) and len(musicbrainz_values) > 0:
                 self.resolved[tag_name] = musicbrainz_values
