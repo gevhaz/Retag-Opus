@@ -28,6 +28,11 @@ def add_values(tags_to_update: Tags, tag_name: str, new_values: list[str]) -> No
     tags_to_update[tag_name] = remove_duplicates(existing_values + new_values)
 
 
+def is_performer_tag(tag_name: str) -> bool:
+    """Check for a performer role tag, e.g. "performer:violin"."""
+    return tag_name.startswith(constants.PERFORMER_PREFIX)
+
+
 def split_tag(joined_values: str) -> list[str]:
     """Split the provided tag by pre-defined delimeters."""
     split_values = re.split(", | and | & |; ", joined_values)

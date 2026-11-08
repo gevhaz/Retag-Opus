@@ -16,7 +16,7 @@ from pathlib import Path
 from mutagen.oggopus import OggOpus
 from simple_term_menu import TerminalMenu
 
-from retag_opus import cli, constants, description_parser, messages, styles, tags_parser
+from retag_opus import cli, constants, description_parser, messages, styles, tag_editor, tags_parser
 from retag_opus.exceptions import UserExitException
 from retag_opus.musicbrainz import MusicBrainzMatcher
 from retag_opus.tag_table import (
@@ -266,7 +266,7 @@ def run(argv: Sequence[str] | None = None) -> int:
 
             # 4. For each field, if there are conflicts, ask user input
             try:
-                tags.resolve_metadata()
+                tag_editor.resolve_metadata(tags)
             except UserExitException as e:
                 print(f"RetagOpus exited successfully: {e}")
                 return 0
@@ -289,7 +289,7 @@ def run(argv: Sequence[str] | None = None) -> int:
 
             while reshow_choices:
                 print("Final result:")
-                tags.print_resolved()
+                tag_editor.print_resolved(tags)
                 reshow_choices = False
                 options = [
                     "[p] pass",
@@ -328,12 +328,12 @@ def run(argv: Sequence[str] | None = None) -> int:
                         print(f"Trying to improve metadata again for file: {song_name}")
                         redo = True
                     case "[m] modify tag":
-                        tags.modify_resolved_field()
+                        tag_editor.modify_resolved_field(tags)
                         messages.info("Current metadata to save:")
-                        tags.print_resolved()
+                        tag_editor.print_resolved(tags)
                         reshow_choices = True
                     case "[d] delete item in tag":
-                        tags.delete_tag_item()
+                        tag_editor.delete_tag_item(tags)
                         reshow_choices = True
                     case "[p] pass":
                         messages.warning(f"Pass. Skipping song: {song_name}")
@@ -346,11 +346,11 @@ def run(argv: Sequence[str] | None = None) -> int:
                         reshow_choices = True
                     case "[a] all metadata":
                         messages.info("All old and new metadata suggested for this file:")
-                        tags.print_all()
+                        tag_editor.print_all(tags)
                         reshow_choices = True
                     case "[e] resolved metadata":
                         messages.info("Current metadata to save:")
-                        tags.print_resolved()
+                        tag_editor.print_resolved(tags)
                         reshow_choices = True
                     case _:
                         messages.error("Something went wrong, starting over")
