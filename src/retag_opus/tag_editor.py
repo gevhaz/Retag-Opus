@@ -60,7 +60,7 @@ def performer_print_name(tag_name: str) -> str:
     return "- " + capitalize_first_letter(role)
 
 
-def print_metadata_key(
+def print_tag(
     tag_table: TagTable,
     printed_tag_name: str,
     tag_name: str,
@@ -81,19 +81,19 @@ def print_metadata_key(
     print("  " + printed_tag_name + ": " + style(value))
 
 
-def print_metadata(tag_table: TagTable, tags_to_print: Tags, style: styles.Style) -> None:
+def print_tags(tag_table: TagTable, tags_to_print: Tags, style: styles.Style) -> None:
     """Print the performers and the common tags of tags_to_print."""
     if any(is_performer_tag(tag_name) for tag_name in tags_to_print.keys()):
         print("  Performers:")
         for tag_name in performer_tags_in_print_order(tags_to_print):
             if tag_name in tags_to_print and tags_to_print[tag_name] is not None:
-                print_metadata_key(tag_table, performer_print_name(tag_name), tag_name, style, tags_to_print)
+                print_tag(tag_table, performer_print_name(tag_name), tag_name, style, tags_to_print)
     for tag_name, print_name in constants.tags_printed_for_every_song.items():
-        print_metadata_key(tag_table, print_name, tag_name, style, tags_to_print)
+        print_tag(tag_table, print_name, tag_name, style, tags_to_print)
     print("")
 
 
-def get_colored_values_from_all_sources(tag_table: TagTable, tag_name: str) -> list[str]:
+def styled_values_from_all_sources(tag_table: TagTable, tag_name: str) -> list[str]:
     """Get a tag's values in all sources, styled by source.
 
     The sources come in order of preference, with the song's file
@@ -102,32 +102,32 @@ def get_colored_values_from_all_sources(tag_table: TagTable, tag_name: str) -> l
     description, it's ["B", "A"], with "B" in the YouTube style. If
     no source has the tag, the list is empty.
     """
-    colored_values: list[str] = []
+    styled_values: list[str] = []
     original_values = tag_table.values_from(ORIGINAL, tag_name)
     for source, values in tag_table.found_values(tag_name):
         if values != original_values:
-            colored_values.append(source.style(constants.VALUE_SEPARATOR.join(values)))
+            styled_values.append(source.style(constants.VALUE_SEPARATOR.join(values)))
     if original_values:
-        colored_values.append(ORIGINAL.style(constants.VALUE_SEPARATOR.join(original_values)))
-    return colored_values
+        styled_values.append(ORIGINAL.style(constants.VALUE_SEPARATOR.join(original_values)))
+    return styled_values
 
 
-def print_all(tag_table: TagTable) -> None:
+def print_all_sources(tag_table: TagTable) -> None:
     """Print every tag's values in all sources, colored by source."""
     performer_block = []
     there_are_tags = False
     for tag_name in performer_tags_in_print_order(*tags_of_all_sources(tag_table)):
-        colored_values = get_colored_values_from_all_sources(tag_table, tag_name)
-        if len(colored_values) > 0:
+        styled_values = styled_values_from_all_sources(tag_table, tag_name)
+        if len(styled_values) > 0:
             there_are_tags = True
-            performer_block.append(performer_print_name(tag_name) + ": " + " | ".join(colored_values))
+            performer_block.append(performer_print_name(tag_name) + ": " + " | ".join(styled_values))
 
     main_block = []
     for tag_name, print_name in constants.tags_printed_for_every_song.items():
-        colored_values = get_colored_values_from_all_sources(tag_table, tag_name)
-        if len(colored_values) > 0:
+        styled_values = styled_values_from_all_sources(tag_table, tag_name)
+        if len(styled_values) > 0:
             there_are_tags = True
-            main_block.append(print_name + ": " + " | ".join(colored_values))
+            main_block.append(print_name + ": " + " | ".join(styled_values))
         else:
             main_block.append(print_name + ": " + styles.unset("Not set"))
 
@@ -140,20 +140,20 @@ def print_all(tag_table: TagTable) -> None:
         messages.error("There's no data to be printed")
 
 
-def print_youtube(tag_table: TagTable) -> None:
+def print_youtube_tags(tag_table: TagTable) -> None:
     """Print the tags parsed from the YouTube description."""
     if tag_table.tags_from(YOUTUBE):
-        print_metadata(tag_table, tag_table.tags_from(YOUTUBE), styles.youtube)
+        print_tags(tag_table, tag_table.tags_from(YOUTUBE), styles.youtube)
     else:
         messages.error("No new data parsed from description")
 
 
-def print_resolved(tag_table: TagTable, print_all: bool = False) -> None:
+def print_resolved_tags(tag_table: TagTable, with_all_sources: bool = False) -> None:
     """Print the tags that will be saved to the song's file.
 
     Tags without a line of their own are listed first as other tags,
-    leaving out MusicBrainz IDs. print_all also shows the values of all
-    sources for tags that keep the value they have now, see
+    leaving out MusicBrainz IDs. with_all_sources also shows the values
+    of all sources for tags that keep the value they have now, see
     print_resolved_tag().
     """
     other_tag_names: list[str] = []
@@ -168,32 +168,32 @@ def print_resolved(tag_table: TagTable, print_all: bool = False) -> None:
             resolved_values = tag_table.resolved.get(tag_name, [])
             joined_resolved_values = constants.VALUE_SEPARATOR.join(resolved_values).replace("\n", " ")
             if resolved_values == REMOVED_TAG:
-                print_metadata_key(tag_table, f"- {tag_name}", tag_name, styles.removed, tag_table.tags_from(ORIGINAL))
+                print_tag(tag_table, f"- {tag_name}", tag_name, styles.removed, tag_table.tags_from(ORIGINAL))
             elif resolved_values != tag_table.values_from(ORIGINAL, tag_name):
-                print_metadata_key(tag_table, f"- {tag_name}", tag_name, styles.changed, tag_table.resolved)
+                print_tag(tag_table, f"- {tag_name}", tag_name, styles.changed, tag_table.resolved)
             elif len(joined_resolved_values) > 200:
                 print(f"  - {tag_name}: " + styles.original(f"[{joined_resolved_values[:65]}...]"))
             else:
-                print_metadata_key(tag_table, f"- {tag_name}", tag_name, styles.original, tag_table.resolved)
+                print_tag(tag_table, f"- {tag_name}", tag_name, styles.original, tag_table.resolved)
 
     # Only performers with something to show are printed: the resolved
     # ones, which include the file's tags and removed tags, and when
     # printing all, the ones in the other sources too
-    if print_all:
+    if with_all_sources:
         performer_tags = performer_tags_in_print_order(tag_table.resolved, *tags_of_all_sources(tag_table))
     else:
         performer_tags = performer_tags_in_print_order(tag_table.resolved)
     if performer_tags:
         print("  Performers:")
         for tag_name in performer_tags:
-            print_resolved_tag(tag_table, performer_print_name(tag_name), tag_name, print_all)
+            print_resolved_tag(tag_table, performer_print_name(tag_name), tag_name, with_all_sources)
     for tag_name, print_name in constants.tags_printed_for_every_song.items():
-        print_resolved_tag(tag_table, print_name, tag_name, print_all)
+        print_resolved_tag(tag_table, print_name, tag_name, with_all_sources)
 
     print("")
 
 
-def print_resolved_tag(tag_table: TagTable, printed_tag_name: str, tag_name: str, print_all: bool) -> None:
+def print_resolved_tag(tag_table: TagTable, printed_tag_name: str, tag_name: str, with_all_sources: bool) -> None:
     """Print the line showing what will be saved in a tag.
 
     The resolved tags are the tags that will be saved to the song's
@@ -205,9 +205,9 @@ def print_resolved_tag(tag_table: TagTable, printed_tag_name: str, tag_name: str
       file has now.
     - Green (styles.changed): the tag will get the value shown.
     - Cyan (styles.original): the tag keeps the value it has now.
-      If print_all is set, the values found in all sources are shown
-      instead, each in the color of its source, so that they can be
-      compared before choosing a value.
+      If with_all_sources is set, the values found in all sources are
+      shown instead, each in the color of its source, so that they can
+      be compared before choosing a value.
     - Gray (styles.unset) "Not found": the tag has no value and
       won't get one.
 
@@ -216,21 +216,21 @@ def print_resolved_tag(tag_table: TagTable, printed_tag_name: str, tag_name: str
     what the tag is called in the line, e.g. "Title" for "title".
     """
     resolved_values = tag_table.resolved.get(tag_name)
-    colored_values = get_colored_values_from_all_sources(tag_table, tag_name)
+    styled_values = styled_values_from_all_sources(tag_table, tag_name)
     # If the user chose to remove a tag that existed before
     if resolved_values == REMOVED_TAG:
-        print_metadata_key(tag_table, printed_tag_name, tag_name, styles.removed, tag_table.tags_from(ORIGINAL))
+        print_tag(tag_table, printed_tag_name, tag_name, styles.removed, tag_table.tags_from(ORIGINAL))
     # If the resolved tag differs from the original tag
     elif resolved_values is not None and resolved_values != tag_table.values_from(ORIGINAL, tag_name):
-        print_metadata_key(tag_table, printed_tag_name, tag_name, styles.changed, tag_table.resolved)
+        print_tag(tag_table, printed_tag_name, tag_name, styles.changed, tag_table.resolved)
     # original and resolved are equal, but other tags exist
-    elif len(colored_values) > 0 and print_all:
-        print("  " + printed_tag_name + ": " + " | ".join(colored_values))
+    elif len(styled_values) > 0 and with_all_sources:
+        print("  " + printed_tag_name + ": " + " | ".join(styled_values))
     else:
-        print_metadata_key(tag_table, printed_tag_name, tag_name, styles.original, tag_table.resolved)
+        print_tag(tag_table, printed_tag_name, tag_name, styles.original, tag_table.resolved)
 
 
-def modify_resolved_field(tag_table: TagTable) -> None:
+def enter_tags_by_hand(tag_table: TagTable) -> None:
     """Let the user type tags and values to save, until one is empty."""
     tag_name = " "
     value = " "
@@ -242,7 +242,7 @@ def modify_resolved_field(tag_table: TagTable) -> None:
             tag_table.resolved[tag_name] = split_manual_value(tag_name, value)
 
 
-def delete_tag_item(tag_table: TagTable) -> None:
+def remove_values_from_tag(tag_table: TagTable) -> None:
     """Let the user remove values from one of the tags to save.
 
     The user chooses a tag, then which of its values to remove. A tag
@@ -286,7 +286,7 @@ def delete_tag_item(tag_table: TagTable) -> None:
                 tag_table.resolved[selected_tag] = REMOVED_TAG
 
 
-def manually_adjust_tag_when_resolving(tag_table: TagTable, tag_name: str) -> bool:
+def ask_for_other_action(tag_table: TagTable, tag_name: str) -> bool:
     """Let the user set a tag by hand when no source is right.
 
     The user can select values among the ones all sources found, type
@@ -320,7 +320,7 @@ def manually_adjust_tag_when_resolving(tag_table: TagTable, tag_name: str) -> bo
             return False
         case "[p] Print description metadata":
             print("-----------------------------------------------")
-            print_youtube(tag_table)
+            print_youtube_tags(tag_table)
             return True
         case "[s] Select items from a list":
             values_from_all_sources = tag_table.get_values_from_all_sources(tag_name)
@@ -353,7 +353,7 @@ def manually_adjust_tag_when_resolving(tag_table: TagTable, tag_name: str) -> bo
             return True
 
 
-def resolve_metadata(tag_table: TagTable) -> None:
+def resolve_tags(tag_table: TagTable) -> None:
     """Choose the values to save for the tags that sources found.
 
     A tag gets the sources' value without asking when the file has
@@ -408,7 +408,7 @@ def ask_for_value(tag_table: TagTable, tag_name: str) -> None:
         the app.
     """
     print("-----------------------------------------------")
-    print_resolved(tag_table, print_all=True)
+    print_resolved_tags(tag_table, with_all_sources=True)
     candidates = tag_table.found_values(tag_name)
     candidates.append((ORIGINAL, tag_table.values_from(ORIGINAL, tag_name)))
 
@@ -429,7 +429,7 @@ def ask_for_value(tag_table: TagTable, tag_name: str) -> None:
         if not isinstance(choice, int) or choice > other_action_index:
             raise UserExitException("Skipping this and all later songs")
         if choice == other_action_index:
-            redo = manually_adjust_tag_when_resolving(tag_table, tag_name)
+            redo = ask_for_other_action(tag_table, tag_name)
         else:
             _, chosen_values = candidates[choice]
             tag_table.resolved[tag_name] = chosen_values
