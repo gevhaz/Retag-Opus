@@ -1926,16 +1926,6 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go (Live)"]})
         self.assertFalse(tags.sources_agree("title"))
 
-    def test_resolve_metadata_matches_musicbrainz_regardless_of_typography(self) -> None:
-        """Test that MusicBrainz typography doesn't cause a conflict."""
-        tags = TagTable()
-        tags.set_tags(ORIGINAL, {"title": ["Don't Go"]})
-        tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go"]})
-        tags.resolve_metadata()
-        self.assertEqual(["Don't Go"], tags.resolved["title"])
-        out = self.capsys.readouterr().out
-        self.assertEqual("Title: Metadata matches MusicBrainz.\n", out)
-
     @patch("simple_term_menu.TerminalMenu.__init__")
     @patch("simple_term_menu.TerminalMenu.show")
     def test_resolve_metadata_offers_musicbrainz(self, mock_show: MagicMock, mock_menu: MagicMock) -> None:
@@ -2054,6 +2044,30 @@ class TestMusicBrainzSource(unittest.TestCase):
         tags.set_tags(MUSICBRAINZ, {"album": ["album"], "tracknumber": ["5"]})
         tags.resolve_metadata()
         self.assertEqual(["5"], tags.resolved["tracknumber"])
+
+    def test_agreeing_source_compares_as_the_source_does(self) -> None:
+        """Test that only MusicBrainz ignores typography."""
+        tags = TagTable()
+        tags.set_tags(ORIGINAL, {"title": ["Don't Go"]})
+        tags.set_tags(PARSED_FROM_ORIGINAL, {"title": ["Dont Go"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go"]})
+        self.assertEqual(MUSICBRAINZ, tags.agreeing_source("title"))
+
+    def test_agreeing_source_is_the_most_preferred(self) -> None:
+        """Test that the most preferred agreeing source is given."""
+        tags = TagTable()
+        tags.set_tags(ORIGINAL, {"title": ["Don't Go"]})
+        tags.set_tags(MUSICBRAINZ, {"title": ["Don’t Go"]})
+        tags.set_youtube_tags({"title": [" Don't Go "]}, is_auto_generated=True)
+        self.assertEqual(YOUTUBE, tags.agreeing_source("title"))
+
+    def test_agreeing_source_needs_a_value_in_the_file(self) -> None:
+        """Test that none agrees with a missing or different value."""
+        tags = TagTable()
+        tags.set_tags(MUSICBRAINZ, {"title": ["Song"]})
+        self.assertIsNone(tags.agreeing_source("title"))
+        tags.set_tags(ORIGINAL, {"title": ["Song (Live)"]})
+        self.assertIsNone(tags.agreeing_source("title"))
 
 
 @patch.dict(os.environ, {"FORCE_COLOR": "1", "NO_COLOR": ""})
