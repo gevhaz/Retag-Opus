@@ -656,6 +656,14 @@ class TagTable:
         """Check whether the album to save is MusicBrainz's."""
         return self.is_same_album(self.resolved.get("album", []), self.values_from(MUSICBRAINZ, "album"))
 
+    def agreeing_source(self, tag_name: str) -> Source | None:
+        """Get the most preferred source that has the file's value."""
+        original_values = self.values_from(ORIGINAL, tag_name)
+        for source, values in self.found_values(tag_name):
+            if source.is_equal(values, original_values):
+                return source
+        return None
+
     def manually_adjust_tag_when_resolving(self, tag_name: str) -> bool:
         """Perform a manual action on a tag when no source is right.
 
@@ -761,13 +769,7 @@ class TagTable:
             # album rather than a single, and then the user chooses
             # which is right
             album_differs_from_musicbrainz = tag_name == "album" and self.differs_from_musicbrainz_album()
-            # The existing value can be kept if a source agrees with it
-            agreeing_source = None
-            if original_values and not album_differs_from_musicbrainz:
-                for source, values in found_values:
-                    if source.is_equal(values, original_values):
-                        agreeing_source = source
-                        break
+            agreeing_source = self.agreeing_source(tag_name)
 
             if tag_name.startswith(constants.MUSICBRAINZ_ID_PREFIX) and len(musicbrainz_values) > 0:
                 self.resolved[tag_name] = musicbrainz_values
@@ -779,7 +781,7 @@ class TagTable:
                         f"{tag_name.title()}: No value exists in metadata. "
                         f"Using {self.name_of(preferred_source)}: {preferred_values}."
                     )
-            elif agreeing_source is not None:
+            elif agreeing_source is not None and not album_differs_from_musicbrainz:
                 messages.success(f"{tag_name.title()}: Metadata matches {self.name_of(agreeing_source)}.")
                 self.resolved[tag_name] = [value.strip() for value in original_values]
             else:
