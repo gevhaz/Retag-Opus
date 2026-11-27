@@ -1,6 +1,12 @@
 # Code style
 
 - Use very descriptive variable names, even if they're long.
+- Choose names so that the code reads as plain English, and check
+  them by reading it aloud. A line like `if order in shipped_orders:`
+  should say what it checks to someone who hasn't seen the code around
+  it. If the sentence is wrong or unclear, e.g. because a variable
+  holds something other than what its name says, rename until it reads
+  right.
 - Don't cram logic into one line. Prefer a plain loop or a named
   variable over a dense comprehension or a long expression.
 - Follow PEP 8 and PEP 257 and write idiomatic Python, e.g. plain
@@ -25,6 +31,9 @@
   saying something that can go stale.
 - Shorter doesn't mean fewer: public functions and functions with
   non-obvious behavior still get a docstring.
+- If a short function needs more than a one-line docstring, or a
+  comment, to be understood, fix its name or move out what doesn't
+  belong in it instead of explaining more.
 
 # Platforms
 
@@ -36,6 +45,7 @@
 - The coverage threshold, `fail_under` in `pyproject.toml`, is only
   there to make a drop in coverage visible. It's completely fine to
   lower it when that makes sense, e.g. after removing tested code.
+- When a new test covers what an old one did, remove the old one.
 
 # Spellcheck
 
@@ -47,6 +57,8 @@
 - Write pull request descriptions and commit messages for a reader who
   reads them first, to get oriented, and only then looks at the code.
   Don't assume they already have a specific part of the code in mind.
+- Say who does what, e.g. "`resolve_tags()` asks the user", not
+  "resolving asks".
 
 # Commits
 
