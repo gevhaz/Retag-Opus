@@ -266,7 +266,7 @@ def run(argv: Sequence[str] | None = None) -> int:
 
             # 4. For each field, if there are conflicts, ask user input
             try:
-                tag_editor.resolve_metadata(tags)
+                tag_editor.resolve_tags(tags)
             except UserExitException as e:
                 print(f"RetagOpus exited successfully: {e}")
                 return 0
@@ -289,7 +289,7 @@ def run(argv: Sequence[str] | None = None) -> int:
 
             while reshow_choices:
                 print("Final result:")
-                tag_editor.print_resolved(tags)
+                tag_editor.print_resolved_tags(tags)
                 reshow_choices = False
                 options = [
                     "[p] pass",
@@ -328,12 +328,12 @@ def run(argv: Sequence[str] | None = None) -> int:
                         print(f"Trying to improve metadata again for file: {song_name}")
                         redo = True
                     case "[m] modify tag":
-                        tag_editor.modify_resolved_field(tags)
+                        tag_editor.enter_tags_by_hand(tags)
                         messages.info("Current metadata to save:")
-                        tag_editor.print_resolved(tags)
+                        tag_editor.print_resolved_tags(tags)
                         reshow_choices = True
                     case "[d] delete item in tag":
-                        tag_editor.delete_tag_item(tags)
+                        tag_editor.remove_values_from_tag(tags)
                         reshow_choices = True
                     case "[p] pass":
                         messages.warning(f"Pass. Skipping song: {song_name}")
@@ -346,11 +346,11 @@ def run(argv: Sequence[str] | None = None) -> int:
                         reshow_choices = True
                     case "[a] all metadata":
                         messages.info("All old and new metadata suggested for this file:")
-                        tag_editor.print_all(tags)
+                        tag_editor.print_all_sources(tags)
                         reshow_choices = True
                     case "[e] resolved metadata":
                         messages.info("Current metadata to save:")
-                        tag_editor.print_resolved(tags)
+                        tag_editor.print_resolved_tags(tags)
                         reshow_choices = True
                     case _:
                         messages.error("Something went wrong, starting over")

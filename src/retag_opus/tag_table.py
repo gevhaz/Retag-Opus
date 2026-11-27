@@ -26,7 +26,7 @@ file's, and name_of() gives what it's called in messages and menus.
 Most methods look at one column at a time. found_values() gives the
 found values of a tag, leaving out the file and sources without any, and
 agreeing_source() the source that agrees with the file's value.
-tag_editor.resolve_metadata() goes through the columns with found
+tag_editor.resolve_tags() goes through the columns with found
 values, and keeps the file's value if a source agrees with it, or else
 asks the user. The result is TagTable.resolved, the row that will be
 saved to the file.
