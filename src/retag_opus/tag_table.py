@@ -107,7 +107,7 @@ class TagTable:
         # the YouTube tags that are stored.
         self._youtube_is_auto_generated: bool = False
         self.resolved: Tags = {}
-        self.album_level_tags: Tags = {}
+        self.tags_from_earlier_song: Tags = {}
         # Length of the song in seconds, used to identify it
         self.length: float | None = None
 
@@ -617,7 +617,7 @@ class TagTable:
 
         :param album_level_tags: Tags previously chosen for the album.
         """
-        self.album_level_tags = deepcopy(album_level_tags)
+        self.tags_from_earlier_song = deepcopy(album_level_tags)
         self.resolved.update(deepcopy(album_level_tags))
 
     def get_album_level_tags(self) -> Tags:
@@ -652,8 +652,8 @@ class TagTable:
                 return True
         return False
 
-    def album_is_musicbrainz_release(self) -> bool:
-        """Check whether the album is the release MusicBrainz found."""
+    def will_save_musicbrainz_album(self) -> bool:
+        """Check whether the album to save is MusicBrainz's."""
         return self.is_same_album(self.resolved.get("album", []), self.values_from(MUSICBRAINZ, "album"))
 
     def manually_adjust_tag_when_resolving(self, tag_name: str) -> bool:
@@ -740,15 +740,15 @@ class TagTable:
         """
         pruned_tags = [tag_name for tag_name, value in self.resolved.items() if value == REMOVED_TAG]
 
-        for tag_name, album_level_value in self.album_level_tags.items():
+        for tag_name, album_level_value in self.tags_from_earlier_song.items():
             messages.success(
                 f"{tag_name.title()}: Using value from earlier song on the same album: {album_level_value}."
             )
 
         for tag_name in self.tags_with_new_data():
-            if tag_name in self.album_level_tags:
+            if tag_name in self.tags_from_earlier_song:
                 continue
-            if tag_name in constants.release_tags and not self.album_is_musicbrainz_release():
+            if tag_name in constants.release_specific_tags and not self.will_save_musicbrainz_album():
                 # E.g. a single on YouTube may only be on an album on
                 # MusicBrainz, and then its track number would be wrong
                 continue

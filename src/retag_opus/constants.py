@@ -72,9 +72,9 @@ MUSICBRAINZ_ID_PREFIX: Final = "musicbrainz_"
 # each, but still shown.
 track_position_tags: Final[list[str]] = ["tracknumber", "totaltracks", "discnumber", "totaldiscs"]
 
-# Tags that describe the release a song was found on, which are only
-# right for the album if it's that release
-release_tags: Final[list[str]] = track_position_tags + [
+# Tags whose values only hold for one release of a song, e.g. its track
+# number on an album
+release_specific_tags: Final[list[str]] = track_position_tags + [
     "musicbrainz_albumid",
     "musicbrainz_albumartistid",
     "musicbrainz_releasegroupid",
